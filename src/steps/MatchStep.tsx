@@ -29,7 +29,12 @@ const POS_SPRING = { type: 'spring', stiffness: 420, damping: 36 } as const
 export default function MatchStep({ step, phase, attempt, setController, lessonId, mode }: StepProps<T>) {
   const n = step.pairs.length
   const memKey = `${lessonId ?? mode}:${step.id}`
-  const rightOrder = useMemo(() => shuffleNotIdentity(range(n), step.id), [n, step.id])
+  const rightOrder = useMemo(() => {
+    const s = shuffleNotIdentity(range(n), step.id)
+    // with repeated answers a shuffle can still line every row up with its match; rotate it until it doesn't
+    for (let k = 0; k < n && s.every((r, row) => step.pairs[r].right === step.pairs[row].right); k++) s.push(s.shift()!)
+    return s
+  }, [n, step])
   /**
    * Is left item l correctly paired with right item r? Compared by text, so two
    * pairs that share an answer (or a prompt) can be matched either way round.

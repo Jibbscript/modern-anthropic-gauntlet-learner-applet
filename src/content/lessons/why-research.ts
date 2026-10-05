@@ -190,7 +190,7 @@ const lesson: Lesson = {
     {
       kind: 'concept',
       id: 'race',
-      title: 'Why publish? A race to the top',
+      title: 'The race to the top, and its limit',
       body:
         "Why publish a study where your own model ties for the highest blackmail rate? Anthropic's answer is a ==race to the top==: make safety something labs compete on. Its evidence: OpenAI and Google DeepMind adopted RSP-style frameworks within months, and laws like SB 53 now require published ones.\n\n" +
         'The limit: in September 2026 Anthropic disclosed four incidents in third-party cyber evaluations that pre-release auditing had missed. Publishing is not catching.',

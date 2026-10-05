@@ -3,8 +3,12 @@ import type { Lab, LabLevel } from '../../core/types'
 /** Python source: raw template (backslashes kept as typed), leading newline dropped. */
 const py = (s: TemplateStringsArray) => s.raw[0].replace(/^\n/, '')
 
-/** learner code first, then the provided fakes (identical in starter and every solution) */
-const withWeb = (code: string) => `${code}\n\n${PROVIDED}`
+/**
+ * learner code first, then the provided fakes (identical in starter and every solution).
+ * The __future__ line keeps type hints lazy, so `clock: FakeClock` works although FakeClock is defined below.
+ */
+const withWeb = (code: string) => `${FUTURE}${code}\n\n${PROVIDED}`
+const FUTURE = '# Lets type hints name the provided classes at the bottom of the file.\nfrom __future__ import annotations\n\n\n'
 
 /* --------------------------------------------------------------- provided */
 
@@ -530,9 +534,18 @@ def _l3_wide(n, host="https://a.com"):
     return pages
 
 
+_L3_LIMIT_S = 3.0  # a correct crawl here takes well under a second, even on a slow phone
+
+
 async def _l3_crawl(pages, start="https://a.com/", **kwargs):
     web = FakeWeb(pages)
-    got = await crawl_async(start, web.afetch, **kwargs)
+    try:
+        got = await _l3_asyncio.wait_for(crawl_async(start, web.afetch, **kwargs), _L3_LIMIT_S)
+    except _l3_asyncio.TimeoutError:
+        raise AssertionError(
+            f"crawl_async didn't return within {_L3_LIMIT_S:g} s, so it is probably stuck: look for a worker "
+            "waiting forever on an empty queue, or a task that never finishes"
+        ) from None
     assert isinstance(got, list), f"crawl_async should return a list, got {type(got).__name__}"
     return got, web
 
@@ -742,9 +755,11 @@ Example: \`/\` links to 12 pages, and every fetch takes 10 ms.
 /* ---------------------------------------------------------------- level 4 */
 
 const L4_TESTS = py`
+import asyncio as _l4_asyncio
 import random as _l4_random
 
 _L4_EPS = 1e-6
+_L4_LIMIT_S = 3.0  # real seconds: the virtual clock makes every correct crawl here take well under one
 
 
 def _l4_links(*hrefs):
@@ -762,7 +777,13 @@ def _l4_host_times(web, host):
 async def _l4_crawl(pages, seeds, latency=0.1, failures=None, **kwargs):
     clock = FakeClock()
     web = FakeWeb(pages, latency=latency, failures=failures, clock=clock)
-    got = await crawl_polite(seeds, web.afetch, clock, **kwargs)
+    try:
+        got = await _l4_asyncio.wait_for(crawl_polite(seeds, web.afetch, clock, **kwargs), _L4_LIMIT_S)
+    except _l4_asyncio.TimeoutError:
+        raise AssertionError(
+            f"crawl_polite didn't return within {_L4_LIMIT_S:g} s of real time, so it is probably stuck: look for "
+            "an await that never finishes, or a wait that uses asyncio.sleep instead of clock.sleep"
+        ) from None
     assert isinstance(got, tuple) and len(got) == 2, f"crawl_polite should return (visited, errors), got {got!r}"
     return got[0], got[1], web, clock
 
@@ -815,8 +836,10 @@ async def test_l4_only_seed_hosts():
         "https://b.com/": _l4_links("https://c.com/"), "https://b.com/x": "",
         "https://c.com/": "",
     }
-    visited, errors, web, _ = await _l4_crawl(pages, ["https://a.com/", "https://b.com/"])
-    assert visited == ["https://a.com/", "https://b.com/", "https://b.com/x"], f"visited: {visited!r}"
+    visited, errors, web, _ = await _l4_crawl(pages, ["https://a.com/", "HTTPS://B.com"])
+    assert visited == ["https://a.com/", "https://b.com/", "https://b.com/x"], (
+        f"visited: {visited!r}. Normalize the seeds too: HTTPS://B.com is https://b.com/"
+    )
     assert "https://c.com/" not in web.fetched, "c.com is not a seed host, so it must never be fetched"
 
 
@@ -844,8 +867,8 @@ async def test_l4_backoff_doubles():
 
 async def test_l4_gives_up_after_retries():
     pages = {"https://a.com/": _l4_links("/down"), "https://a.com/down": "never served"}
-    visited, errors, web, _ = await _l4_crawl(pages, ["https://a.com/"], failures={"https://a.com/down": [503, 503, 503]})
-    assert errors == {"https://a.com/down": 503}, f"errors: {errors!r}"
+    visited, errors, web, _ = await _l4_crawl(pages, ["https://a.com/"], failures={"https://a.com/down": [500, 502, 503]})
+    assert errors == {"https://a.com/down": 503}, f"errors should hold the last status (500, 502, then 503): {errors!r}"
     assert visited == ["https://a.com/"], f"visited: {visited!r}"
     assert web.fetched.count("https://a.com/down") == 3, (
         f"retries=2 means 3 attempts in total, saw {web.fetched.count('https://a.com/down')}"

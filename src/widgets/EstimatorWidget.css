@@ -385,6 +385,7 @@
   font-weight: 700;
 }
 .est-ask__input::placeholder {
+  font-family: var(--font-ui);
   color: var(--ink-3);
   font-weight: 500;
   font-size: var(--fs-md);

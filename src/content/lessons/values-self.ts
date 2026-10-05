@@ -38,7 +38,7 @@ const lesson: Lesson = {
           why: 'A humblebrag: a virtue in a flaw costume.',
         },
         {
-          text: 'I dislike open-ended migrations. Around week three I lose focus, so I set myself weekly demos.',
+          text: 'I dislike vendor evaluations. I lose patience with feature grids, so I write our criteria down first.',
           bucket: 'honest',
           why: 'Specific, with a cost and a system for handling it.',
         },
@@ -48,9 +48,9 @@ const lesson: Lesson = {
           why: 'Maybe true, but your part is missing entirely.',
         },
         {
-          text: 'I shipped the config change without a canary. My call, and checkout was down for 40 minutes.',
+          text: 'I skipped the load test because I was sure the endpoint was fine. It fell over at launch. That was on me.',
           bucket: 'honest',
-          why: 'Your part in one plain sentence, with the cost.',
+          why: 'Your part in plain sentences, including what you thought at the time.',
         },
         {
           text: "I don't really have work I dislike. I'm very adaptable.",
@@ -58,14 +58,14 @@ const lesson: Lesson = {
           why: "Everyone dislikes something. This says you won't tell.",
         },
         {
-          text: "My manager would say I'm slow to delegate. She's right: I held on to on-call too long last quarter.",
+          text: "My manager would say I go quiet when I'm stuck. She's right: I sat on a blocker for four days in March.",
           bucket: 'honest',
-          why: 'The critique in their words, plus evidence it is real.',
+          why: 'The critique as they would put it, plus evidence it is real.',
         },
         {
-          text: 'My biggest weakness is that I work too hard.',
+          text: 'I used to be nervous presenting, but I took a course in college and it is fine now.',
           bucket: 'evasive',
-          why: 'The oldest humblebrag there is.',
+          why: 'A fake weakness: real once, fixed long ago, so it tells the interviewer nothing about you today.',
         },
         {
           text: "I'm weaker at frontend work. I can do it, but slowly, so I pair on it.",
@@ -93,10 +93,10 @@ const lesson: Lesson = {
       eyebrow: 'Which is stronger?',
       question: 'What kind of work do you dislike?',
       a: "Long documentation passes on systems I didn't build. After an hour I stop being careful. When it's needed I timebox it into 45-minute blocks and pair with the owner, which also makes the docs better. It tells me I work best building or debugging something live.",
-      b: "Honestly, I don't mind most work. If it needs doing, I'll do it. Maybe meetings, like everyone? But I understand they're necessary, so I try not to complain about them and just get on with it. Attitude matters more than preferences.",
+      b: "Work that cuts corners. When teammates skip tests or leave docs half-written, it really bothers me, so I end up quietly fixing it myself in the evenings. I just hold myself to a high bar, and I wish everyone did.",
       better: 'a',
       explanation:
-        'A is specific, admits a real cost (*I stop being careful*), shows a system for handling it, and draws a conclusion about fit. B picks the one dislike everyone shares, then takes it back.',
+        'B sounds specific, but it is a humblebrag (*my bar is high*) with a villain (*teammates*) and no system beyond working evenings. A admits a real cost (*I stop being careful*), shows a system for handling it, and draws a conclusion about fit.',
     },
     {
       kind: 'concept',
@@ -107,7 +107,7 @@ const lesson: Lesson = {
         'Then what you thought at the time, what it cost others, what you changed, and ==evidence the change stuck==.',
       callout: {
         tone: 'source',
-        text: 'Organizations can do this too. Anthropic\'s RSP updates page notes evaluations "completed 3 days later than the 3-month interval", and its Sep 2026 incidents post said pre-release auditing had missed the problems. Sources: [RSP updates](https://www.anthropic.com/rsp-updates); [incidents post](https://www.anthropic.com/news/alignment-assessment-cybersecurity-incidents).',
+        text: 'Institutions face the same test. Anthropic\'s RSP updates page records evaluations "completed 3 days later than the 3-month interval", and its Sep 9, 2026 assessment of four incidents in cyber evaluations said pre-release auditing had missed the behavior. Whether the fixes match the failures is yours to judge. Sources: [RSP updates](https://www.anthropic.com/rsp-updates); [incidents post](https://www.anthropic.com/news/alignment-assessment-cybersecurity-incidents).',
       },
     },
     {
@@ -155,7 +155,7 @@ const lesson: Lesson = {
       pairs: [
         { left: 'Humblebrag', right: '*My standards are just too high.*' },
         { left: 'Blame shift', right: '*Infra never gave us the capacity.*' },
-        { left: 'Villain coworker', right: "*My lead just wasn't very good.*" },
+        { left: 'Villain coworker', right: '*My lead was honestly just bad at his job.*' },
         { left: 'No lesson', right: '*Anyway, it all worked out.*' },
         { left: 'Fake weakness', right: '*I struggled with Git as an intern.*' },
         { left: 'Ownership fog', right: '*Mistakes were made in the rollout.*' },
@@ -178,12 +178,12 @@ const lesson: Lesson = {
       prompt: '*What would your last manager say is your biggest area for growth?* Best answer?',
       choices: [
         {
-          text: "She'd say I'm slow to hand things off; her words were 'bottleneck on deploys'. I've handed two systems over since, and still catch myself.",
+          text: "She'd say I'm slow to hand things off; her words were 'bottleneck on deploys'. I've handed off two systems since, and still slip.",
           correct: true,
           feedback: 'Quotes the critique, shows action, and admits it is not fully fixed. That last clause makes it believable.',
         },
         {
-          text: "She'd probably say I take on too much, because I care so much about the team and really hate seeing anyone overloaded.",
+          text: "She'd probably say I take on too much, because I care so much about the team and really hate seeing anyone else overloaded.",
           feedback: 'A humblebrag. If a reference later says something different, this answer looks managed.',
         },
         {
@@ -191,7 +191,7 @@ const lesson: Lesson = {
           feedback: "Implausible, and risky if references are checked. Every manager has a growth area in mind for their reports.",
         },
         {
-          text: "She'd say I could communicate more, but to be fair, she wasn't great at giving clear direction to the team either.",
+          text: "She'd say I could communicate more, but to be fair, she wasn't great at giving clear direction to the team either. It went both ways.",
           feedback: 'Half an answer, then a counterattack. The interviewer hears how you will talk about your next manager.',
         },
       ],
@@ -208,17 +208,17 @@ const lesson: Lesson = {
           interviewer: 'What kind of work do you dislike doing?',
           options: [
             {
-              text: "I don't really dislike anything. Every task is a chance to learn something, and I try to bring the same energy to all of it.",
+              text: "I don't really dislike anything. Every task is a chance to learn something new, and I try to bring the same energy to all of it, glamorous or not. That's just how I work.",
               quality: 'weak',
               feedback: 'No one believes it, and it signals you will manage the interviewer rather than talk to them.',
             },
             {
-              text: 'Repetitive manual work, mostly. When I spot it, I usually write a script to automate it, so nobody on the team ever has to do it again.',
+              text: "Repetitive manual work, mostly. When I spot it, I usually write a script to automate it, so nobody on the team ever has to do it again. It's a pet peeve.",
               quality: 'okay',
               feedback: 'Common, and edging toward a humblebrag (*I fix it for everyone*). What about the work you cannot automate away?',
             },
             {
-              text: "Long, open-ended migrations. Around week three I lose focus and get sloppy, so I break them into weekly demos and pair for the tedious stretches. I'm at my best on shorter, sharper problems.",
+              text: "Long, open-ended migrations. Around week three I get sloppy, so I break them into weekly demos and pair on the tedious stretches. I'm best on shorter, sharper problems.",
               quality: 'strong',
               feedback: 'Specific, admits a real cost, shows a system, and draws a conclusion about fit.',
             },
@@ -233,12 +233,12 @@ const lesson: Lesson = {
               feedback: 'Honest about the limit, specific about the threshold, and turns it into a real question about the role.',
             },
             {
-              text: "Oh, honestly I don't mind it that much. I was probably overstating it a bit earlier. I'm sure it would be fine once I got going.",
+              text: "Oh, honestly I don't mind it that much. I was probably overstating it a bit earlier. I'm sure it would be fine once I got going and found a rhythm.",
               quality: 'weak',
               feedback: 'Retracting under the lightest pressure. Now the interviewer does not know which answer to believe.',
             },
             {
-              text: "That's fine. I'm adaptable, and I'd find a way to make it work. Every role has parts that aren't your favorite, after all.",
+              text: "That's fine. I'm adaptable, and I'd find a way to make it work. Every role has parts that aren't your favorite, and honestly, migrations teach you a lot about a system.",
               quality: 'okay',
               feedback: 'Not wrong, but it ducks the question. How would you make it work, and where is your limit?',
             },
@@ -248,19 +248,19 @@ const lesson: Lesson = {
           interviewer: 'Tell me about something that went badly and was your fault.',
           options: [
             {
-              text: 'We had an outage once after a config change. It was a real learning moment for the team, and afterwards we added canaries to the deploy process.',
+              text: 'We had an outage once after a schema migration. It was a real learning moment for the team, and afterwards we added a mandatory dry-run step to the process.',
               quality: 'okay',
-              feedback: 'True, but *we* is doing a lot of work. Whose change was it?',
+              feedback: 'True, but *we* is doing a lot of work. Whose migration was it, and what did they think at the time?',
             },
             {
-              text: "I pushed a config change on a Friday without a canary. I thought it was trivial. Checkout was down for 40 minutes. I added canaries to our deploy tool, and they've caught two bad configs since.",
+              text: 'I ran a schema migration at peak without a dry run; the diff looked trivial. It locked orders for 25 minutes. I added a dry-run gate to our tooling. It has caught three since.',
               quality: 'strong',
               feedback: 'Your part in one sentence, what you thought, the cost, the change, and evidence it stuck.',
             },
             {
-              text: 'Our release process was broken, honestly. Someone on another team approved my change without really looking at it, and it went straight out.',
+              text: 'Our release process was broken, honestly. Someone on another team approved my migration without really looking at it, and it went straight out at peak.',
               quality: 'weak',
-              feedback: 'A blame shift plus a villain. Even if every word is true, it is the story shape interviewers listen for.',
+              feedback: 'A blame shift plus a villain. Even if every word is true, it is exactly the story shape interviewers listen for.',
             },
           ],
         },
@@ -394,20 +394,20 @@ const lesson: Lesson = {
       prompt: 'Which failure is the best one to bring to a culture round?',
       choices: [
         {
-          text: 'An outage your config change caused, which led you to add canaries you still use.',
+          text: 'A rushed cache change that served stale prices for an hour, and the test you added that still runs.',
           correct: true,
           feedback: 'A real cost, a clear part that was yours, and a change you can show stuck.',
         },
         {
-          text: 'A README typo you noticed and fixed within minutes of merging it.',
+          text: 'A README typo you noticed and fixed within minutes of merging it, before anyone saw.',
           feedback: 'Too small to cost anything, so it reads as a dodge.',
         },
         {
-          text: 'A project that failed after leadership cancelled its funding midway.',
-          feedback: 'Not your fault, so it cannot answer the question.',
+          text: 'A project that failed after leadership cancelled its funding midway, despite strong work.',
+          feedback: 'Not your fault, so it cannot answer the question. *Despite strong work* is a humblebrag too.',
         },
         {
-          text: 'A launch that slipped because another team missed its deadline.',
+          text: 'A launch that slipped two weeks because another team missed the deadline for its API.',
           feedback: 'Your part is missing. The story is about them.',
         },
       ],

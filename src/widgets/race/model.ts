@@ -57,6 +57,8 @@ export interface RaceState {
 export interface LostUpdate {
   /** id of the lost increment, e.g. "A1" */
   id: string
+  /** index into `writes` of the write that dropped it */
+  write: number
   /** thread whose increment was lost */
   victim: number
   /** thread whose write overwrote it */
@@ -180,9 +182,50 @@ export function lostUpdates(state: RaceState, setup: RaceSetup): LostUpdate[] {
     if (last < 0) continue // never written (thread not finished)
     const over = state.writes[last + 1]
     if (!over) continue
-    out.push({ id, victim: victimOf(id), by: over.thread, staleValue: over.value - 1, storedValue: over.value })
+    out.push({ id, write: last + 1, victim: victimOf(id), by: over.thread, staleValue: over.value - 1, storedValue: over.value })
   }
   return out
+}
+
+export interface Overwrite {
+  /** index into `writes` of the overwriting write */
+  write: number
+  /** thread that wrote the stale value */
+  by: number
+  /** thread whose write was overwritten (the write just before), and the value it had stored */
+  over: number
+  overValue: number
+  /** the value `by` had loaded, and what it stored */
+  staleValue: number
+  storedValue: number
+  /** increments that are missing from the final value because of this write */
+  lost: string[]
+}
+
+/**
+ * Final lost updates grouped by the write that dropped them. A write only
+ * drops increments when its thread loaded before the previous write landed
+ * (had it loaded after, it would carry everything in x), so "`by` loaded
+ * `staleValue` before `over` stored `overValue`" is always true.
+ */
+export function overwrites(state: RaceState, setup: RaceSetup): Overwrite[] {
+  const groups = new Map<number, string[]>()
+  for (const l of lostUpdates(state, setup)) groups.set(l.write, [...(groups.get(l.write) ?? []), l.id])
+  return [...groups.entries()]
+    .sort((a, b) => a[0] - b[0])
+    .map(([i, lost]) => {
+      const w = state.writes[i]
+      const prev = state.writes[i - 1]
+      return { write: i, by: w.thread, over: prev.thread, overValue: prev.value, staleValue: w.value - 1, storedValue: w.value, lost }
+    })
+}
+
+/** "A’s +1", "both of A’s +1s", "A’s +1 and C’s +1" */
+export function incrementsLabel(ids: string[]): string {
+  const owners = [...new Set(ids.map((id) => id[0]))].sort()
+  return owners
+    .map((o) => (ids.filter((id) => id[0] === o).length > 1 ? `both of ${o}’s +1s` : `${o}’s +1`))
+    .join(' and ')
 }
 
 /** "A"-style labels for the increments a write dropped */

@@ -43,6 +43,8 @@ const rise = (i: number) => ({
 })
 
 const fmtInt = (n: number) => Math.round(n).toLocaleString('en-US')
+/** stat tiles: full digits up to 99,999, then 128k / 1.2M so values never outgrow a tile */
+const fmtStat = (n: number) => (n >= 1e6 ? `${(n / 1e6).toFixed(1).replace(/\.0$/, '')}M` : n >= 1e5 ? `${Math.floor(n / 1e3)}k` : fmtInt(n))
 
 export default function MeScreen() {
   const s = useStore()
@@ -55,7 +57,7 @@ export default function MeScreen() {
     const answered = days.reduce((a, d) => a + d.answered, 0)
     const correct = days.reduce((a, d) => a + d.correct, 0)
     return {
-      lessons: Object.values(s.lessons).filter((l) => l.completedAt).length,
+      lessons: Object.entries(s.lessons).filter(([id, l]) => l.completedAt && CATALOG.lessons[id]).length,
       totalLessons: Object.keys(CATALOG.lessons).length,
       reviews: days.reduce((a, d) => a + d.reviews, 0),
       accuracy: answered ? correct / answered : null,
@@ -153,6 +155,7 @@ export default function MeScreen() {
 
           <motion.section className="me-sec" {...rise(i++)}>
             <SectionHead title="Skills" aside={<SkillsAside skill={mastery.skill} />} />
+            <p className="me-note">Mastery combines how much of a skill you have unlocked with how well you remember it.</p>
             <div className="me-areas">
               {CATALOG.courses.map((c) => (
                 <AreaGroup key={c.id} course={c} skills={mastery.skill} />
@@ -238,7 +241,9 @@ function Stat({
         <Icon size={20} strokeWidth={2.4} fill={filled ? 'currentColor' : 'none'} />
       </span>
       <div className="me-stat__text">
-        <div className="me-stat__value">{value == null ? '–' : <Ticker from={0} value={value} format={(n) => fmtInt(n) + suffix} />}</div>
+        <div className="me-stat__value" aria-label={value == null ? 'none yet' : fmtInt(value) + suffix}>
+          {value == null ? '–' : <Ticker from={0} value={value} format={(n) => fmtStat(n) + suffix} />}
+        </div>
         <div className="me-stat__label">{label}</div>
         {note && <div className={`me-stat__note ${noteTone ? `is-${noteTone}` : ''}`}>{note}</div>}
       </div>
@@ -427,7 +432,10 @@ function AreaGroup({ course, skills }: { course: Course; skills: Record<string, 
             {started}/{list.length} started{due > 0 ? ` · ${due} due` : ''}
           </span>
         </span>
-        <span className="me-area__pct tabular">{m == null ? '–' : `${Math.round(m * 100)}%`}</span>
+        <span className="me-area__pct tabular" aria-label={m == null ? 'not started' : `${Math.round(m * 100)}% mastery`}>
+          {m == null ? '–' : `${Math.round(m * 100)}%`}
+          {m != null && <small>mastery</small>}
+        </span>
         <motion.span className="me-area__chev" animate={{ rotate: open ? 180 : 0 }} transition={{ type: 'spring', stiffness: 500, damping: 30 }}>
           <ChevronDown size={20} strokeWidth={2.8} />
         </motion.span>

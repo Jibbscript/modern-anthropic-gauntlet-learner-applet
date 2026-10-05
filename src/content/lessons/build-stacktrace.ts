@@ -93,15 +93,18 @@ ZeroDivisionError: division by zero`,
       code: {
         code: `import re
 
-FRAME = re.compile(r'^\\s*File "(?P<file>[^"]+)", line (?P<line>\\d+), in (?P<func>.+)$')
+FRAME = re.compile(
+    r'^\\s*File "(?P<file>[^"]+)", '
+    r'line (?P<line>\\d+), in (?P<func>.+)$')
 
-def parse(tb: str) -> tuple[str, list[tuple[str, int, str]]]:
+def parse(tb: str) -> tuple[str, list]:
     frames, exc_type = [], ""
     for line in tb.splitlines():
         if m := FRAME.match(line):
             frames.append((m["file"], int(m["line"]), m["func"]))
-        elif line and not line[0].isspace() and not line.startswith("Traceback"):
-            exc_type = line.split(":", 1)[0]
+        elif line and not line[0].isspace():
+            if not line.startswith("Traceback"):
+                exc_type = line.split(":", 1)[0]
     return exc_type, frames`,
       },
       callout: {
@@ -272,7 +275,7 @@ print(" ".join(out))`,
       id: 'edges',
       title: 'Edge cases interviewers poke',
       body:
-        '- **Identical samples**: no events; the open frames just get longer. An **empty** sample ends everything.\n' +
+        '- **Identical samples**: no events. An **empty** sample ends everything.\n' +
         '- **Recursion**: compare by position, so `f > f` is two frames.\n' +
         '- **After the last sample**: the commonly reported version emits nothing more; some variants close open frames. Ask.\n' +
         '- **Debounce** (a reported follow-up): only begin a frame after N consecutive samples at the same position.\n' +
@@ -288,17 +291,17 @@ print(" ".join(out))`,
           interviewer: 'How do you know the output is right beyond this one example?',
           options: [
             {
-              text: 'I would add a few more hand-written examples and compare against expected output.',
+              text: 'I would hand-write a few more examples, including a deeper stack and a return to `main`, and compare against expected output.',
               quality: 'okay',
               feedback: 'Useful, but examples only cover the cases you thought of. An invariant checks every input you throw at it.',
             },
             {
-              text: 'Check invariants on every output: every end matches the most recent open begin, and replaying the events rebuilds each sample\'s stack exactly. Then targeted cases: recursion, identical samples, empty input.',
+              text: 'Invariants on every output: each end matches the latest open begin, and replaying the events rebuilds every sample\'s stack. Then targeted cases: recursion, repeated samples, empty input.',
               quality: 'strong',
               feedback: 'Properties that must hold for any input, plus the specific edge cases. That is testing your own implementation.',
             },
             {
-              text: 'It matches the expected output, so I am fairly confident.',
+              text: 'It matches the expected output exactly, and the logic is only a dozen lines, so I am fairly confident in it.',
               quality: 'weak',
               feedback: 'One example hides exactly the bugs this problem is about: recursion, repeated samples, and what happens after the last sample.',
             },
@@ -308,17 +311,17 @@ print(" ".join(out))`,
           interviewer: 'Samples are noisy. Only emit a frame once it has held its position for N consecutive samples.',
           options: [
             {
-              text: 'Only emit anything once the whole stack has been identical for N samples in a row.',
+              text: 'Keep it simple: only emit anything once the whole stack has been identical for N samples in a row, then diff as before.',
               quality: 'weak',
               feedback: 'Too coarse: churn deep in the stack would hide stable outer frames, and nothing begins until the entire stack holds still.',
             },
             {
-              text: 'Post-process: run the converter, then delete any begin/end pair that spans fewer than N samples.',
+              text: 'Post-process: run the converter as is, then delete every begin/end pair that spans fewer than N samples before returning the list.',
               quality: 'okay',
               feedback: 'It works on a batch, but needs the whole event list and a second pass, and frames still open at the end need special handling.',
             },
             {
-              text: 'Per depth, count consecutive samples where that slot holds the same name with the same callers; begin the frame when the count hits N, and only end frames that began. I would ask whether the begin uses the first or the Nth timestamp.',
+              text: 'Per depth, count consecutive samples where that slot holds the same name with the same callers. Begin it at N, and only end frames that began. Then I would ask: first or Nth timestamp?',
               quality: 'strong',
               feedback: 'Streams, works per position (so recursion still works), keeps begins and ends paired, and surfaces the ambiguous choice instead of guessing.',
             },
@@ -328,17 +331,17 @@ print(" ".join(out))`,
           interviewer: 'Back to crash reports: one bug is showing up as thousands of separate groups. Why?',
           options: [
             {
-              text: 'Something occurrence-specific leaked into the signature: a message with an ID, a line number that shifted across deploys, or an address. I would diff two groups that should be one and see which field differs.',
+              text: 'Something per-occurrence leaked into the signature: an ID in the message, a line number shifted by a deploy, an address. I would diff two groups that should be one.',
               quality: 'strong',
               feedback: 'A ranked set of suspects and a cheap experiment to tell them apart.',
             },
             {
-              text: 'The grouping is too strict. I would group on exception type only.',
+              text: 'The grouping is too strict. I would drop the frames and group on exception type only, which collapses the duplicates at once.',
               quality: 'okay',
               feedback: 'That fixes the split, but now every `KeyError` in the codebase lands in one group.',
             },
             {
-              text: 'Users trigger it in different ways, so they are probably different bugs.',
+              text: 'Users trigger it in different ways, so these are probably different bugs that happen to look alike.',
               quality: 'weak',
               feedback: 'The premise says it is one bug. Explaining away the data instead of checking the signature misses the point.',
             },

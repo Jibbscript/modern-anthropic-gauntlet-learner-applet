@@ -137,7 +137,7 @@ const lesson: Lesson = {
           text: 'Ship Monday with shared folders excluded by a flag. Log the issue with an owner and a date, and fix before widening.',
           correct: true,
           feedback:
-            'Keeps the speed for 99.7% of accounts, removes the harm from people who never opted in, and writes the known issue down.',
+            'Keeps the date and nearly all the value, removes the harm from people who never opted in, and writes the known issue down where it can be tracked.',
         },
         {
           text: "Ship to everyone. It's rare, and archives are restorable for 30 days, so it's a two-way door and the risk is small.",
@@ -147,7 +147,7 @@ const lesson: Lesson = {
         {
           text: "Hold the whole launch until the edge case is fixed and tested, however long that takes. Known harm shouldn't ship.",
           feedback:
-            "You'd delay value for 99.7% of accounts to protect a slice you could simply exclude. Caution should be proportional to the risk.",
+            "You'd delay the feature for everyone to protect a slice you could simply exclude. Caution should be proportional to the risk.",
         },
         {
           text: 'Ship to everyone and fix it quietly next sprint, so nobody gets spooked by a known issue before launch.',
@@ -164,7 +164,7 @@ const lesson: Lesson = {
       body:
         'Being overruled is normal. What you do next is the signal.\n\n' +
         '- **Two-way door**: make your case once, then disagree and commit.\n' +
-        '- **One-way door, risk on others**: offer a safer option. Still overruled? Write down the concern and the decision, then use the real channel (security, your skip-level) and tell your lead.\n' +
+        '- **One-way door, risk on others**: offer a safer option. Still overruled? Write down the concern and the decision, tell your lead, then use the real channel (security, your skip-level).\n' +
         "- **Your line**: know in advance what you'd refuse to do yourself.",
       callout: {
         tone: 'warn',
@@ -213,11 +213,11 @@ const lesson: Lesson = {
       eyebrow: 'Anthropic',
       title: 'Anthropic argues this in public',
       body:
-        'Anthropic lists *Hold light and shade* among its values: "We need shade to understand and protect against the potential for bad outcomes. We need light to realize the good outcomes."\n\n' +
-        'Its Responsible Scaling Policy ties safeguards to capability thresholds. In Feb 2026, RSP v3 dropped the 2023 pause pledge: Anthropic argued a lone pause could leave the world less safe, and critics cited commercial pressure. Form your own view.',
+        'Anthropic\'s values include *Hold light and shade*: "We need shade to understand and protect against the potential for bad outcomes. We need light to realize the good outcomes."\n\n' +
+        'Its Responsible Scaling Policy ties safeguards to capability thresholds. RSP v3 (Feb 2026) swapped the 2023 pause pledge for a conditional delay. Anthropic argued a lone pause could leave the world less safe; critics cited commercial pressure. Form your own view.',
       callout: {
         tone: 'source',
-        text: 'Values: [anthropic.com/company](https://www.anthropic.com/company), accessed Oct 2026. RSP v3 and its rationale: [Anthropic, Feb 24, 2026](https://www.anthropic.com/news/responsible-scaling-policy-v3). The pause-pledge change: [TIME, Feb 24, 2026](https://time.com/7380854/exclusive-anthropic-drops-flagship-safety-pledge/).',
+        text: 'Values: [anthropic.com/company](https://www.anthropic.com/company), accessed Oct 2026. RSP v3 and its rationale: [Anthropic, Feb 24, 2026](https://www.anthropic.com/news/responsible-scaling-policy-v3). The pledge change: [TIME, Feb 24, 2026](https://time.com/7380854/exclusive-anthropic-drops-flagship-safety-pledge/). v3.1 (Apr 2026) added that Anthropic remains *free* to pause: a permission, not a commitment.',
       },
     },
     {
@@ -246,18 +246,18 @@ const lesson: Lesson = {
           interviewer: 'How do you balance delivery speed with security concerns?',
           options: [
             {
-              text: 'I try to find a balance. Ship fast, but never compromise on security. With good planning up front, you can usually have both without much tension.',
+              text: 'I try to find a balance. Ship fast, but never compromise on security. With threat modeling up front and security in the room early, you can usually have both.',
               quality: 'okay',
               feedback:
                 "A reasonable instinct with no content. *Never compromise* isn't true of anyone who ships, and *a balance* doesn't say how you find it.",
             },
             {
-              text: 'By sizing the risk. Most changes are two-way doors, so they ship fast behind a flag. Auth, customer data and deletes slow down even on a deadline: hard to undo, and others carry the cost.',
+              text: 'I size the risk. Most changes are two-way doors, so they ship behind a flag. Auth, customer data and deletes slow down even on deadline: hard to undo, and others pay.',
               quality: 'strong',
               feedback: 'Names the variables (reversibility, who bears it) and where your line falls. The interviewer can probe any part of it.',
             },
             {
-              text: "Security always wins for me. I'd never ship anything I wasn't completely confident in, whatever the deadline or the pressure from product.",
+              text: "Security always wins for me. I'd never ship anything I wasn't completely confident in, whatever the deadline, and I'd push back hard on any pressure from product or leadership.",
               quality: 'weak',
               feedback: 'A slogan, and taken literally you would never ship. Evaluators reportedly look for genuine friction, not a stance.',
             },
@@ -267,17 +267,17 @@ const lesson: Lesson = {
           interviewer: 'Tell me about a time you actually made that call.',
           options: [
             {
-              text: "Nothing specific comes to mind right now, but in general I'm very safety-conscious, and the teams I've worked with know that about me.",
+              text: "Nothing specific comes to mind right now, but in general I'm very safety-conscious, and every team I've worked with knows that's where I stand.",
               quality: 'weak',
               feedback: 'No story means no evidence. Prepare one; the reflect steps at the end of this lesson are for exactly this.',
             },
             {
-              text: 'We had a launch where I found a security issue the week before. I raised it, we fixed it, and we launched a little later. It worked out fine.',
+              text: 'We had a launch where I found a security issue the week before. I raised it with my lead, we fixed it together, and we launched a few days later. It worked out fine.',
               quality: 'okay',
               feedback: 'Real, but thin. How big was the risk, who disagreed, what did it cost, and would you do it again?',
             },
             {
-              text: "Days before a login revamp, I found the new OAuth flow logged refresh tokens. I asked to slip only OAuth by four days; the PM was unhappy. The rest shipped on time. I'd do it again: leaked tokens can't be unleaked.",
+              text: "Days before a login revamp, I found the OAuth flow logged refresh tokens. I got only OAuth delayed four days; the PM was unhappy. I'd do it again: leaked tokens can't be unleaked.",
               quality: 'strong',
               feedback:
                 'Specific and sized. It names who carried the cost and judges the call now. Note the scoping: only the risky half slipped.',
@@ -289,18 +289,18 @@ const lesson: Lesson = {
             'Suppose your team had a capability breakthrough that also carried serious risk if released. Would you support delaying it? What if other labs would not delay?',
           options: [
             {
-              text: "That's really leadership's call more than mine. I'd trust them to weigh it carefully and go with whatever they decide is best for everyone.",
+              text: "That's really leadership's call more than mine. They see far more of the picture than I would, so I'd trust them to weigh it and go with whatever they decide is best.",
               quality: 'weak',
               feedback: 'The question asks for your judgment. Deferring entirely suggests you would have no view inside the company either.',
             },
             {
-              text: "Probably yes, if the delay buys something: evals, safeguards, a staged release. If others won't wait, delay is worth less, which is Anthropic's own RSP v3 argument. But less isn't zero. Where the line sits, I'm unsure.",
+              text: "Yes, if the delay buys something concrete, like evals or safeguards. If others won't wait, it buys less; that's Anthropic's RSP v3 argument. But less isn't zero. Where the line sits, I'm unsure.",
               quality: 'strong',
               feedback:
                 'Takes a position, asks what the delay buys, engages the follow-up instead of dodging it, and admits uncertainty without hiding behind it.',
             },
             {
-              text: "Yes. If it's risky, we shouldn't release it until it's safe, whatever other labs decide to do. Someone in the industry has to hold the line.",
+              text: "Yes. If it's risky, we shouldn't release it until it's safe, whatever other labs decide to do. Someone in the industry has to hold the line, and it might as well be us.",
               quality: 'okay',
               feedback: 'A clear position, but it ignores the follow-up: if others ship anyway, what does your delay buy? Engage with that.',
             },
@@ -402,10 +402,9 @@ const lesson: Lesson = {
       kind: 'order',
       prompt: 'You think a launch puts customer data at risk, and your lead disagrees. Order the escalation ladder.',
       items: [
-        'Make the case to the decider, with the risk sized',
-        'Offer a cheaper safe option: scope, flag, staging',
+        'Size the risk for the decider and offer a cheaper safe option',
         'If overruled, write down the concern and the decision',
-        'Take it to the owning channel, telling your lead first',
+        'Tell your lead, then take it to the owning channel',
         'Decline to do the part that crosses your line',
       ],
       explanation:

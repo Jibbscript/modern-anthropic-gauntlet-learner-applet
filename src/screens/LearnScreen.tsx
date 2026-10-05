@@ -1,5 +1,6 @@
 import { motion, type Variants } from 'motion/react'
-import { useEffect, useMemo, useState, type ReactNode } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { createPortal } from 'react-dom'
 import { Battery, BatteryCharging, Brain, CalendarDays, Check, ChevronRight, Clock, NotebookPen, Sparkles, Target, Trophy, Zap } from 'lucide-react'
 import type { Course, Lesson, StorySlotId } from '../core/types'
 import { liveStreak, qualifies, useStore, type GauntletState } from '../core/store'
@@ -102,11 +103,14 @@ function Charges({ n, size = 18 }: { n: number; size?: number }) {
   )
 }
 
-function WeekStrip({ s, today, big }: { s: GauntletState; today: string; big?: boolean }) {
+function WeekStrip({ s, today, big, inButton }: { s: GauntletState; today: string; big?: boolean; inButton?: boolean }) {
   const days = weekOf(today)
   const charged = new Set(s.streak.frozenDays)
+  // inside a button only phrasing content is valid, so the strip becomes spans there
+  const List = inButton ? 'span' : 'ol'
+  const Item = inButton ? 'span' : 'li'
   return (
-    <ol className={`learn-week ${big ? 'learn-week--big' : ''}`} aria-label="This week">
+    <List className={`learn-week ${big ? 'learn-week--big' : ''}`} aria-label={inButton ? undefined : 'This week'}>
       {days.map((key, i) => {
         const met = qualifies(s.days[key])
         const isToday = key === today
@@ -115,7 +119,7 @@ function WeekStrip({ s, today, big }: { s: GauntletState; today: string; big?: b
         const state = met ? 'met' : saved ? 'saved' : future ? 'future' : 'empty'
         const label = `${DOW_LONG[i]}: ${met ? 'streak day' : saved ? 'saved by a streak charge' : future ? 'upcoming' : isToday ? 'not yet' : 'missed'}`
         return (
-          <li key={key} className={`learn-day learn-day--${state} ${isToday ? 'is-today' : ''}`} aria-label={label}>
+          <Item key={key} className={`learn-day learn-day--${state} ${isToday ? 'is-today' : ''}`} aria-label={inButton ? undefined : label}>
             <motion.span
               key={state}
               className="learn-day__dot"
@@ -130,10 +134,10 @@ function WeekStrip({ s, today, big }: { s: GauntletState; today: string; big?: b
               ) : null}
             </motion.span>
             <span className="learn-day__dow">{DOW[i]}</span>
-          </li>
+          </Item>
         )
       })}
-    </ol>
+    </List>
   )
 }
 
@@ -147,7 +151,9 @@ function StreakSheetBody({ s, today, onClose }: { s: GauntletState; today: strin
     ? `You're on a ${live.count}-day streak. Come back tomorrow to keep it going.`
     : live.count > 0
       ? 'Finish a lesson or 3 reviews today to keep it alive.'
-      : 'Finish a lesson or 3 reviews to start a streak.'
+      : s.streak.best > 0
+        ? 'Your last streak ended. Finish a lesson or 3 reviews to start a new one.'
+        : 'Finish a lesson or 3 reviews to start a streak.'
   return (
     <div className="learn-sheet">
       <motion.div
@@ -287,7 +293,13 @@ function GoalSheetBody({ s, today, onClose }: { s: GauntletState; today: string;
 
 function StreakCard({ s, today, onOpen }: { s: GauntletState; today: string; onOpen: () => void }) {
   const live = liveStreak(s.streak, today)
-  const status = live.doneToday ? 'Extended today' : live.count > 0 ? 'Do a lesson to keep it' : 'One lesson starts it'
+  const status = live.doneToday
+    ? 'Extended today'
+    : live.count > 0
+      ? 'Do a lesson to keep it'
+      : s.streak.best > 0
+        ? 'One lesson starts a new one'
+        : 'One lesson starts it'
   return (
     <motion.button
       variants={item}
@@ -306,7 +318,7 @@ function StreakCard({ s, today, onOpen }: { s: GauntletState; today: string; onO
         </span>
         <Charges n={s.streak.freezes} />
       </span>
-      <WeekStrip s={s} today={today} />
+      <WeekStrip s={s} today={today} inButton />
     </motion.button>
   )
 }

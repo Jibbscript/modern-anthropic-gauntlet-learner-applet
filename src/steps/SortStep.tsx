@@ -166,8 +166,13 @@ export default function SortStep({ step, phase, attempt, setController, lessonId
         <div className="sort-stage">
           <div className="sort-stage__meta">
             <span className="step__instructions">{meta}</span>
-            <span className="sort-stage__count tabular" aria-label={`${sorted} of ${n} sorted`}>
-              {sorted}/{n}
+            <span className="sort-stage__count tabular">
+              <span aria-hidden>
+                {sorted}/{n}
+              </span>
+              <span className="visually-hidden">
+                {sorted} of {n} sorted
+              </span>
             </span>
           </div>
           <div className={`sort-stage__well${locked ? ' sort-stage__well--compact' : ''}`}>
@@ -253,8 +258,9 @@ export default function SortStep({ step, phase, attempt, setController, lessonId
                   {stacked && (
                     <header className="sort-tray__head">
                       <span className="sort-tray__label">{b.label}</span>
-                      <span className="sort-tray__count tabular" aria-label={`${chips.length} cards`}>
-                        {chips.length}
+                      <span className="sort-tray__count tabular">
+                        <span aria-hidden>{chips.length}</span>
+                        <span className="visually-hidden">{chips.length === 1 ? '1 card' : `${chips.length} cards`}</span>
                       </span>
                     </header>
                   )}
@@ -354,9 +360,8 @@ function StageStatus({ phase }: { phase: StepProps['phase'] }) {
       className={`sort-status sort-status--${tone}${compact ? ' sort-status--compact' : ''}`}
       initial={{ opacity: 0, scale: 0.94 }}
       animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, transition: { duration: 0.12 } }}
-      transition={{ type: 'spring', stiffness: 520, damping: 30 }}
-      role={compact ? 'status' : undefined}
+      exit={{ opacity: 0, transition: { duration: 0.08 } }}
+      transition={{ type: 'spring', stiffness: 520, damping: 30, delay: 0.08 }}
     >
       <Icon size={compact ? 22 : 30} strokeWidth={2.4} className="sort-status__icon" aria-hidden />
       <div className="sort-status__words">

@@ -73,6 +73,16 @@ const PACKAGES_URL = ${JSON.stringify(PYODIDE_PACKAGES_URL)};
 const HARNESS = ${JSON.stringify(HARNESS_PY)};
 const STDLIB = ${JSON.stringify(STDLIB_PACKAGES)};
 let py = null;
+// loadPyodide never settles when one of its own fetches fails (a CSP
+// connect-src that blocks the CDN, or offline with only pyodide.js cached),
+// and the rejection can't even be observed because errors from a cross-origin
+// script are muted. Probe a file it needs, in parallel, so that case fails
+// fast instead of waiting for the 90 s load timeout. Same URL and cache mode
+// as Pyodide's own request, so a cached copy counts and nothing downloads twice.
+fetch(INDEX_URL + "pyodide-lock.json").then(
+  (r) => { if (!r.ok && !py) self.postMessage({ type: "failed", message: "Failed to fetch the Python runtime (HTTP " + r.status + ")" }); },
+  (err) => { if (!py) self.postMessage({ type: "failed", message: "Failed to fetch the Python runtime: " + String((err && err.message) || err) }); },
+);
 const booting = (async () => {
   const t0 = Date.now();
   try {

@@ -62,7 +62,7 @@ const lesson: Lesson = {
       kind: 'concept',
       id: 'meaning',
       title: "Characters merge. Meaning doesn't.",
-      body: 'OT and CRDTs merge characters, not intent. Alice adds *formal*, Bob adds *plain* at the same spot, and both survive: *Reply in plain formal English.* For a prompt, a merge nobody wrote is behavior nobody tested.\n\nCoarser options often fit prompts better:\n\n- **Field-level locks**: one editor per field, with an expiring lease.\n- **Optimistic concurrency**: each save names its base version; a stale save is rejected and a person merges.',
+      body: 'OT and CRDTs merge characters, not intent. Alice adds *formal*, Bob adds *plain* at the same spot, and both survive: *Reply in plain formal English.* For a prompt, a merge nobody wrote is behavior nobody tested.\n\nCoarser options often fit prompts better:\n\n- **Field-level locks**: one editor per field, with an expiring lease.\n- **Optimistic concurrency**: each save names its base version; stale saves go to a human merge.',
     },
     {
       kind: 'match',

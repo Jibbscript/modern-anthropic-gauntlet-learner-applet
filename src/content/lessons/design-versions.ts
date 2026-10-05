@@ -21,7 +21,7 @@ const lesson: Lesson = {
       prompt: 'Which data model makes that ticket answerable for every run, forever?',
       choices: [
         {
-          text: 'Saves insert immutable version rows, and each run stores the `version_id` it executed',
+          text: 'Saves insert immutable versions; each run records the `version_id` it executed',
           correct: true,
           feedback:
             "Yes. A version never changes once written, so a run's `version_id` names exact text, model and params. Editing a prompt adds history; it never rewrites it.",
@@ -32,7 +32,7 @@ const lesson: Lesson = {
             'Closer than it looks: you could replay the log to rebuild old text. But every lookup becomes a reconstruction, and one missed log write breaks the chain. Make history the record, not a side effect.',
         },
         {
-          text: 'Copy the full prompt text, model and params into every run row',
+          text: 'Copy the full prompt text, model and params into every run row as it starts',
           feedback:
             "It does make runs explainable. But 2,000 runs of one prompt store 2,000 copies, and you still can't list, diff or restore versions, because there are none.",
         },
@@ -90,10 +90,10 @@ const lesson: Lesson = {
       id: 'run-is-a-job',
       eyebrow: 'Execution',
       title: 'A run is a job, not a request',
-      body: "Model calls take up to minutes, providers throttle, workers die. So the request never waits on the model:\n\n- The API records the run, puts its id on a **queue**, and returns `202` with a `run_id`.\n- **Workers** pull jobs as fast as provider limits allow.\n- Tokens stream to the browser over **SSE**; closing the tab does not stop the run.\n- Every run gets a **timeout**, and a **cancel** flag workers check.",
+      body: "Model calls can take minutes, providers throttle, workers die. So no request waits on the model:\n\n- The API records the run, puts its id on a **queue**, returns `202` with a `run_id`.\n- **Workers** pull jobs as fast as provider limits allow.\n- Tokens stream to the browser over **SSE**; closing the tab doesn't stop the run.\n- Every run gets a **timeout** and a **cancel** flag workers check.",
       callout: {
         tone: 'tip',
-        text: 'SSE events can carry ids. A reconnecting `EventSource` sends `Last-Event-ID`, so the server can resume the stream instead of restarting the run.',
+        text: 'Why SSE: token streams are one-way, and SSE is plain HTTP. WebSockets earn their keep for two-way traffic like co-editing. A reconnecting `EventSource` sends `Last-Event-ID`, so the server resumes the stream instead of rerunning the prompt.',
       },
     },
     {
@@ -116,7 +116,7 @@ const lesson: Lesson = {
       kind: 'concept',
       id: 'limits',
       title: 'Limits per org: requests and tokens',
-      body: "Each org gets a **token bucket**: capacity is the burst it may send at once, the refill rate its sustained pace. Empty bucket: `429` with `Retry-After`.\n\nFor model calls, meter **tokens** as well as requests. One 100,000-token run costs as much as 200 small ones. Behind every org's bucket sits your own provider limit, shared by everyone.\n\nHold to burst: five get through, then about one a second.",
+      body: "Each org gets a **token bucket**: capacity is the burst it may send at once, the refill rate its sustained pace. Empty bucket: `429` with `Retry-After`.\n\nFor model calls, meter **tokens** as well as requests: one 100,000-token run costs as much as 200 small ones. Behind every org's bucket sits your provider limit, shared by everyone.\n\nHold to burst: five get through, then about one a second.",
       widget: { id: 'tokenbucket', config: { capacity: 5, rate: 1, compareFixedWindow: false, goal: 'explore' } },
     },
     {
@@ -134,10 +134,10 @@ const lesson: Lesson = {
       kind: 'concept',
       id: 'idempotency',
       title: 'Timeouts are ambiguous',
-      body: "The client's `POST /runs` times out. Did the run start? Maybe. A blind retry can run it twice and bill twice.\n\nThe fix: the client makes an **idempotency key** once per logical run and sends it on every attempt. The server keeps `(org_id, key) → run_id` for a day and answers repeats with the original run.\n\nWorkers need care too: most queues deliver **at least once**, redelivering jobs whose lease expired.",
+      body: "The client's `POST /runs` times out. Did the run start? Maybe. A blind retry may bill it twice.\n\nThe fix: the client makes an **idempotency key** once per logical run and sends it on every attempt. The server keeps `(org_id, key) → run_id` for a day and answers repeats with the original run.\n\nWorkers need care too: most queues deliver **at least once**, redelivering any job whose lease expired.",
       callout: {
         tone: 'tip',
-        text: 'Retry only what can succeed later: timeouts, `429` (honor `Retry-After`) and `5xx`. Back off exponentially with jitter, and cap the attempts.',
+        text: 'Retry only what can succeed later: timeouts, `429` (honor `Retry-After`) and transient `5xx`. Back off exponentially with jitter, and cap the attempts.',
       },
     },
     {
@@ -160,7 +160,7 @@ const lesson: Lesson = {
       prompt: "Teams rerun a 2,000-row eval after every small edit, and most rows don't change. You add a result cache. Which design goes in the doc?",
       choices: [
         {
-          text: 'Key on org, version content hash and row-input hash; serve hits only to eval reruns that opt in, never to the Run button',
+          text: 'Key on org, version hash and row-input hash; serve hits only to eval reruns that opt in',
           correct: true,
           feedback:
             'Yes. Content keys cannot go stale because versions never change, the org keeps tenants apart, and the Run button keeps meaning *sample again*.',
@@ -170,7 +170,7 @@ const lesson: Lesson = {
           feedback: 'Names are not content. Edit the prompt and the same key now returns an output from older text: a cache that is confidently wrong.',
         },
         {
-          text: 'Key on org, version content hash and row-input hash, and serve hits to every run that matches',
+          text: 'Key on org, version hash and row-input hash; serve a hit to any run that matches',
           feedback:
             'The key is right; the policy is not. Someone pressing Run at temperature 1 expects a fresh sample, and even temperature 0 is not guaranteed to be deterministic. A silent hit changes what Run means.',
         },
@@ -194,19 +194,19 @@ const lesson: Lesson = {
           interviewer: 'Users want to run a version against a 2,000-row dataset and get a score. How does that work?',
           options: [
             {
-              text: '"One worker job loops over all 2,000 rows, calls the model for each, and writes the score at the end."',
+              text: '"One eval job on the queue loops over the 2,000 rows, calls the model for each, and writes the score when it finishes."',
               quality: 'okay',
               feedback: "It works, and it's simple. But it's serial, and a crash at row 1,900 starts over unless you checkpoint. You've rebuilt a worse queue inside one job.",
             },
             {
-              text: '"An `evals` row, plus one child run per dataset row on the same queue, keyed `eval_id:row_id`. When every child is terminal, an aggregator computes the score."',
+              text: '"An `evals` row fans out one child run per row onto the run queue, keyed `eval_id:row_id`. When all are terminal, aggregate."',
               quality: 'strong',
               feedback: 'Strong. Children reuse everything you built for runs: limits, retries, streaming, cost tracking. The deterministic key makes a repeated fan-out harmless.',
             },
             {
-              text: '"The browser loops over the rows, calls `POST /runs` once per row, and averages the results itself."',
+              text: '"The browser loops over the rows, calls `POST /runs` for each and averages the scores, so the backend needs no new code."',
               quality: 'weak',
-              feedback: 'Close the laptop and the eval dies halfway, with no server-side record of what finished. Long-running work belongs on the server.',
+              feedback: 'No new backend code, and no eval either once the laptop closes: it dies halfway, with no server-side record of what finished. Long-running work belongs on the server.',
             },
           ],
         },
@@ -214,17 +214,17 @@ const lesson: Lesson = {
           interviewer: "One team's eval is eating all the capacity. Interactive runs are timing out.",
           options: [
             {
-              text: '"Evals go on a lower-priority queue with a per-org cap on in-flight children. Interactive runs keep reserved capacity, so nobody waits behind batch rows."',
+              text: '"Evals drop to a lower-priority queue with a per-org cap on in-flight rows. Interactive runs keep reserved capacity."',
               quality: 'strong',
               feedback: 'Strong. Fairness is a scheduling decision: priority between kinds of work, and caps within each tenant.',
             },
             {
-              text: '"Add more workers and ask the model provider for a higher rate limit, so there is room for both kinds of work."',
+              text: '"Add more workers and request a higher provider rate limit, so batch and interactive work both have room to run."',
               quality: 'okay',
               feedback: 'More capacity helps everyone, until the next, bigger eval. Without priority and per-org caps, one tenant can always crowd out the rest.',
             },
             {
-              text: '"Ask users to schedule big evals overnight, when interactive traffic is low and nobody is waiting."',
+              text: '"Ask users to schedule big evals overnight, when interactive traffic is low and nobody is waiting on results."',
               quality: 'weak',
               feedback: 'That turns a scheduling problem into a support ticket. The system should enforce the policy, not its users.',
             },
@@ -234,19 +234,19 @@ const lesson: Lesson = {
           interviewer: 'Halfway through, the user hits Cancel. Of the 1,000 rows that ran, 40 timed out.',
           options: [
             {
-              text: '"Delete the queued jobs and show the score computed from whichever rows finished before the cancel."',
+              text: '"Delete the remaining queued jobs, then show the score from the rows that finished, so the user still gets a number."',
               quality: 'okay',
               feedback: 'Close. But a score over 960 rows with 40 silent timeouts looks complete. Say what is missing.',
             },
             {
-              text: '"Count the timeouts as failures and let the eval run to the end, so the score covers every row."',
+              text: '"Let the eval finish anyway and count the 40 timeouts as failures, so the final score covers every row."',
               quality: 'weak',
               feedback: "It ignores the cancel, keeps spending the customer's tokens, and scores infrastructure flakiness as model failures.",
             },
             {
-              text: '"Mark it `cancelled`; workers skip its queued children. Show the score as partial, with 40 timed out and a retry for just those. Bill only tokens actually spent."',
+              text: '"Mark it `cancelled` so workers skip queued rows. Label the score partial: 960 scored, 40 timed out, retry those."',
               quality: 'strong',
-              feedback: 'Strong. Cancel is a status workers check, partial results are labeled partial, and cost follows real usage.',
+              feedback: 'Strong. Cancel is a status workers check, and a partial result says it is partial. Add one line on billing: charge only the tokens actually spent.',
             },
           ],
         },
@@ -258,7 +258,7 @@ const lesson: Lesson = {
       kind: 'concept',
       id: 'recap',
       title: 'Remember',
-      body: "1. **Versions are immutable** rows with a content hash and a parent. Only pointers (the head, tags like `prod`) ever move, and runs reference versions, so every output is explainable.\n2. **A run is a job**: queue, workers, SSE, and per-org buckets on both requests and tokens.\n3. **Timeouts are ambiguous.** One idempotency key per logical run, and workers that tolerate at-least-once delivery.",
+      body: "1. **Versions are immutable** rows with a content hash and a parent. Only pointers (the head, tags like `prod`) move, and runs reference versions, so every output is explainable.\n2. **A run is a job**: queue, workers, SSE, and per-org buckets on requests and tokens.\n3. **Timeouts are ambiguous.** One idempotency key per logical run, and workers that tolerate redelivery.",
     },
   ],
   cards: [
@@ -276,13 +276,13 @@ const lesson: Lesson = {
       prompt: "A client's `POST /runs` times out after 10 seconds. What do you know about the run?",
       choices: [
         {
-          text: 'Nothing for sure: it may exist, so a retry must reuse the same idempotency key',
+          text: 'Nothing for sure, so a retry must reuse the same idempotency key',
           correct: true,
           feedback: 'Yes. A timeout tells you about the response, not about the work.',
         },
-        { text: 'It was never created, so a fresh request is safe', feedback: 'The server may have accepted it and only the response was lost. That is how double billing happens.' },
-        { text: 'It was created, so the client should never retry', feedback: 'The request may have died before it reached the server. Never retrying loses runs.' },
-        { text: 'It failed, so the server rolls it back on its own', feedback: 'The server does not know the client gave up. Without a cancel, the run carries on.' },
+        { text: 'It was never created, since the server never answered; send a fresh one', feedback: 'The server may have accepted it and only the response was lost. That is how double billing happens.' },
+        { text: 'It was created, since the request went out, so the client must not retry', feedback: 'The request may have died before it reached the server. Never retrying loses runs.' },
+        { text: 'It failed, and the server rolls it back once the client disconnects', feedback: 'The server does not know the client gave up. Without a cancel, the run carries on.' },
       ],
       explanation: 'Timeouts are ambiguous by nature. An idempotency key makes the retry safe either way: if the run exists you get it back, and if not, it is created once.',
     },
@@ -290,7 +290,7 @@ const lesson: Lesson = {
       id: 'design-versions.token-wait',
       skill: 'design.execution',
       kind: 'numeric',
-      prompt: "An org's token bucket meters model tokens and refills at 2,000 tokens a second. It is empty. The next run must reserve 50,000 tokens. How many seconds until it can start?",
+      prompt: "An org's token bucket meters model tokens: capacity 100,000, refilling at 2,000 tokens a second. It is empty. The next run must reserve 50,000 tokens. How many seconds until it can start?",
       answer: 25,
       tolerance: 0.1,
       unit: 's',
@@ -311,8 +311,8 @@ const lesson: Lesson = {
           text: 'Input tokens only, and charge the output tokens after the run',
           feedback: 'Then 50 parallel runs all pass the check and blow through the limit together before any output is counted.',
         },
-        { text: 'A flat average, say 1,000 tokens for every run', feedback: 'Wrong for every run that is not average, and long outputs sail through on a small deduction.' },
-        { text: 'Nothing until the run finishes, then the exact total', feedback: 'A burst of concurrent runs is never checked against the bucket until it is too late.' },
+        { text: 'A flat 1,000 tokens per run, the historical average across orgs', feedback: 'Wrong for every run that is not average, and long outputs sail through on a small deduction.' },
+        { text: 'Nothing up front; deduct the exact total once the run finishes', feedback: 'A burst of concurrent runs is never checked against the bucket until it is too late.' },
       ],
       explanation: 'Reserve, then settle: the usual shape when cost is only known afterwards. The same pattern works for money budgets.',
     },
@@ -334,11 +334,11 @@ const lesson: Lesson = {
       id: 'design-versions.redelivery',
       skill: 'design.execution',
       kind: 'spotbug',
-      prompt: 'The queue delivers at least once. When a worker crashes after saving output but before acking, the run is generated and billed twice. Tap the line.',
+      prompt: 'The queue delivers at least once. A worker crashes after marking a run `succeeded` but before acking, and the redelivered job generates and bills it again. Tap the line.',
       code: 'def handle(job):\n    run = db.get_run(job.run_id)\n    if run.status == "cancelled":\n        return queue.ack(job)\n    db.set_status(run.id, "running")\n    out = model.generate(run)\n    db.save_output(run.id, out)\n    db.set_status(run.id, "succeeded")\n    queue.ack(job)',
       bugLines: [3],
       explanation:
-        'The guard skips cancelled runs but not finished ones, so a redelivered job for a `succeeded` run calls the model again. Skip every terminal status. A run left `running` by a dead worker should still be retried; that is what redelivery is for.',
+        'The guard skips cancelled runs but not finished ones, so a redelivered job for a `succeeded` run calls the model again. Skip every terminal status, but still retry a run a dead worker left `running`: that is what redelivery is for. (Write output and status in one transaction, too, or a crash between them strands a finished output on a `running` run.)',
       fix: { code: 'TERMINAL = {"cancelled", "failed",\n            "succeeded"}\n\ndef handle(job):\n    run = db.get_run(job.run_id)\n    if run.status in TERMINAL:\n        return queue.ack(job)\n    ...' },
     },
     {

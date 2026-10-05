@@ -73,7 +73,10 @@ page = "https://site.com/blog/post"
 print(urljoin(page, "other"))
 print(urljoin(page, "/other"))
 print(urljoin(page, "../about"))`,
-      answers: ['https://site.com/blog/other\nhttps://site.com/other\nhttps://site.com/about'],
+      answers: [
+        'https://site.com/blog/other\nhttps://site.com/other\nhttps://site.com/about',
+        'https://site.com/blog/other https://site.com/other https://site.com/about',
+      ],
       explanation:
         'A relative link replaces the last path segment, the way a browser resolves it: `post` is a file inside `/blog/`, not a directory. A leading `/` resolves from the host root, and `..` climbs one level from `/blog/`. String concatenation gets all three wrong, which is why you resolve every link against the URL of the page it appeared on.',
       hint: 'Treat `post` like a filename sitting in the `/blog/` directory.',
@@ -181,7 +184,7 @@ for t in workers:
       kind: 'compare',
       id: 'termination',
       question: 'Interviewer: *How does your crawler know it is finished?*',
-      a: 'Each worker loops `while not q.empty(): url = q.get()` and returns when the queue drains. No extra bookkeeping: once every worker has returned, the crawl is done.',
+      a: 'Each worker loops `while not q.empty(): url = q.get()` and returns when the queue drains. `queue.Queue` is already thread-safe, so there are no extra counters or sentinels to get wrong: once every worker has returned, the crawl is done.',
       b: 'I count work, not queue length. Every `put` is matched by a `task_done()` after that page\'s links are enqueued, so the count cannot reach zero while a fetch is in flight. Main waits on `q.join()`, then sends one `None` per worker.',
       better: 'b',
       explanation:
@@ -258,12 +261,12 @@ def test_each_page_fetched_once():
           interviewer: 'Nice. On a 10,000-page site this takes an hour. Make it faster.',
           options: [
             {
-              text: 'Wrap `fetch` in a `ThreadPoolExecutor` and `map` it over the frontier, one BFS level at a time.',
+              text: 'Wrap `fetch` in a `ThreadPoolExecutor` and `map` it over each BFS level. The frontier is already a list, so each level fans out across the pool and the rest of the code stays the same.',
               quality: 'okay',
               feedback: 'A reasonable first cut, but each level waits for its slowest page, and you have not said what state becomes shared.',
             },
             {
-              text: 'Fetching is I/O-bound, so threads help despite the GIL. N workers pull from one shared queue. Before coding: the queue and `seen` become shared state, so I will decide how each is protected.',
+              text: 'Fetches are I/O-bound, so threads work despite the GIL: N workers on one shared queue. But the queue and `seen` become shared state, so first I will decide how each is protected.',
               quality: 'strong',
               feedback: 'Why threads fit, the shape, and the risk, all before typing. That is the conversation they want.',
             },
@@ -278,17 +281,17 @@ def test_each_page_fetched_once():
           interviewer: 'The logs show `/pricing` fetched twice. Walk me through how that happens.',
           options: [
             {
-              text: 'Python sets are thread-safe because of the GIL, so the site must be returning duplicate links.',
+              text: 'Python sets are thread-safe because of the GIL, so `seen` cannot be the problem. The site probably links `/pricing` under two spellings; I would log the raw hrefs.',
               quality: 'weak',
-              feedback: 'A single `add` or `in` is atomic in CPython; the check followed by the add is not. Blaming the input without evidence also reads badly.',
+              feedback: 'A single `add` or `in` is atomic in CPython; the check followed by the add is not. Blaming the input before checking your own shared state also reads badly.',
             },
             {
-              text: 'Probably a race on the `seen` set. I would put a lock around it.',
+              text: 'Probably a race on the `seen` set, with two workers touching it at once. I would put a lock around the code that reads and writes it, then rerun and see if the duplicates go away.',
               quality: 'okay',
               feedback: 'Right area, no mechanism. "A lock around it" could still leave the fetch sitting between the check and the add.',
             },
             {
-              text: '`/pricing` was queued twice. Worker A checks it, finds it unvisited, starts fetching. Before A adds it, B pops the second copy and passes the same check. I will make check-and-add one locked step at enqueue time.',
+              text: '`/pricing` was queued twice. A checks it, finds it unvisited, starts fetching; before A adds it, B pops the second copy and passes the same check. Fix: one locked check-and-add at enqueue time.',
               quality: 'strong',
               feedback: 'A concrete interleaving, then a fix that removes the window instead of shrinking it.',
             },
@@ -298,12 +301,12 @@ def test_each_page_fetched_once():
           interviewer: 'How would you convince yourself the fix works?',
           options: [
             {
-              text: 'A fake fetcher over an in-memory graph with cycles, a random sleep to shake interleavings, 8 workers, many runs. Assert the result matches the single-threaded crawl and every URL was fetched exactly once.',
+              text: 'A fake fetcher over an in-memory site with cycles, random sleeps to shake interleavings, 8 workers, many runs. Assert the pages match the single-threaded crawl and each was fetched exactly once.',
               quality: 'strong',
               feedback: 'A test designed to make the race likely, with an oracle (the single-threaded result) and the property you care about.',
             },
             {
-              text: 'Run it against a real site a few times and grep the logs for duplicates.',
+              text: 'Run it a few times against a real site with 8 workers, count fetches per URL in the logs, and check that none appears twice.',
               quality: 'okay',
               feedback: 'Better than nothing, but slow, flaky, impolite to the site, and a race can hide for a hundred runs.',
             },
@@ -350,7 +353,7 @@ base = "https://a.com/docs/"
 print(urljoin(base, "intro"))
 url = "https://a.com/x?y=1#top"
 print(urldefrag(url).url)`,
-      answers: ['https://a.com/docs/intro\nhttps://a.com/x?y=1'],
+      answers: ['https://a.com/docs/intro\nhttps://a.com/x?y=1', 'https://a.com/docs/intro https://a.com/x?y=1'],
       explanation: 'With a trailing slash, `docs/` is a directory, so the relative link goes inside it. `urldefrag` drops only the `#fragment`; the query string is part of the resource and stays.',
     },
     {

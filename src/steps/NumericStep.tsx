@@ -39,11 +39,26 @@ const RE_NUM = new RegExp(String.raw`^(${NUM})(?:[x*]10(?:\^|\*\*)([+-]?\d+))?([
  * "4e6", "2.5b", "1.5 million", "2^20", "10**6", "1/16", "25%", "~800",
  * and the step's own unit typed after the number ("500 ms").
  */
+const norm = (x: string) => x.trim().toLowerCase().replace(/[−–—]/g, '-').replace(/[×✕]/g, 'x')
+
+/** drop the step's unit typed after the number, without eating a magnitude ("3ms" is not "3m" + unit "s") */
+function stripUnit(s: string, u: string): string {
+  if (s.length > u.length && s.endsWith(u)) {
+    const before = s[s.length - u.length - 1]
+    if (!(u.length === 1 && /[a-z]/.test(u) && /[a-z]/.test(before))) return s.slice(0, -u.length)
+  }
+  // another spelling of a word unit: "30 minutes" for "min", "20 req" for "requests", "5 sec" for "s"
+  const head = /^[a-z]+/.exec(u)?.[0]
+  const word = /[a-z]{3,}$/.exec(s)?.[0]
+  if (head && word && word.length < s.length && !Object.hasOwn(MULT, word) && (word.startsWith(head) || head.startsWith(word))) return s.slice(0, -word.length)
+  return s
+}
+
 export function parseNumber(input: string, unit?: string): number | null {
-  let s = input.trim().toLowerCase().replace(/[−–—]/g, '-').replace(/[×✕]/g, 'x')
+  let s = norm(input)
   if (!s) return null
-  const u = unit?.trim().toLowerCase()
-  if (u && u !== '%' && s.length > u.length && s.endsWith(u)) s = s.slice(0, -u.length)
+  const u = unit ? norm(unit) : undefined
+  if (u && u !== '%') s = stripUnit(s, u)
   s = s
     .replace(/^(?:~|≈|about|approx\.?|roughly)/, '')
     .replace(/[$€£¥]/g, '')
@@ -132,7 +147,15 @@ export function judge(x: number, answer: number, tolerance = 0.01): NumericVerdi
     const r = Math.abs(x / answer)
     const big = r >= 1 ? r : 1 / r
     const oom = Math.round(Math.log10(big))
-    far = big < 1.95 ? `about ${fmtPct(err * 100)}` : big < 10_000 ? `about ${fmtRatio(big)}×` : `about 10${sup(oom)}×`
+    far =
+      big >= 10_000
+        ? `about 10${sup(oom)}×`
+        : big >= 1.95
+          ? `about ${fmtRatio(big)}×`
+          : err >= 0.001
+            ? `about ${fmtPct(err * 100)}`
+            : // a hair off an exact answer: the absolute gap says more than "0.001%"
+              `off by ${fmtSig(Math.abs(x - answer))}`
   }
   return { correct, err, dir, far }
 }

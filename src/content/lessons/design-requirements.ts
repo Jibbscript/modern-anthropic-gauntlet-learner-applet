@@ -126,7 +126,7 @@ const lesson: Lesson = {
       unit: 'tokens/s',
       explanation:
         '69.4 runs/s × 3,000 tokens ≈ **208,000 tokens a second** at peak. Counting only the prompt gives 174,000, a sixth short. Tokens, not request count, are your real load: they drive cost, provider rate limits and per-team quotas.',
-      hint: 'Runs per second × tokens per run. Count both directions.',
+      hint: 'Peak runs per second (not the average) × tokens per run. Count both directions.',
     },
     {
       kind: 'numeric',
@@ -272,18 +272,18 @@ const lesson: Lesson = {
       id: 'design-requirements.assume',
       skill: 'design.requirements',
       kind: 'mcq',
-      prompt: 'The interviewer says "assume whatever you think is reasonable." What is the best next move?',
+      prompt: 'Your prompt playground doc assumes the lines below. If you guessed wrong, which one changes the *shape* of the design, not just its size?',
       choices: [
         {
-          text: 'Write numbered assumptions with numbers, say which one the design is most sensitive to, and continue',
+          text: 'Prompts are mostly a few KB, with a long tail into megabytes',
           correct: true,
-          feedback: 'Yes. Visible, correctable, and it shows you know where the risk is.',
+          feedback: 'Yes. The tail decides blob storage versus database rows, how uploads work, and whether the editor can hold a prompt in memory.',
         },
-        { text: 'Pick very large numbers so the design is safe at any scale', feedback: 'Over-scoping buys complexity the product does not need, and hides your sense of proportion.' },
-        { text: 'Keep asking questions until the interviewer gives you exact figures', feedback: 'They just told you to decide. Pushing back again reads as unwillingness to make a call.' },
-        { text: 'Skip numbers and keep the design general', feedback: 'Without numbers you cannot tell which parts are hard, so you cannot choose what to deep-dive.' },
+        { text: '100,000 daily active users, growing about 10% a month', feedback: 'Ten times more users is still about 700 runs a second at peak. Bigger numbers, same boxes.' },
+        { text: 'Each user runs about 20 prompts a day, mostly by hand', feedback: 'Doubling it doubles token cost and quota pressure, but the components stay the same.' },
+        { text: 'Traffic peaks at about 3x the daily average, on weekdays', feedback: 'It sets how much headroom you provision, not which components you need.' },
       ],
-      explanation: '"Assume" is an invitation to show judgment. Make the assumptions explicit so they can be challenged.',
+      explanation: 'Sizes you can assume, write down and adjust later. Write the assumption the design is most sensitive to first, and tell the interviewer which one it is.',
     },
     {
       id: 'design-requirements.eventual',
@@ -295,7 +295,7 @@ const lesson: Lesson = {
         { text: 'The list of who is viewing a prompt', correct: true, feedback: 'Yes. Presence that is a few seconds stale harms nobody.' },
         { text: 'The run-history list on a dashboard', correct: true, feedback: 'Yes. A finished run showing up a second late is fine.' },
         { text: 'A weekly usage analytics chart', correct: true, feedback: 'Yes. Aggregates can lag minutes or more.' },
-        { text: 'Which version is the head of a prompt', feedback: 'No. Compare-and-set on the head only works if every writer sees the latest head; on a lagging replica, two saves can both win.' },
+        { text: 'The head pointer that saves compare-and-set against', feedback: 'No. The check and the write must hit one authoritative copy. If two writers could each check a different stale copy, both saves would win.' },
         { text: 'Whether a revoked share link still works', feedback: 'No. Revocation is a security promise; a lagging check leaks data after the owner cut access.' },
       ],
       explanation: 'Spend strong consistency where a stale read breaks correctness or security, and let everything else lag.',

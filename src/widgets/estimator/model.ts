@@ -40,11 +40,11 @@ export function derive(i: Inputs): Derived {
 }
 
 export const DEFAULT_INPUTS: Inputs = {
-  dau: 10_000,
-  reqPerUser: 5,
-  tokensPerReq: 1_000,
+  dau: 50_000,
+  reqPerUser: 10,
+  tokensPerReq: 2_000,
   peak: 2,
-  bytesPerVersion: 2_000,
+  bytesPerVersion: 4_000,
 }
 
 export const RANGES: Record<InputKey, [number, number]> = {

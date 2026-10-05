@@ -30,7 +30,7 @@ const lesson: Lesson = {
       kind: 'concept',
       id: 'shape-picks-store',
       title: 'Shape picks the store',
-      body: "Ask three questions of each piece of data: how big, does it change, how is it read?\n\n- **Postgres**: small rows you filter, join and update in transactions. Orgs, members, prompts, version metadata, run status.\n- **Object storage**: big immutable blobs, read whole. Prompt bodies, run outputs, dataset files. Key them by hash or run id.\n- **Cache**: hot reads you can rebuild from the other two if it vanishes.",
+      body: "Ask three questions of each piece of data: how big, does it change, how is it read?\n\n- **Postgres**: small rows you filter, join and update in transactions. Orgs, members, prompts, version metadata, run status.\n- **Object storage**: big immutable blobs, read whole. Prompt bodies, run outputs, dataset files. Key them by hash or run id.\n- **Cache**: hot data you can rebuild, or afford to lose, if it vanishes.",
       callout: {
         tone: 'source',
         text: 'Candidates report a Prompt Playground design round (2026). Prep-site write-ups of it list metadata vs blob storage as a standard probe: [aceoffer](https://aceoffer.app/interviews/prompt_playground_system_design). Second-hand guides, not verbatim questions.',
@@ -63,7 +63,7 @@ const lesson: Lesson = {
       title: 'org_id on every row',
       body: "Put `org_id` on every tenant-owned row, even when a join could find it. Filters, indexes, partitions and security policies are then one column away.\n\nThen let queries pick indexes. *A prompt's recent runs* wants `(org_id, prompt_id, created_at)`. *A version's children* wants `(parent_id)`. An index no query uses is write cost for nothing.",
       code: {
-        code: 'orgs: id, name, plan\nusers: id, email\nmembers: org_id, user_id, role\nprompts: id, org_id, title,\n  head_version_id\nversions: id, org_id, prompt_id,\n  parent_id, content_hash,\n  body_ref, model, params\nruns: id, org_id, prompt_id,\n  version_id, eval_id, status,\n  tokens_in, tokens_out,\n  cost_micros, output_ref, created_at\ndatasets: id, org_id, file_ref\nevals: id, org_id, version_id,\n  dataset_id, status, score',
+        code: 'orgs: id, name, plan\nusers: id, email\nmembers: org_id, user_id, role\nprompts: id, org_id, title,\n  head_version_id\nversions: id, org_id, prompt_id,\n  parent_id, content_hash,\n  body_ref, model, params\nruns: id, org_id, prompt_id,\n  version_id, vars, eval_id,\n  status, tokens_in, tokens_out,\n  cost_micros, output_ref,\n  created_at\ndatasets: id, org_id, file_ref\nevals: id, org_id, version_id,\n  dataset_id, status, score',
         lang: 'text',
       },
     },
@@ -74,10 +74,10 @@ const lesson: Lesson = {
       prompt: '`runs` will reach billions of rows. Its queries: a prompt\'s recent runs, and monthly usage per org. Runs are deleted after 90 days. How do you partition it in Postgres?',
       choices: [
         {
-          text: 'Range-partition by `created_at`, one per month, indexed on `(org_id, prompt_id, created_at)`',
+          text: 'Range-partition by `created_at` monthly, with an `(org_id, prompt_id, created_at)` index',
           correct: true,
           feedback:
-            'Yes. Recent-run queries touch the newest partition or two, and retention becomes dropping a whole partition instead of deleting billions of rows.',
+            'Yes. Recent-run queries with a time bound prune to the newest partition or two, and retention becomes dropping a whole partition instead of deleting billions of rows.',
         },
         {
           text: 'Hash-partition by `org_id`, so each tenant\'s runs stay together in one partition',
@@ -85,7 +85,7 @@ const lesson: Lesson = {
             'Tempting: tenant queries prune well, and org is the right key for *sharding across machines* later. But retention is still a giant DELETE in every partition, and one huge customer makes one partition huge.',
         },
         {
-          text: 'Hash-partition by `run_id`, so writes spread evenly across every partition',
+          text: 'Hash-partition by `run_id`, so inserts spread evenly across all partitions',
           feedback: 'Even writes, but every org or prompt query now touches every partition, and retention is still a giant DELETE.',
         },
         {
@@ -105,7 +105,7 @@ const lesson: Lesson = {
       body: "A cross-tenant leak is the bug this product cannot survive. Layer the defenses:\n\n1. **Authorization** in the app: roles per org (owner, editor, viewer), checked on every request.\n2. **Row-level security** in Postgres: a policy like `org_id = current_setting('app.org_id')::uuid` filters every query, including the one someone forgot to filter.\n3. **Scope everything else**: object keys under the org, short-lived signed URLs, `org_id` in every cache key.",
       callout: {
         tone: 'warn',
-        text: 'Superusers, and by default table owners, bypass row-level security. Use `FORCE ROW LEVEL SECURITY` or connect the app as a separate role.',
+        text: 'Superusers and `BYPASSRLS` roles always skip row-level security, and table owners do by default. Connect the app as its own unprivileged, non-owner role; `FORCE ROW LEVEL SECURITY` covers the owner, never a superuser.',
       },
     },
     {
@@ -139,17 +139,17 @@ const lesson: Lesson = {
       id: 'write-tradeoff',
       eyebrow: 'Tradeoffs',
       title: 'Write the tradeoff down',
-      body: "Every storage choice gives something up. Write it so a reader can argue with it:\n\n> We chose **X** over **Y** because [a requirement or a number]. It costs us [what we gave up]. We'd revisit if [an observable trigger].\n\nTwo rules. Name a real alternative, not a straw man. And make the trigger something you could put on a dashboard.",
+      body: "Every storage choice gives something up. Write it so a reader can argue with it:\n\n> We chose **X** over **Y** because [a requirement or a number]. It costs us [what we gave up]. We'd revisit if [an observable trigger].\n\nTwo rules. Name a real alternative, not a straw man. And make the trigger observable: a metric crossing a line, or a requirement arriving.",
     },
     {
       kind: 'compare',
       id: 'metadata-db',
       question: "Your doc's storage section needs one paragraph on the metadata database. Which one belongs there?",
-      a: 'We will use a distributed SQL database so the system scales horizontally from day one. That way we never face a painful migration later, and it can handle whatever growth our users throw at it.',
-      b: "**We chose** one Postgres primary with a read replica **over** a distributed SQL database **because** peak is about 70 runs a second and metadata grows well under 1 TB a year; one node handles that, and moving the head pointer stays a single-row transaction. **Cost:** a vertical ceiling, and failover we run ourselves. **Revisit if** sustained writes pass half the primary's tested capacity; then shard by `org_id`.",
+      a: 'We will use a distributed SQL database for metadata. It scales horizontally, survives losing a node without manual failover, and still gives us serializable transactions. Products like ours outgrow a single Postgres, and migrating a live database later is far riskier than starting distributed.',
+      b: "**We chose** one Postgres primary plus a replica **over** distributed SQL **because** peak is about 70 runs a second and metadata grows well under 1 TB a year, and *insert a version, move the head* stays one local transaction. **Cost:** a vertical ceiling, and failover we run ourselves. **Revisit if** sustained writes pass half the primary's tested capacity; then shard by `org_id`.",
       better: 'b',
       explanation:
-        "B names the alternative, ties the choice to numbers, admits the cost and gives a trigger you can measure. A asserts that scale is good without a number, ignores the cost (operational complexity, harder transactions), and *never migrate* is a promise nobody can keep.",
+        "Both designs are defensible; B is the better paragraph: it ties the choice to this system's numbers, admits its cost and gives a trigger you can measure. A argues from what products *like ours* do and never prices its own costs (consensus latency on every write, a harder system to run). Its migration worry is real, and B answers it: *a vertical ceiling*, plus when to act.",
     },
     {
       kind: 'cloze',
@@ -160,10 +160,10 @@ const lesson: Lesson = {
       blanks: [
         { options: ['object storage', 'Postgres TEXT columns', 'the cache'], answer: 0 },
         { options: ['Postgres TEXT columns', 'object storage', 'a CDN'], answer: 0 },
-        { options: ['users need search inside outputs', 'it ever becomes a problem', 'a better database comes out'], answer: 0 },
+        { options: ['users need search inside outputs', 'outputs keep getting bigger', 'it ever becomes a problem'], answer: 0 },
       ],
       explanation:
-        'Postgres really can hold a 10 MB value (it moves large values out of line), so it is a fair alternative, not a straw man; it loses on backup size and replication cost. And *users need search inside outputs* is a trigger you would notice, where the other two never fire.',
+        'Postgres really can hold a 10 MB value (it moves large values out of line), so it is a fair alternative, not a straw man; it loses on backup size and replication cost. *Users need search inside outputs* is a requirement you would notice arriving; bigger outputs only strengthen the choice, and *if it becomes a problem* never fires.',
       hint: 'The *because* clause describes which store? And which trigger could you actually observe?',
     },
     {
@@ -176,19 +176,19 @@ const lesson: Lesson = {
           interviewer: 'Traffic is 100x. Where does your design break first?',
           options: [
             {
-              text: '"I\'d shard Postgres by `org_id` right away and add read replicas, since the database is usually what breaks first."',
+              text: '"The database usually breaks first, so I\'d shard Postgres by `org_id` now, add read replicas, and cache version reads."',
               quality: 'okay',
               feedback: 'Sharding by org may well come, but you skipped the step that shows judgment: which component runs out of headroom first, and by how much.',
             },
             {
-              text: '"Move every service to Kubernetes with autoscaling, so each tier scales out on its own as load grows."',
+              text: '"Put every service on Kubernetes with autoscaling, so each tier scales out on its own as load grows and nothing hits a wall."',
               quality: 'weak',
               feedback: "Autoscaling stateless servers doesn't scale a database primary or a provider's rate limit. That's naming a tool, not finding a bottleneck.",
             },
             {
-              text: '"Let me do the numbers. 7,000 runs a second is about 20 million model tokens a second, so provider capacity is the first wall. Next, ~20,000 status writes a second on one primary: batch them, then shard by `org_id`."',
+              text: '"Numbers first: 7,000 runs/s × 3,000 tokens ≈ 20M tokens/s, so provider capacity breaks first. Then ~20k status writes/s on one primary."',
               quality: 'strong',
-              feedback: 'Strong. You ranked bottlenecks by arithmetic and fixed them in order. Being right about *which* thing breaks matters more than knowing many fixes.',
+              feedback: 'Strong. You ranked bottlenecks by arithmetic (3,000 tokens a run; three status writes a run) and can fix them in order: provider capacity and quotas, then batched writes, then sharding.',
             },
           ],
         },
@@ -196,17 +196,17 @@ const lesson: Lesson = {
           interviewer: 'You shard by org. One customer is 40% of all runs.',
           options: [
             {
-              text: '"Give that tenant its own shard, and keep an `org → shard` directory so tenants can move later. Their quota still protects everyone else."',
+              text: '"Give that tenant a dedicated shard and keep an `org → shard` directory, so placement can change later. Quotas still bound them."',
               quality: 'strong',
               feedback: 'Strong. A directory, not a hash, makes the whale a placement decision you can change later.',
             },
             {
-              text: '"Switch the shard key to a hash of `run_id`, so load spreads evenly across shards no matter who sends it."',
+              text: '"Re-shard on a hash of `run_id` instead, so load spreads evenly across shards no matter which tenant sends it."',
               quality: 'okay',
               feedback: 'Even load, but every per-org query now fans out to every shard. You fixed one tenant by taxing all of them.',
             },
             {
-              text: '"Ask the customer to cut their usage, or cap their account until we have more capacity."',
+              text: '"Cap that account at its current share until we add capacity, and ask the customer to spread runs over the day."',
               quality: 'weak',
               feedback: 'Your largest customer is the one you can least afford to throttle by email. Design for skew; it is normal.',
             },
@@ -216,19 +216,19 @@ const lesson: Lesson = {
           interviewer: 'A customer says their runs have been slow since Tuesday. What do you look at?',
           options: [
             {
-              text: '"The database CPU graphs and error logs from Tuesday, then the deploys that went out that day."',
+              text: '"Tuesday\'s deploys first, then that day\'s database CPU, queue depth and error-rate graphs, to see what changed."',
               quality: 'okay',
               feedback: 'Reasonable places to look, but system-wide graphs can look healthy while one tenant suffers. Start from their runs.',
             },
             {
-              text: '"Their runs\' traces: spans for the API, limit check, queue wait, time to first token and storage. Whichever span grew since Tuesday names the owner."',
+              text: '"Their runs\' traces: API, limit check, queue wait, time to first token, storage. The span that grew since Tuesday names the owner."',
               quality: 'strong',
               feedback: 'Strong. A trace per run turns *slow* into *which stage got slow*: longer queue waits mean capacity or fairness, a longer time to first token means the provider, a slower API span means your database.',
             },
             {
-              text: '"Run a few prompts myself from my own account and see whether they feel slow."',
+              text: '"Run a few prompts from my own account; if they feel fast, it is probably their network or their prompts."',
               quality: 'weak',
-              feedback: "An anecdote from a different org, prompt and time. You'd be debugging your experience, not theirs.",
+              feedback: "An anecdote from a different org, prompt and time, used to dismiss the report. You'd be debugging your experience, not theirs.",
             },
           ],
         },
@@ -240,7 +240,7 @@ const lesson: Lesson = {
       kind: 'concept',
       id: 'recap',
       title: 'Remember',
-      body: "1. **Shape picks the store**: Postgres for small queried rows, object storage for big immutable blobs, a cache for hot data you can rebuild. Put `org_id` on every row, and in every cache key.\n2. **Partition `runs` by time**, index by tenant, shard by org only when the numbers say so.\n3. **Write tradeoffs** as *X over Y because…; it costs…; revisit if…*, with a trigger you can measure.",
+      body: "1. **Shape picks the store**: Postgres for small queried rows, object storage for big immutable blobs, a cache for hot data you can lose. Put `org_id` on every row and in every cache key.\n2. **Partition `runs` by time**, index by tenant, shard by org only when the numbers say so.\n3. **Write tradeoffs** as *X over Y because…; it costs…; revisit if…*, with a trigger you can observe.",
     },
   ],
   cards: [
@@ -266,8 +266,8 @@ const lesson: Lesson = {
           feedback: 'Yes. Dropping a partition is close to a metadata operation; a mass DELETE has to touch every row.',
         },
         { text: 'Partitioned tables delete rows faster because each partition has its own index', feedback: 'Smaller indexes help a little, but a DELETE still visits every row and leaves dead tuples to vacuum.' },
-        { text: 'Postgres automatically expires partitions past their range', feedback: 'It does not. You (or an extension or cron job) drop old partitions explicitly.' },
-        { text: 'Partitioning compresses old rows so they no longer count', feedback: 'Plain Postgres partitioning does not compress anything. The win is that an entire partition can be dropped at once.' },
+        { text: 'Postgres automatically expires rows that fall outside every partition range', feedback: 'It does not. You (or an extension or cron job) drop old partitions explicitly.' },
+        { text: 'Partitioning compresses old months, so their rows stop costing storage', feedback: 'Plain Postgres partitioning does not compress anything. The win is that an entire partition can be dropped at once.' },
       ],
       explanation: 'Pick the partition key so your biggest delete is a drop. For time-bounded data, that key is time.',
     },
@@ -305,9 +305,9 @@ const lesson: Lesson = {
       kind: 'compare',
       question: 'Which sentence about caching belongs in a design doc?',
       a: 'We cache version bodies in Redis, keyed by `(org_id, version_id)`, instead of reading Postgres and object storage on every open, because opens are most of our reads and versions are immutable, so entries never go stale. It costs memory and one more service. We revisit if the hit rate drops below 80%.',
-      b: 'We will add a Redis caching layer in front of the database to make reads fast and reduce load, and we will tune the TTLs as needed to keep the data fresh and the performance high.',
+      b: 'We put Redis in front of Postgres for prompt reads with a 5-minute TTL, which should cut database load substantially. If users see stale prompts we can lower the TTL. Redis is widely used and the team knows it well, so the operational risk is low.',
       better: 'a',
-      explanation: 'A gives the key, the alternative, the reason it is safe (immutability), the cost and a measurable trigger. B names a tool and a hope; *tune TTLs as needed* hides the real question of staleness.',
+      explanation: "A gives the key, the alternative, the reason it is safe (immutability), the cost and a measurable trigger. B caches the mutable prompt instead of immutable versions, so it buys load relief with staleness and leaves the dial to users' complaints. It never names the key, so tenant isolation is left to chance.",
     },
     {
       id: 'design-scale.org-id',

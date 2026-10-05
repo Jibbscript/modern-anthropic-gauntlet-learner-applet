@@ -62,23 +62,23 @@ const lesson: Lesson = {
         "- **What would move me further**: *If Z, I'd drop it.*",
       callout: {
         tone: 'tip',
-        text: 'Restate their point before you answer it: *So your worry is that…* It shows you heard it, buys you thinking time, and sometimes shows the argument is stronger, or weaker, than it first sounded.',
+        text: 'Steelman before you answer: restate their point in its strongest form (*So your worry is that…*). It shows you heard it, buys thinking time, and often shows the argument is stronger, or weaker, than it first sounded.',
       },
     },
     {
       kind: 'match',
       id: 'pushback-responses',
       eyebrow: 'Read the pushback',
-      prompt: 'Match each pushback to the response it deserves.',
+      prompt: 'Match each pushback to its diagnosis and response.',
       pairs: [
-        { left: "*I'm not sure about that.*", right: 'Restate your reason, ask for theirs' },
-        { left: "*Here's data: your assumption is wrong.*", right: 'Update the part it touches, out loud' },
-        { left: '*Most people here would disagree.*', right: 'Ask for the reasoning behind it' },
-        { left: '*What if traffic were 100x?*', right: 'Re-answer for the new constraint' },
-        { left: '*That sounds a bit naive.*', right: 'Ask which part, then answer that' },
+        { left: "*I'm not sure about that.*", right: 'Bare doubt: hold, restate your reason' },
+        { left: "*Here's data: your assumption is wrong.*", right: 'Evidence: update the part it touches' },
+        { left: '*Most people here would disagree.*', right: "Social proof: ask for their argument" },
+        { left: '*What if traffic were 100x?*', right: 'New constraint: re-answer for it' },
+        { left: '*That sounds a bit naive.*', right: 'Tone: skip the label, ask which part' },
       ],
       explanation:
-        "Only one of these carries evidence, and only one changes the problem. The rest are doubt, social proof and tone. Other people disagreeing is a reason to look harder, not a reason by itself. Pressure gets your reasons and a question back, not a concession.",
+        "Only one of these carries evidence, and only one changes the problem. The rest are doubt, social proof and tone. A crowd disagreeing is a reason to look harder, not a reason by itself. Pressure gets your reasons and a question back, not a concession.",
     },
     {
       kind: 'concept',
@@ -220,17 +220,17 @@ const lesson: Lesson = {
           interviewer: 'Your team is adopting coding agents. Should every AI-generated pull request get a human review?',
           options: [
             {
-              text: "For now, yes. AI diffs look plausible and fail quietly, and review is where we catch that. I'm confident about production code, less sure about low-risk changes like tests. I'd revisit those with data.",
+              text: "For now, yes. AI diffs look plausible and fail quietly; review catches that. I'm confident for production code, less sure for low-risk changes like tests. Data could move me there.",
               quality: 'strong',
               feedback: 'A position, a reason, and a confidence level that differs by case. It also names what would change it.',
             },
             {
-              text: "Yes, always. You can't really trust AI-generated code yet, so every single change needs a human to read it and sign off before it merges.",
+              text: "Yes, always. You can't really trust AI-generated code yet, so every single change needs a human to read it and sign off before it merges, however small it looks.",
               quality: 'okay',
               feedback: 'Defensible, but *always* and *can\'t trust* leave no room to update. Any good counterexample now forces a reversal.',
             },
             {
-              text: "Honestly, whatever the team prefers. I could see it going either way, and I'm happy to adapt to whatever norms the team already has.",
+              text: "Honestly, whatever the team prefers. I could see it going either way, and I'd rather adapt to the norms the team already has than arrive with strong opinions.",
               quality: 'weak',
               feedback: 'You were asked for your view. Having none leaves nothing to update, and nothing to evaluate.',
             },
@@ -240,17 +240,17 @@ const lesson: Lesson = {
           interviewer: 'Hmm. Plenty of fast-moving teams have dropped that. It feels a bit old-fashioned.',
           options: [
             {
-              text: "That's fair, I'll drop it then. Speed matters more than it used to, and I really don't want to be the person slowing the whole team down.",
+              text: "That's fair, I'll drop it then. Speed matters more than it used to, and if strong teams have moved past it, I don't want to be the one slowing everyone down.",
               quality: 'weak',
               feedback: 'You folded to social proof and a tone. Your first answer had a reason; nothing here answered it.',
             },
             {
-              text: "I can see that, and maybe I'm being a little conservative. I'd still keep it for now, I think, at least until we've seen how it goes for a while.",
+              text: "I can see that, and maybe I'm being a little conservative. I'd still keep it for now, I think, at least until we've seen how it goes and the team feels comfortable.",
               quality: 'okay',
               feedback: 'You held, which is right, but without your reason. Restate it and ask for evidence.',
             },
             {
-              text: "Maybe. Other teams dropping it tells me it's possible, not that it's safe for us. My reason stands: plausible diffs fail quietly. Data on what review actually catches would move me. Do you have any?",
+              text: "Others dropping it shows it's possible, not that it's safe here. My reason stands: plausible diffs fail quietly. Data on what review actually catches would move me. Have any?",
               quality: 'strong',
               feedback: 'Holds with the reason, separates *others do it* from *it is safe*, and names the evidence that would move you.',
             },
@@ -261,18 +261,18 @@ const lesson: Lesson = {
             'We do. Over six months, 1,200 AI-generated PRs touched only tests. Reviewers approved 98% unchanged, and the median wait was two days, which blocked feature work.',
           options: [
             {
-              text: "Then I was wrong, and that's useful to know. Let's drop mandatory review for all AI-generated PRs and rely on CI instead. The data is pretty clear.",
+              text: "Then I was wrong, and that's useful to know. Let's drop mandatory review for all AI-generated PRs and lean on CI and spot checks instead. The data is pretty clear.",
               quality: 'okay',
               feedback: 'You updated on evidence, which is good, then stretched it past what it covers. The data is about test-only PRs.',
             },
             {
-              text: "That moves me for test-only PRs: there, review is mostly delay. Though 98% unchanged might mean shallow reviews, so I'd keep a 10% sample. It doesn't move me on production code; the data doesn't cover it.",
+              text: "That moves me on test-only PRs; there, review is mostly delay. 98% unchanged may also mean shallow reviews, so I'd sample 10%. The data doesn't cover production code, so I hold there.",
               quality: 'strong',
               feedback:
                 'Says what moved, what did not and why, and reads the evidence critically without using that as an excuse to ignore it.',
             },
             {
-              text: "Data like that can be misleading, though, and six months isn't very long. I'd still require review on every PR, as a matter of principle.",
+              text: "Data like that can be misleading, though, and six months isn't very long. I'd still require a human review on every single PR, as a matter of principle. Some things just need a person.",
               quality: 'weak',
               feedback: 'You asked for evidence, got it, and ignored it. That is the clearest sign your view does not depend on reasons.',
             },
@@ -378,16 +378,25 @@ const lesson: Lesson = {
       id: 'values-updating.calibrated',
       skill: 'values.judgment',
       kind: 'mcq',
-      prompt: 'Which statement is calibrated?',
+      prompt: 'A test fails one run in twenty. Which diagnosis is calibrated?',
       choices: [
         {
-          text: "Fairly confident it's the cache, maybe 70%. A profile would settle it.",
+          text: 'Probably the shared fixture, maybe 60%. Running it 200 times in isolation would tell us.',
           correct: true,
-          feedback: 'A lean, a confidence, and a test.',
+          feedback: 'A lean, a confidence, and a cheap way to find out.',
         },
-        { text: "It's definitely the cache. In my experience it always is.", feedback: 'Overclaimed: *definitely* and *always* leave no room to update.' },
-        { text: "Could be anything, really. It's hard to say without looking.", feedback: 'An empty hedge: no lean, so nothing for anyone to act on.' },
-        { text: "Everyone knows it's usually the cache in systems like this.", feedback: 'Appeals to a crowd instead of evidence.' },
+        {
+          text: "It's definitely the fixture. Flaky tests like this one are always a timing issue.",
+          feedback: 'Overclaimed: *definitely* and *always* leave no room to update when the rerun says otherwise.',
+        },
+        {
+          text: 'Could be the fixture, the runner, the network or the test itself. Hard to say.',
+          feedback: 'An empty hedge: four options, no ranking, so nobody knows where to look first.',
+        },
+        {
+          text: "The whole team agrees it's the fixture, so we can go ahead and rewrite it.",
+          feedback: 'Agreement is not evidence. A crowd can share the same untested guess.',
+        },
       ],
       explanation: 'Calibration means committing to a lean and saying how strongly, ideally with what would change your mind.',
     },
@@ -420,25 +429,25 @@ const lesson: Lesson = {
         'A company revises a public safety commitment and says it updated its view. Which evidence best separates updating from capitulating?',
       choices: [
         {
-          text: 'Its stated reasons are specific and checkable, and some of the changes cost it something.',
+          text: 'Its reasons are specific and checkable, and some of the changes cost it something.',
           correct: true,
           feedback: 'Checkable reasons, and changes that do not all point the convenient way, are what an honest update looks like.',
         },
         {
-          text: 'The announcement says it was a difficult decision.',
-          feedback: 'Every revision says this. Difficulty is not evidence about direction.',
+          text: 'The announcement stresses it was a difficult decision, made after long internal debate.',
+          feedback: 'Every revision says this. Difficulty and debate are not evidence about direction.',
         },
         {
-          text: 'The new document is longer and more detailed than the old one.',
+          text: 'The new document is longer and more detailed than the old one, with more defined terms.',
           feedback: 'Length is not rigor. A longer document can also hold a weaker commitment.',
         },
         {
-          text: 'Most of its employees supported the change internally.',
-          feedback: 'Internal agreement says little about whether the reasons hold.',
+          text: 'Most of its employees, including its safety staff, supported the change internally.',
+          feedback: 'Internal agreement, even from safety staff, says little about whether the reasons hold.',
         },
       ],
       explanation:
-        "The test you apply to yourself applies to institutions. Anthropic's Feb 2026 RSP v3 revision is a live case: Anthropic published its reasons, and critics tied the change to commercial pressure. Apply the test and form your own view.",
+        "The test you apply to yourself applies to institutions. Anthropic's Feb 2026 RSP v3 revision is a live case: Anthropic published its reasons, GovAI's analysis credited the honesty about constraints while raising concerns, and critics tied the change to commercial pressure. Apply the test and form your own view.",
     },
   ],
 }

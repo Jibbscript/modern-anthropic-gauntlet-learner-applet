@@ -35,19 +35,19 @@ const STRATS: { id: Strategy; title: string; sub: string; caption: string }[] = 
   {
     id: 'lww',
     title: 'Last write wins',
-    sub: 'keep one copy',
+    sub: 'one copy',
     caption: 'Simplest: the server keeps whichever copy arrives last. The other edit is silently lost.',
   },
   {
     id: 'ot',
     title: 'OT',
-    sub: 'transform ops',
+    sub: 'transform',
     caption: 'Edits travel as operations. A central server orders them and shifts positions so both apply.',
   },
   {
     id: 'crdt',
     title: 'CRDT',
-    sub: 'ids per char',
+    sub: 'char ids',
     caption: 'Every character gets a permanent ID, so peers merge directly with no server, at a metadata cost.',
   },
 ]
@@ -153,8 +153,9 @@ export default function CollabWidget({ config, onComplete }: WidgetProps<CollabC
       setPhase('merged')
       setResults((r) => ({ ...r, [strategy]: result.kept }))
       const ok = goal === 'explore' || result.kept === 2
+      // losing an edit is the lesson here, not a mistake: a soft cue, not a buzzer
       if (result.kept < 2) {
-        sfx('wrong')
+        sfx('flip')
         haptic('error')
       }
       if (ok && !firedRef.current) {

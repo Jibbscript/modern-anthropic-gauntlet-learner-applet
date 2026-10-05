@@ -3,8 +3,12 @@ import type { Lab, LabLevel } from '../../core/types'
 /** Python source: raw template (backslashes kept as typed), leading newline dropped. */
 const py = (s: TemplateStringsArray) => s.raw[0].replace(/^\n/, '')
 
-/** learner code first, then the provided fake filesystem (identical in starter and every solution) */
-const withFS = (code: string) => `${code}\n\n${PROVIDED}`
+/**
+ * learner code first, then the provided fake filesystem (identical in starter and every solution).
+ * The __future__ line keeps type hints lazy, so `fs: FakeFS` works although FakeFS is defined below.
+ */
+const withFS = (code: string) => `${FUTURE}${code}\n\n${PROVIDED}`
+const FUTURE = '# Lets type hints name the provided classes at the bottom of the file.\nfrom __future__ import annotations\n\n\n'
 
 /* --------------------------------------------------------------- provided */
 
