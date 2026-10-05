@@ -42,7 +42,9 @@
 .pipe-stat {
   min-width: 0;
   padding: 6px var(--s-2) 6px var(--s-3);
-  transition: background var(--dur-2), box-shadow var(--dur-2);
+  transition:
+    background var(--dur-2),
+    box-shadow var(--dur-2);
 }
 .pipe-stat .w-stat__label {
   font-size: 11px;
@@ -89,7 +91,9 @@
   gap: 8px;
   border-radius: var(--r-md);
   background: var(--surface);
-  box-shadow: inset 0 0 0 1px var(--line), var(--shadow-sm);
+  box-shadow:
+    inset 0 0 0 1px var(--line),
+    var(--shadow-sm);
   padding: 8px;
 }
 .pipe-head {
@@ -171,7 +175,9 @@
   border-radius: var(--r-sm);
   background: var(--surface-2);
   box-shadow: inset 0 0 0 1.5px var(--line);
-  transition: box-shadow var(--dur-2), background var(--dur-2);
+  transition:
+    box-shadow var(--dur-2),
+    background var(--dur-2);
 }
 .pipe-stage.is-bn {
   background: color-mix(in srgb, var(--c-amber) 14%, var(--surface));
@@ -295,7 +301,9 @@
   margin-bottom: 4px;
   padding: 2px 1px;
   border-radius: 5px;
-  transition: background var(--dur-2), box-shadow var(--dur-2);
+  transition:
+    background var(--dur-2),
+    box-shadow var(--dur-2);
 }
 .pipe-queue.is-full {
   background: color-mix(in srgb, var(--bad) 12%, transparent);
@@ -334,7 +342,10 @@
     linear-gradient(160deg, transparent 52%, color-mix(in srgb, var(--img) 55%, #000) 53%),
     linear-gradient(180deg, color-mix(in srgb, var(--img) 55%, #fff), var(--img));
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--img) 70%, #000);
-  transition: filter var(--dur-3), transform var(--dur-3), opacity var(--dur-2);
+  transition:
+    filter var(--dur-3),
+    transform var(--dur-3),
+    opacity var(--dur-2);
 }
 .pipe-tile[data-done='0'] i {
   opacity: 0.55;

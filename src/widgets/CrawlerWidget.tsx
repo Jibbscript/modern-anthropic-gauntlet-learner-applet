@@ -7,7 +7,7 @@ import { haptic, sfx } from '../ui/fx'
 import type { CrawlerConfig, WidgetProps } from './specs'
 import { GRAPHS, type SiteGraph } from './crawler/graphs'
 import { edgeGeometry, NODE_R, VIEW_H, VIEW_W } from './crawler/geometry'
-import { crawlable, initCrawl, stepCrawl, type CrawlOptions, type CrawlState, type Dedupe } from './crawler/model'
+import { crawlable, initCrawl, stepCrawl, type CrawlEvent, type CrawlOptions, type CrawlState, type Dedupe } from './crawler/model'
 import './CrawlerWidget.css'
 
 const TICK_MS = 340
@@ -127,9 +127,10 @@ export default function CrawlerWidget({ config, onComplete }: WidgetProps<Crawle
   const inFlightTwice = (page: number) => queued[page] + fetchers[page].length > 1
   const fresh = new Set(sim.events.filter((e) => e.kind === 'done').map((e) => e.page))
   const dupBurst = new Set(sim.events.filter((e) => e.kind === 'start' && e.dup).map((e) => e.page))
-  const dropped = new Set(sim.events.filter((e) => e.kind === 'drop').map((e) => (e.kind === 'drop' ? e.entry : -1)))
+  const dropped = new Set(sim.events.flatMap((e) => (e.kind === 'drop' ? [e.entry] : [])))
   const uniqueDone = sim.done.filter(Boolean).length
   const hostsShown = graph.hosts.filter((_, h) => graph.pages.some((p) => p.host === h))
+  const multiHost = hostsShown.length > 1
   const mode = DEDUPE.find((d) => d.id === opts.dedupe)!
 
   const status = (() => {
@@ -139,9 +140,8 @@ export default function CrawlerWidget({ config, onComplete }: WidgetProps<Crawle
       return `Crawled ${pages} in ${sim.tick} ticks with ${sim.totalFetches} fetches.`
     }
     if (sim.tick === 0) return `Start from page ${graph.pages[0].label} (${graph.hosts[0]}). Press play or step.`
-    const started = sim.events.filter((e) => e.kind === 'start')
-    const dup = started.find((e) => e.kind === 'start' && e.dup)
-    if (dup) return `Worker ${(dup.kind === 'start' ? dup.worker : 0) + 1} fetches ${graph.pages[dup.page].label} again: a duplicate.`
+    const dup = sim.events.find((e): e is Extract<CrawlEvent, { kind: 'start' }> => e.kind === 'start' && e.dup)
+    if (dup) return `Worker ${dup.worker + 1} fetches ${graph.pages[dup.page].label} again: a duplicate.`
     const drop = sim.events.find((e) => e.kind === 'drop')
     if (drop) return `${graph.pages[drop.page].label} was already visited, so it is dropped.`
     const skip = sim.events.find((e) => e.kind === 'skip')
@@ -166,7 +166,7 @@ export default function CrawlerWidget({ config, onComplete }: WidgetProps<Crawle
             <span>Goal reached</span>
           </motion.div>
         ) : (
-          <motion.div key="todo" className="crawl-goal" exit={{ opacity: 0, y: -4 }}>
+          <motion.div key="todo" className="crawl-goal" exit={{ opacity: 0, y: -4 }} transition={{ duration: reduce ? 0 : 0.15 }}>
             <Target size={15} strokeWidth={2.6} />
             <span>{goalText}</span>
           </motion.div>
@@ -224,11 +224,17 @@ export default function CrawlerWidget({ config, onComplete }: WidgetProps<Crawle
             {graph.pages.map((p, i) => {
               const fw = fetchers[i]
               const fetching = fw.length > 0
-              const state = sim.skipped[i] && !sim.done[i] && !fetching ? 'skipped' : fetching ? 'fetching' : sim.done[i] ? 'done' : queued[i] > 0 ? 'queued' : 'unseen'
+              const state =
+                sim.skipped[i] && !sim.done[i] && !fetching ? 'skipped' : fetching ? 'fetching' : sim.done[i] ? 'done' : queued[i] > 0 ? 'queued' : 'unseen'
               const w0 = fetching ? sim.workers[fw[0]] : null
               const dupNow = fw.some((wi) => sim.workers[wi].dup)
               const frac = w0 ? (w0.total - w0.left + 1) / w0.total : 0
-              const badge = sim.fetches[i] > 1 ? { text: `×${sim.fetches[i]}`, tone: 'bad' } : queued[i] + fw.length > 1 && opts.dedupe !== 'atomic' ? { text: `×${queued[i] + fw.length}`, tone: 'warn' } : null
+              const badge =
+                sim.fetches[i] > 1
+                  ? { text: `×${sim.fetches[i]}`, tone: 'bad' }
+                  : queued[i] + fw.length > 1 && opts.dedupe !== 'atomic'
+                    ? { text: `×${queued[i] + fw.length}`, tone: 'warn' }
+                    : null
               return (
                 <g key={i} transform={`translate(${p.x} ${p.y})`} className={`crawl-node crawl-node--${state}`} style={hostVar(p.host)}>
                   <title>{`${p.label}: ${p.path} (${graph.hosts[p.host]})`}</title>
@@ -252,7 +258,9 @@ export default function CrawlerWidget({ config, onComplete }: WidgetProps<Crawle
                   )}
                   <motion.g
                     initial={false}
-                    animate={dupBurst.has(i) && !reduce ? { x: [0, -2.5, 2.5, -1.5, 1.5, 0] } : fresh.has(i) && !reduce ? { scale: [1, 1.16, 1] } : { x: 0, scale: 1 }}
+                    animate={
+                      dupBurst.has(i) && !reduce ? { x: [0, -2.5, 2.5, -1.5, 1.5, 0] } : fresh.has(i) && !reduce ? { scale: [1, 1.16, 1] } : { x: 0, scale: 1 }
+                    }
                     transition={{ duration: 0.4 }}
                   >
                     <circle className="crawl-node__body" r={NODE_R} />
@@ -299,7 +307,12 @@ export default function CrawlerWidget({ config, onComplete }: WidgetProps<Crawle
             <div key={i} className={`crawl-worker${w.page >= 0 ? ' crawl-worker--busy' : ''}${w.dup ? ' crawl-worker--dup' : ''}`} style={workerVar(i)}>
               <span className="crawl-worker__id">W{i + 1}</span>
               {w.page >= 0 ? (
-                <motion.span layoutId={reduce ? undefined : `qe-${w.entry}`} className="crawl-chip" style={hostVar(graph.pages[w.page].host)} transition={{ type: 'spring', stiffness: 520, damping: 34 }}>
+                <motion.span
+                  layoutId={reduce ? undefined : `qe-${w.entry}`}
+                  className="crawl-chip"
+                  style={hostVar(graph.pages[w.page].host)}
+                  transition={{ type: 'spring', stiffness: 520, damping: 34 }}
+                >
                   {graph.pages[w.page].label}
                 </motion.span>
               ) : (
@@ -307,7 +320,11 @@ export default function CrawlerWidget({ config, onComplete }: WidgetProps<Crawle
               )}
               {w.dup && <span className="crawl-worker__dup">dup</span>}
               <span className="crawl-worker__bar">
-                <motion.span initial={false} animate={{ scaleX: w.page >= 0 ? (w.total - w.left + 1) / w.total : 0 }} transition={reduce ? { duration: 0 } : { duration: playing ? TICK_MS / 1000 : 0.25, ease: 'linear' }} />
+                <motion.span
+                  initial={false}
+                  animate={{ scaleX: w.page >= 0 ? (w.total - w.left + 1) / w.total : 0 }}
+                  transition={reduce ? { duration: 0 } : { duration: playing ? TICK_MS / 1000 : 0.25, ease: 'linear' }}
+                />
               </span>
             </div>
           ))}
@@ -373,11 +390,9 @@ export default function CrawlerWidget({ config, onComplete }: WidgetProps<Crawle
         </Button>
       </div>
 
-      <div className="crawl-controls">
+      <div className={`crawl-controls${multiHost ? '' : ' crawl-controls--single'}`}>
         <label className={`crawl-slider${locked.has('workers') ? ' is-locked' : ''}`}>
-          <span className="w-label">
-            Workers {locked.has('workers') && <Lock size={11} strokeWidth={2.8} />}
-          </span>
+          <span className="w-label">Workers {locked.has('workers') && <Lock size={11} strokeWidth={2.8} />}</span>
           <span className="crawl-slider__val tabular">{opts.workers}</span>
           <input
             className="w-slider"
@@ -391,28 +406,26 @@ export default function CrawlerWidget({ config, onComplete }: WidgetProps<Crawle
             aria-label="Workers"
           />
         </label>
-        <Tile
-          compact
-          className="crawl-toggle"
-          state={opts.sameHost ? 'selected' : 'idle'}
-          disabled={locked.has('sameHost')}
-          onClick={() => change({ sameHost: !opts.sameHost })}
-          role="switch"
-          aria-checked={opts.sameHost}
-        >
-          <span className="crawl-toggle__text">
-            Same host {locked.has('sameHost') && <Lock size={11} strokeWidth={2.8} />}
-          </span>
-          <span className={`crawl-switch${opts.sameHost ? ' is-on' : ''}`} aria-hidden>
-            <motion.i layout transition={{ type: 'spring', stiffness: 600, damping: 32 }} />
-          </span>
-        </Tile>
+        {multiHost && (
+          <Tile
+            compact
+            className="crawl-toggle"
+            state={opts.sameHost ? 'selected' : 'idle'}
+            disabled={locked.has('sameHost')}
+            onClick={() => change({ sameHost: !opts.sameHost })}
+            role="switch"
+            aria-checked={opts.sameHost}
+          >
+            <span className="crawl-toggle__text">Same host {locked.has('sameHost') && <Lock size={11} strokeWidth={2.8} />}</span>
+            <span className={`crawl-switch${opts.sameHost ? ' is-on' : ''}`} aria-hidden>
+              <motion.i layout transition={{ type: 'spring', stiffness: 600, damping: 32 }} />
+            </span>
+          </Tile>
+        )}
       </div>
 
       <div className="crawl-dedupe">
-        <span className="w-label">
-          Dedupe {locked.has('dedupe') && <Lock size={11} strokeWidth={2.8} />}
-        </span>
+        <span className="w-label">Dedupe {locked.has('dedupe') && <Lock size={11} strokeWidth={2.8} />}</span>
         <div className="crawl-dedupe__tiles" role="radiogroup" aria-label="Dedupe strategy">
           {DEDUPE.map((d) => (
             <Tile
@@ -429,7 +442,14 @@ export default function CrawlerWidget({ config, onComplete }: WidgetProps<Crawle
           ))}
         </div>
         <AnimatePresence mode="wait" initial={false}>
-          <motion.p key={mode.id} className="crawl-dedupe__blurb" initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} transition={{ duration: 0.18 }}>
+          <motion.p
+            key={mode.id}
+            className="crawl-dedupe__blurb"
+            initial={{ opacity: 0, y: 4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -4 }}
+            transition={{ duration: 0.18 }}
+          >
             {mode.blurb(sim.cap)}
           </motion.p>
         </AnimatePresence>
@@ -442,7 +462,13 @@ function Stat({ label, value, tone, bump }: { label: string; value: number | str
   return (
     <div className={`w-stat crawl-stat${tone ? ` crawl-stat--${tone}` : ''}`}>
       <span className="w-stat__label">{label}</span>
-      <motion.span key={bump ? String(value) : 'v'} className="w-stat__value" initial={bump ? { scale: 1.5 } : false} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 500, damping: 16 }}>
+      <motion.span
+        key={bump ? String(value) : 'v'}
+        className="w-stat__value"
+        initial={bump ? { scale: 1.5 } : false}
+        animate={{ scale: 1 }}
+        transition={{ type: 'spring', stiffness: 500, damping: 16 }}
+      >
         {value}
       </motion.span>
     </div>

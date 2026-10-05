@@ -58,7 +58,7 @@ function stars(acc: number): number {
 /* --------------------------------------------------------------- layout */
 
 const SPACING = 132
-const TOP_PAD = 40
+const TOP_PAD = 36
 
 function useWidth<T extends HTMLElement>() {
   const ref = useRef<T>(null)
@@ -157,7 +157,7 @@ function PathNodeView({
   const prog = s.lessons[lesson.id]
   const resume = status === 'current' && !!prog && prog.resumeStep > 0
   const progress = resume ? Math.min(1, prog.resumeStep / Math.max(1, lesson.steps.length)) : 0
-  const labelLeft = x + puck / 2 + 12
+  const labelLeft = x + puck / 2 + (status === 'current' ? 16 : 12)
   const ph = (puck / 92) * 64
   let sub: ReactNode
   if (status === 'done') {
@@ -255,8 +255,10 @@ function Level({
   const done = nodes.filter((n) => n.status === 'done').length
   const complete = done === nodes.length
   const ph = (geo.puck / 92) * 64
-  const ys = nodes.map((_, i) => TOP_PAD + i * SPACING)
-  const height = TOP_PAD + (nodes.length - 1) * SPACING + ph + 36
+  // leave headroom for the floating Start bubble when a level opens on the current lesson
+  const top = nodes[0]?.status === 'current' ? TOP_PAD + 44 : TOP_PAD
+  const ys = nodes.map((_, i) => top + i * SPACING)
+  const height = top + (nodes.length - 1) * SPACING + ph + 36
   const cy = ph * 0.6
   // dotted connectors between consecutive nodes; a segment is lit once its start is done
   const segs = nodes.slice(0, -1).map((n, i) => {

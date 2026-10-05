@@ -217,7 +217,7 @@ t=10  main > render
     {
       kind: 'predict',
       id: 'events',
-      prompt: 'Using `to_events` from the last step, with `+name` for a begin and `-name` for an end, what does this print?',
+      prompt: 'Using `to_events` from the last step, where `+` marks a begin and `-` marks an end, what does this print?',
       code: `samples = [
     ["main"],
     ["main", "f"],

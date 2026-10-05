@@ -62,6 +62,9 @@
 .learn-pill--streak.is-zero {
   color: var(--ink-3);
 }
+.learn-pill__icon {
+  display: inline-flex;
+}
 .learn-pill--xp svg {
   color: var(--xp);
 }
@@ -397,14 +400,29 @@ button.learn-card:active,
 .learn-end {
   display: flex;
   flex-direction: column;
-  gap: var(--s-4);
-  padding: var(--s-5) var(--s-4) var(--s-4);
+  gap: var(--s-3);
+  padding: var(--s-4);
+}
+.learn-end__top {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.learn-end__titles {
+  min-width: 0;
+}
+.learn-end__titles h2 {
+  margin-top: 2px;
+  font-size: var(--fs-xl);
+  font-weight: 700;
+  line-height: 1.2;
 }
 .learn-end__badge {
+  flex: none;
   display: grid;
   place-items: center;
-  width: 60px;
-  height: 60px;
+  width: 56px;
+  height: 56px;
   border-radius: 18px;
   background: var(--surface-3);
   color: var(--ink-2);
@@ -421,13 +439,7 @@ button.learn-card:active,
   text-transform: uppercase;
   color: var(--ink-3);
 }
-.learn-end__text h2 {
-  margin-top: 4px;
-  font-size: var(--fs-xl);
-  font-weight: 700;
-}
 .learn-end__text p {
-  margin-top: 6px;
   color: var(--ink-2);
   font-size: var(--fs-sm);
 }

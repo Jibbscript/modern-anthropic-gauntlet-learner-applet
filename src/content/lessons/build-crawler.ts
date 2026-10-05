@@ -153,7 +153,7 @@ def worker() -> None:
       eyebrow: 'Your turn',
       prompt: 'This crawl uses check-then-add. Run it with 3 workers and watch the duplicate counter. Then change the dedupe rule so a full crawl with 2 or more workers fetches nothing twice.',
       goal: 'Full crawl, 2+ workers, 0 duplicates',
-      widget: { id: 'crawler', config: { graph: 'cyclic', workers: 3, dedupe: 'check-then-add', sameHost: true, goal: 'no-dupes' } },
+      widget: { id: 'crawler', config: { graph: 'small', workers: 3, dedupe: 'check-then-add', sameHost: true, goal: 'no-dupes' } },
       explanation:
         'With **atomic**, the visited check and insert happen together, under a lock, at enqueue time, so each page is queued once and fetched once. Try check-then-add with 1 worker: zero duplicates. A bug that needs two threads hides in single-threaded tests.',
     },

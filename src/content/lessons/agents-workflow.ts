@@ -49,11 +49,11 @@ const lesson: Lesson = {
       kind: 'concept',
       id: 'hook',
       eyebrow: 'Newer formats',
-      title: "When the agent types, what's left to watch?",
-      body: "In August 2026 a candidate reported an onsite round with a twist: online VS Code, four TypeScript pull requests, and Claude Code available. Part one: review and explain all four PRs. Part two: improve one.\n\nThey weren't sure what was being assessed. A working assumption: if the tool types faster than you, typing isn't the signal. Your judgment is.",
+      title: 'Same agent, different engineer',
+      body: "Two candidates get the same repo, the same agent and 40 minutes. One lets it run and ends with more code. The other ends with less code, a written plan, and a test that caught the agent's mistake.\n\nWhich one would you hire? When the tool does the typing, typing stops being the signal. What's left to watch is judgment.",
       callout: {
         tone: 'source',
-        text: "Candidate report on [PracHub](https://prachub.com/interview-experiences/anthropic-software-engineer-interview-experience-reviewing-and-improving-pull-requests-with-claude-code), Aug 2026. Anthropic hasn't published a rubric for agent-assisted rounds, and formats change.",
+        text: "Candidates report agent-assisted rounds in newer formats, e.g. an Aug 2026 [report](https://prachub.com/interview-experiences/anthropic-software-engineer-interview-experience-reviewing-and-improving-pull-requests-with-claude-code) of reviewing and improving PRs with Claude Code. No rubric is public, and formats change.",
       },
     },
     {
@@ -62,20 +62,20 @@ const lesson: Lesson = {
       prompt: "Agent-assisted round: a small repo, Claude Code, 45 minutes. What's the strongest first five minutes?",
       choices: [
         {
-          text: 'Read the task and the code it touches, say a plan of small slices out loud, then brief the agent on the first',
+          text: 'Read the code it touches, say a plan of small slices aloud, brief the first slice',
           correct: true,
           feedback: 'Right. You build your own model of the code first, and your plan is visible from minute one.',
         },
         {
-          text: 'Paste the whole task into the agent and let it run while you watch',
+          text: 'Paste the whole task into the agent and let it run while you watch closely',
           feedback: "Fast to start, slow to finish: one giant diff you can't review, and nothing for the interviewer to see but waiting.",
         },
         {
-          text: 'Ignore the agent and code it yourself to prove you can',
+          text: "Ignore the agent and write it all yourself, to prove you don't need it",
           feedback: 'Tempting if you type faster than you delegate. But the tool is part of the round; refusing it skips what they set up to observe.',
         },
         {
-          text: 'Ask the agent for a plan and follow it step by step',
+          text: 'Ask the agent to write a plan, then follow its plan step by step',
           feedback: 'A generated plan is a fine draft. Following it unread hands over the part that is most clearly your job.',
         },
       ],
@@ -85,7 +85,7 @@ const lesson: Lesson = {
       kind: 'concept',
       id: 'slices',
       title: 'Small slices, running plan',
-      body: "Big asks produce big diffs, and big diffs get skimmed. Cut the task into slices that each end in a check you can run: a test goes green, a command prints the right thing.\n\nRough rule: if you can't review the diff in a couple of minutes, the slice was too big. Keep the plan as a checklist in a notes file. Tick items off, and rewrite it when reality changes.",
+      body: "Big asks make big diffs, and big diffs get skimmed. Cut the task into slices that each end in a check you can run: a test goes green, a command prints the right thing.\n\nRough rule: if you can't review the diff in two minutes, the slice was too big. Keep the plan as a checklist in a notes file, tick items off, and rewrite it when reality changes.",
       callout: {
         tone: 'tip',
         text: 'Say each slice out loud as you start it. The interviewer can see your screen, not your reasons.',
@@ -144,20 +144,20 @@ const lesson: Lesson = {
       prompt: "The agent reports: *Added backoff. All 31 tests pass.* Scrolling back, you can't find a test command anywhere in its output. What do you do?",
       choices: [
         {
-          text: 'Run the suite yourself, or have it run while you watch, and read the output before moving on',
+          text: 'Run the suite yourself, or watch it run, and read the output',
           correct: true,
           feedback: 'Right. Seconds of cost, and the claim becomes evidence.',
         },
         {
-          text: 'Trust it: agents report their own tool results accurately, and re-running wastes time',
+          text: 'Trust it: agents report their tool results accurately, and reruns cost time',
           feedback: 'Usually accurate is not always accurate. A summary can describe an earlier run, a subset, or a hope.',
         },
         {
-          text: "Ask the agent: 'Are you sure every test passed?'",
+          text: "Ask the agent: 'Are you sure every single test passed?'",
           feedback: 'Asking for the claim again gets you the claim again, often more confidently. You want output, not reassurance.',
         },
         {
-          text: 'Keep going and run everything once at the end',
+          text: 'Keep going, and run the whole suite once at the very end',
           feedback: 'Then a failure could come from any of several changes. Verifying each slice keeps the search to one diff.',
         },
       ],
@@ -226,12 +226,12 @@ const lesson: Lesson = {
               feedback: "You'll get one large diff you can't fully review, and the interviewer sees nothing of how you think.",
             },
             {
-              text: "Five minutes reading the scheduler and its tests. Then a plan, out loud: a timeout field on jobs, enforcement in the runner, tests for each. I'll brief the agent one slice at a time.",
+              text: 'Five minutes reading the scheduler and its tests. Then a plan, out loud: timeout field, enforcement in the runner, tests for each. Then I brief the agent one slice at a time.',
               quality: 'strong',
               feedback: 'Strong. You build a model of the code, decompose, and make the plan visible before anything is generated.',
             },
             {
-              text: 'Ask the agent to summarise the codebase and propose a plan, then follow it.',
+              text: 'Ask the agent to summarise the codebase and propose a plan, then follow that plan so we move fast from the start.',
               quality: 'okay',
               feedback: "A reasonable accelerator, but now it's the agent's plan. Read enough code to judge the summary, and edit the plan before following it.",
             },
@@ -241,17 +241,17 @@ const lesson: Lesson = {
           interviewer: "Its runner diff uses `signal.alarm` with a handler, and the tests pass. Thoughts?",
           options: [
             {
-              text: "Jobs run in pool threads, and Python only lets you install signal handlers from the main thread, so this can't work there. The tests probably call the runner on the main thread. I'd add a test that runs a slow job through the pool first.",
+              text: "Jobs run in pool threads, and Python only allows signal handlers from the main thread, so this can't work there. The tests likely run on the main thread. I'd first add a test with a slow job in the pool.",
               quality: 'strong',
               feedback: 'Strong. You caught a plausible-but-wrong mechanism, explained why the tests miss it, and turned that into a test.',
             },
             {
-              text: "Tests pass, and `signal.alarm` is a standard way to time out a call in Python. I'd accept it.",
+              text: "Tests pass, and `signal.alarm` is the standard way to put a time limit on a call in Python, so I'd accept it and move on.",
               quality: 'weak',
               feedback: "Standard on the main thread only. In a pool worker, `signal.signal` raises `ValueError`. Green here says nothing about the workers.",
             },
             {
-              text: "I'm not sure `signal` plays well with threads. I'd ask the agent to double-check, and read the docs if it hedges.",
+              text: "I'm not sure `signal` plays well with threads. I'd ask the agent to double-check that, and read the docs if it hedges.",
               quality: 'okay',
               feedback: 'Right instinct, slow route. A five-line experiment or the docs settle it faster than another round of agent opinion.',
             },
@@ -261,17 +261,17 @@ const lesson: Lesson = {
           interviewer: "Its third attempt at cancelling a timed-out job fails with a new error. Now what?",
           options: [
             {
-              text: 'Paste the full traceback back in and ask it to try again.',
+              text: "Paste the full traceback back in, point out that it's a new error, and ask it to try again with that context.",
               quality: 'okay',
               feedback: 'Sometimes fine. On a fourth attempt with errors that keep changing, it is more likely a loop than progress.',
             },
             {
-              text: 'Ask it for a completely different approach, and keep going until something passes.',
+              text: 'Ask it for a completely different approach, and keep iterating with it until something finally passes the tests.',
               quality: 'weak',
               feedback: "That's the loop, accelerated. 'Until something passes' invites a green that games the test.",
             },
             {
-              text: "Take the wheel. Three different errors means neither of us has a model of the bug. Python has no safe way to kill a thread, so real cancellation needs a cooperative check or a process. I'd decide which we need, then build it or re-brief.",
+              text: "Take the wheel: three different errors means neither of us has a model of the bug. Python can't safely kill a thread, so cancellation needs a cooperative check or a process. I'd pick one, then build it or re-brief.",
               quality: 'strong',
               feedback: 'Strong. You stopped the loop, named the real constraint, and turned it into a decision the interviewer can see.',
             },
@@ -281,7 +281,7 @@ const lesson: Lesson = {
           interviewer: 'Five minutes left. What do you do?',
           options: [
             {
-              text: "Squeeze in one more feature with the agent. There's time for a quick one.",
+              text: "Squeeze in one more feature with the agent. There's time for a quick one, and more coverage looks better.",
               quality: 'weak',
               feedback: 'An unreviewed change in the last five minutes is how stray edits ship. Finishing cleanly beats finishing more.',
             },
@@ -291,7 +291,7 @@ const lesson: Lesson = {
               feedback: 'Strong. A verified, honest status is the best last five minutes of any round.',
             },
             {
-              text: 'Ask the agent to write a summary of everything that changed.',
+              text: 'Ask the agent to write a summary of everything that changed, and read that out as my wrap-up.',
               quality: 'okay',
               feedback: 'A useful draft, but a summary of your work should come from you, checked against the diff.',
             },

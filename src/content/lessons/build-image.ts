@@ -64,22 +64,22 @@ assert rotate_cw(square) == [[3, 1], [4, 2]]`,
       kind: 'cloze',
       id: 'compose',
       prompt: 'A pipeline applies transforms left to right. Complete it so `pipeline(gray, blur, rotate)(img)` runs `gray` first and feeds each result to the next step.',
-      code: `from functools import reduce
-
-def pipeline(*steps):
+      code: `def pipeline(*steps):
     def run(img):
-        apply = lambda acc, step: {{0}}
-        return reduce(apply, steps, {{1}})
+        out = {{0}}
+        for step in steps:
+            out = {{1}}
+        return out
     return run
 
 thumb = pipeline(gray, blur, rotate)`,
       blanks: [
-        { options: ['acc(step)', 'step(acc)', 'step(img)'], answer: 1 },
-        { options: ['img', 'steps[0]', 'None'], answer: 0 },
+        { options: ['None', 'img', 'steps[0]'], answer: 1 },
+        { options: ['step(img)', 'out(step)', 'step(out)'], answer: 2 },
       ],
       explanation:
-        '`reduce` threads an accumulator through the steps: it starts as `img`, and each step\'s output feeds the next. `step(img)` would apply every step to the original and keep only the last result. Starting from `img` also makes `pipeline()` with no steps the identity, an edge case worth a test.',
-      hint: 'The accumulator is the image so far. What should each step be called on?',
+        '`out` is the image so far: it starts as `img`, and each step\'s output feeds the next. `step(img)` would apply every step to the original and keep only the last result. Starting from `img` also makes `pipeline()` with no steps the identity, an edge case worth a test. This loop is `functools.reduce` written out.',
+      hint: 'Each step should transform the result of the step before it.',
     },
     {
       kind: 'concept',

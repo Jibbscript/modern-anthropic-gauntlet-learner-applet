@@ -200,7 +200,7 @@ export default function PracticeScreen() {
               )}
 
               <motion.section className="prac-sec" {...rise(i++)}>
-                <SectionHead title="Next 7 days" aside={`${d.fc.reduce((a, x) => a + x.count, 0)} reviews`} />
+                <SectionHead title="Next 7 days" aside={`${d.fc.reduce((a, x) => a + x.count, 0)} due this week`} />
                 <div className="prac-card prac-card--pad">
                   <ForecastChart data={d.fc} />
                   <p className="prac-note">Cards due each day. Today includes anything overdue.</p>

@@ -38,7 +38,10 @@ export default function PoolWidget({ config, onComplete }: WidgetProps<PoolConfi
   const cores = Math.max(1, Math.min(16, Math.round(config.cores ?? 4)))
   const locked = useMemo(() => new Set(config.lockControls ?? []), [config.lockControls])
   const goal = config.goal === 'explore' ? 'explore' : 'fastest'
-  const initial = useMemo(() => ({ kind: (config.kind === 'io' ? 'io' : 'cpu') as TaskKind, executor: DEFAULT_EXECUTOR, workers: DEFAULT_WORKERS }), [config.kind])
+  const initial = useMemo(
+    () => ({ kind: (config.kind === 'io' ? 'io' : 'cpu') as TaskKind, executor: DEFAULT_EXECUTOR, workers: DEFAULT_WORKERS }),
+    [config.kind],
+  )
   // app setting (via MotionConfig) or the OS preference
   const reduceConfig = useReducedMotionConfig()
   const reduceOs = useReducedMotion()
@@ -62,9 +65,9 @@ export default function PoolWidget({ config, onComplete }: WidgetProps<PoolConfi
   // a fixed time axis per task kind (the slowest combo), so faster setups visibly shrink
   const tMax = useMemo(() => {
     let m = 0
-    for (const ex of ['thread', 'process', 'async'] as Executor[]) for (let w = 1; w <= 8; w++) m = Math.max(m, simulatePool({ ...params, executor: ex, workers: w }).wall)
+    for (const ex of ['thread', 'process', 'async'] as Executor[])
+      for (let w = 1; w <= 8; w++) m = Math.max(m, simulatePool({ ...params, executor: ex, workers: w }).wall)
     return Math.ceil(m)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [kind, tasks, cores])
 
   const key = `${executor}-${workers}-${kind}`
@@ -94,13 +97,22 @@ export default function PoolWidget({ config, onComplete }: WidgetProps<PoolConfi
     setWorkers(initial.workers)
   }
   const speedup = result.sequential / result.wall
-  const goalText = goal === 'fastest' ? `Find a setup within 10% of the fastest possible for ${kind === 'cpu' ? 'CPU-bound' : 'I/O-bound'} tasks` : 'Try three different setups'
+  const goalText =
+    goal === 'fastest'
+      ? `Find a setup within 10% of the fastest possible for ${kind === 'cpu' ? 'CPU-bound' : 'I/O-bound'} tasks`
+      : 'Try three different setups'
 
   return (
     <div className="pool">
       <AnimatePresence mode="wait" initial={false}>
         {reached ? (
-          <motion.div key="done" className="w-goal" initial={{ scale: 0.85, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: 'spring', stiffness: 520, damping: 20 }}>
+          <motion.div
+            key="done"
+            className="w-goal"
+            initial={{ scale: 0.85, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ type: 'spring', stiffness: 520, damping: 20 }}
+          >
             <CheckCircle2 size={18} strokeWidth={2.6} />
             <span>
               Goal reached
@@ -108,7 +120,7 @@ export default function PoolWidget({ config, onComplete }: WidgetProps<PoolConfi
             </span>
           </motion.div>
         ) : (
-          <motion.div key="todo" className="pool-goal" exit={{ opacity: 0, y: -4 }}>
+          <motion.div key="todo" className="pool-goal" exit={{ opacity: 0, y: -4 }} transition={{ duration: reduce ? 0 : 0.15 }}>
             <Target size={15} strokeWidth={2.6} />
             <span>{goalText}</span>
           </motion.div>
@@ -140,16 +152,21 @@ export default function PoolWidget({ config, onComplete }: WidgetProps<PoolConfi
       <Legend result={result} />
 
       <AnimatePresence mode="wait" initial={false}>
-        <motion.p key={`${executor}-${kind}-${workers >= tasks}`} className="pool-insight" initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} transition={{ duration: 0.18 }}>
+        <motion.p
+          key={`${executor}-${kind}-${workers >= tasks}`}
+          className="pool-insight"
+          initial={{ opacity: 0, y: 4 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -4 }}
+          transition={{ duration: 0.18 }}
+        >
           {insight(executor, kind, workers, tasks, cores)}
         </motion.p>
       </AnimatePresence>
 
       <div className="pool-controls">
         <div className="pool-group">
-          <span className="w-label">
-            Executor {locked.has('executor') && <Lock size={11} strokeWidth={2.8} />}
-          </span>
+          <span className="w-label">Executor {locked.has('executor') && <Lock size={11} strokeWidth={2.8} />}</span>
           <div className="pool-tiles pool-tiles--3" role="radiogroup" aria-label="Executor">
             {EXECUTORS.map((e) => (
               <Tile
@@ -186,9 +203,7 @@ export default function PoolWidget({ config, onComplete }: WidgetProps<PoolConfi
         </label>
 
         <div className="pool-group">
-          <span className="w-label">
-            Tasks {locked.has('kind') && <Lock size={11} strokeWidth={2.8} />}
-          </span>
+          <span className="w-label">Tasks {locked.has('kind') && <Lock size={11} strokeWidth={2.8} />}</span>
           <div className="pool-tiles pool-tiles--2" role="radiogroup" aria-label="Task kind">
             {KINDS.map((k) => (
               <Tile
@@ -213,7 +228,13 @@ export default function PoolWidget({ config, onComplete }: WidgetProps<PoolConfi
       </div>
 
       <div className="pool-footer">
-        <Button size="sm" variant="ghost" icon={<RotateCcw size={15} strokeWidth={2.6} />} onClick={reset} disabled={kind === initial.kind && executor === initial.executor && workers === initial.workers}>
+        <Button
+          size="sm"
+          variant="ghost"
+          icon={<RotateCcw size={15} strokeWidth={2.6} />}
+          onClick={reset}
+          disabled={kind === initial.kind && executor === initial.executor && workers === initial.workers}
+        >
           Reset
         </Button>
       </div>
@@ -223,8 +244,12 @@ export default function PoolWidget({ config, onComplete }: WidgetProps<PoolConfi
 
 function insight(ex: Executor, kind: TaskKind, w: number, tasks: number, cores: number): string {
   if (ex === 'thread' && kind === 'cpu') return 'Only the thread holding the GIL runs Python. CPU work takes turns, so extra threads add nothing.'
-  if (ex === 'thread') return w >= tasks ? 'Every task waits at the same time, so the batch costs about one wait.' : 'A waiting thread releases the GIL, so waits overlap. More threads, more overlap.'
-  if (ex === 'process' && kind === 'cpu') return `Each process has its own interpreter and GIL: CPU work runs in parallel on up to ${cores} cores. Each spawn costs 0.3 s.`
+  if (ex === 'thread')
+    return w >= tasks
+      ? 'Every task waits at the same time, so the batch costs about one wait.'
+      : 'A waiting thread releases the GIL, so waits overlap. More threads, more overlap.'
+  if (ex === 'process' && kind === 'cpu')
+    return `Each process has its own interpreter and GIL: CPU work runs in parallel on up to ${cores} cores. Each spawn costs 0.3 s.`
   if (ex === 'process') return 'Processes overlap waits too, but you pay startup and pickling for parallelism the waits never needed.'
   if (kind === 'cpu') return 'One thread and no pre-emption: a coroutine that never awaits holds the loop. CPU work runs one task at a time.'
   return 'While one coroutine awaits I/O, the loop runs the next. One thread overlaps every wait.'
@@ -250,7 +275,11 @@ function Gantt({ result, tMax, drawKey, reduce }: { result: PoolResult; tMax: nu
 
   return (
     <div className="pool-chart">
-      <svg viewBox={`0 0 ${VB_W} ${H}`} role="img" aria-label={`Timeline: ${n} ${result.executor === 'async' ? 'coroutines' : 'workers'}, wall time ${result.wall.toFixed(2)} seconds`}>
+      <svg
+        viewBox={`0 0 ${VB_W} ${H}`}
+        role="img"
+        aria-label={`Timeline: ${n} ${result.executor === 'async' ? 'coroutines' : 'workers'}, wall time ${result.wall.toFixed(2)} seconds`}
+      >
         <defs>
           <pattern id={`hatch-${uid}`} width="4" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
             <rect width="4" height="4" className="pool-hatch-bg" />
@@ -304,7 +333,14 @@ function Gantt({ result, tMax, drawKey, reduce }: { result: PoolResult; tMax: nu
               const w = x(t.end) - x(t.start)
               return (
                 <g key={i}>
-                  <rect x={x(t.start) + 0.4} y={laneY} width={Math.max(0.8, w - 0.8)} height={LANE_H} rx={3} className={`pool-token pool-token--${t.row % 2}`} />
+                  <rect
+                    x={x(t.start) + 0.4}
+                    y={laneY}
+                    width={Math.max(0.8, w - 0.8)}
+                    height={LANE_H}
+                    rx={3}
+                    className={`pool-token pool-token--${t.row % 2}`}
+                  />
                   {w >= 11 && (
                     <text x={x(t.start) + w / 2} y={laneY + LANE_H / 2} dy="0.35em" className="pool-token__label">
                       {t.row + 1}
@@ -327,7 +363,14 @@ function Gantt({ result, tMax, drawKey, reduce }: { result: PoolResult; tMax: nu
         {/* wall-time cursor sweeps with the drawing */}
         <motion.g key={drawKey} className="pool-wall" initial={{ x: reduce ? wallX : X0 }} animate={{ x: wallX }} transition={draw}>
           <line x1={0} x2={0} y1={TOP - 4} y2={axisY - 2} />
-          <motion.text x={-3} y={TOP - 6} textAnchor="end" initial={{ opacity: reduce ? 1 : 0 }} animate={{ opacity: 1 }} transition={{ delay: reduce ? 0 : DRAW_S * 0.8 }}>
+          <motion.text
+            x={-3}
+            y={TOP - 6}
+            textAnchor="end"
+            initial={{ opacity: reduce ? 1 : 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: reduce ? 0 : DRAW_S * 0.8 }}
+          >
             {result.wall.toFixed(1)} s
           </motion.text>
         </motion.g>

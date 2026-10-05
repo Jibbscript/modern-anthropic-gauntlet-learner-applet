@@ -1,15 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import {
-  bestThroughput,
-  bottlenecks,
-  defaultAllocation,
-  measuredThroughput,
-  peakBuffered,
-  simulatePipeline,
-  throughput,
-  utilization,
-  type Loc,
-} from './model'
+import { bestThroughput, bottlenecks, defaultAllocation, measuredThroughput, peakBuffered, simulatePipeline, throughput, utilization, type Loc } from './model'
 
 const costs = [1, 2, 4, 1]
 

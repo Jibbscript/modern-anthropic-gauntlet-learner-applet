@@ -176,9 +176,12 @@ export function defaultAllocation(budget: number): number[] {
 export function bestThroughput(budget: number, costs: number[]): number {
   let best = 0
   const r = [1, 2, 3, 4]
-  for (const a of r) for (const b of r) for (const c of r) for (const d of r) {
-    if (a + b + c + d > budget) continue
-    best = Math.max(best, throughput({ workers: [a, b, c, d], costs }))
-  }
+  for (const a of r)
+    for (const b of r)
+      for (const c of r)
+        for (const d of r) {
+          if (a + b + c + d > budget) continue
+          best = Math.max(best, throughput({ workers: [a, b, c, d], costs }))
+        }
   return best
 }

@@ -380,7 +380,7 @@
   background: var(--good);
 }
 .me-heat__cell.is-today {
-  box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--ink);
+  box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--ink);
 }
 .me-heat__cell.is-picked:not(.is-today) {
   box-shadow: 0 0 0 2px var(--surface), 0 0 0 3.5px var(--ink-3);
@@ -400,7 +400,7 @@
   margin-top: var(--s-2);
   padding: var(--s-2) var(--s-3);
   border-radius: var(--r-sm);
-  background: var(--surface-2);
+  background: color-mix(in srgb, var(--ink) 5%, transparent);
   font-size: 13px;
   font-weight: 700;
   color: var(--ink-2);
@@ -501,7 +501,7 @@
   border-radius: var(--r-lg);
 }
 .me-area__head:active {
-  background: var(--surface-2);
+  background: color-mix(in srgb, var(--ink) 5%, transparent);
 }
 .me-area__art {
   flex: none;

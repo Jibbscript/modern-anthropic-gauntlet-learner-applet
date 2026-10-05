@@ -111,7 +111,7 @@ const lesson: Lesson = {
       kind: 'concept',
       id: 'culture-signal',
       title: 'Culture: your judgment, not theirs',
-      body: "In a May 2026 Bloomberg Businessweek feature, Daniela Amodei offered a sample culture question: *What are some of the slightly unusual beliefs you hold, and how have you defended them in uncomfortable situations because you felt they were right?* She added: *We're not looking for a specific belief.*\n\nCandidates and coaches report what scores: real reasoning, admitting what you don't know, honest critique of Anthropic, and visibly updating when given a better argument.",
+      body: "In a May 2026 Bloomberg Businessweek feature, Daniela Amodei gave a sample culture question: *What are some of the slightly unusual beliefs you hold, and how have you defended them in uncomfortable situations because you felt they were right?* She added: *We're not looking for a specific belief.*\n\nCandidates and coaches report what scores: real reasoning, admitting what you don't know, honest critique of Anthropic, and visibly updating on a better argument.",
       callout: {
         tone: 'source',
         text: "[GIGAZINE's summary of the Bloomberg feature](https://gigazine.net/gsc_news/en/20260601-anthropic-recruiting), June 2026.",
@@ -121,7 +121,7 @@ const lesson: Lesson = {
       kind: 'compare',
       id: 'why-anthropic',
       question: 'Recruiter screen: *Why Anthropic?*',
-      a: 'Anthropic is the leader in AI safety, and I deeply believe in the mission of ensuring the world safely makes the transition through transformative AI. I admire everything the company stands for, and I want to be part of it.',
+      a: "Anthropic is the leader in AI safety, and I deeply believe in the mission of ensuring the world safely makes the transition through transformative AI. I've followed the company for years, I admire everything it stands for, and a culture that puts safety first is exactly where I want to do the most meaningful work of my career.",
       b: "Two reasons. I've spent three years on evaluation tooling, and your interpretability work is the first I've seen that treats model internals as something you can measure. And I'm unsettled in a useful way: I get the RSP v3 argument that one lab pausing alone could leave the world less safe, but I'm not convinced a conditional pause pledge was worth nothing. I'd rather argue that from inside.",
       better: 'b',
       explanation:
@@ -181,7 +181,7 @@ const lesson: Lesson = {
                 "Not dishonest, and the code will probably be clean. But a replayed solution shows little about how you think, and reports say interviewers notice memorized answers.",
             },
             {
-              text: "I should mention I've practiced this one. Happy to do it anyway, or take a variation if that gives you better signal.",
+              text: "To be upfront, I've practiced this one. Happy to do it, or take a variation if that's better signal.",
               quality: 'strong',
               feedback:
                 'Strong. One candidate reported saying exactly this; an extra round with a fresh problem was added, and they still got an offer, though at a lower level than they applied for. Saying so costs time; hiding it gives the interviewer no real signal and puts their trust at risk.',
@@ -197,17 +197,17 @@ const lesson: Lesson = {
           interviewer: 'Works. Now make it concurrent.',
           options: [
             {
-              text: "I'll use multiprocessing so the GIL doesn't slow it down.",
+              text: "I'll use multiprocessing, so the GIL doesn't serialize the fetches and slow everything down.",
               quality: 'weak',
               feedback: 'Processes help CPU-bound work. Crawling is IO-bound, so threads already overlap the waits, and processes make the shared visited set much harder.',
             },
             {
-              text: "I'll switch it to asyncio, since that's the modern way to do it.",
+              text: "I'll switch it to asyncio, since that's the modern way to do concurrent IO in Python.",
               quality: 'okay',
               feedback: 'It could work, but there is no reasoning, and the provided link fetcher in reported versions is a blocking call, so you would still need threads underneath.',
             },
             {
-              text: "Fetching is IO-bound, so threads overlap the waits even with the GIL. I'll use a thread pool, make check-and-add on the visited set one locked step, and track in-flight pages so I know when we're done.",
+              text: "It's IO-bound, so threads work despite the GIL: a pool, a locked check-and-add on visited, and an in-flight count to know when we're done.",
               quality: 'strong',
               feedback: 'Strong: the choice, the reason, and the two classic bugs (a racy check-then-add and stopping too early) named before you write them.',
             },
@@ -217,17 +217,17 @@ const lesson: Lesson = {
           interviewer: "How would you convince yourself it's correct?",
           options: [
             {
-              text: 'A fake link provider with a cycle, a cross-host link, a URL with a #fragment and one slow page. Assert every page is fetched exactly once and the crawl ends.',
+              text: 'A fake link provider with a cycle, a cross-host link, a #fragment and a slow page; assert each page is fetched once and the crawl ends.',
               quality: 'strong',
               feedback: 'Strong: a deterministic test double aimed at the known failure modes, with assertions that would catch a race.',
             },
             {
-              text: "It returned the right URLs on the example, so I'm fairly confident.",
+              text: "It returned the right URLs on the example input, so I'm fairly confident it's correct.",
               quality: 'weak',
               feedback: "One happy-path run can't expose a race or a hang. Concurrency bugs need inputs designed to trigger them.",
             },
             {
-              text: "I'd add logging and run it against a real site a few times.",
+              text: "I'd add logging around each fetch and run it against a real site a few times.",
               quality: 'okay',
               feedback: 'Better than nothing, but real sites are slow and nondeterministic, and logs need a human to notice the bug.',
             },
@@ -251,7 +251,7 @@ const lesson: Lesson = {
       prompt: "Candidates describe Anthropic's coding bar as high but practical. Which behavior is most clearly on that bar?",
       choices: [
         {
-          text: 'Gets a plain version running end to end, then refactors as requirements arrive',
+          text: 'Gets a plain version running, then refactors as requirements arrive',
           correct: true,
           feedback: 'Yes. Working, extensible code that grows with the prompt is the core of what practical rounds score.',
         },

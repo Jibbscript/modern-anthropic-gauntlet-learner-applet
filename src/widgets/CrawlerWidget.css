@@ -70,7 +70,9 @@
   position: relative;
   border-radius: var(--r-md);
   background: var(--surface);
-  box-shadow: inset 0 0 0 1px var(--line), var(--shadow-sm);
+  box-shadow:
+    inset 0 0 0 1px var(--line),
+    var(--shadow-sm);
   padding: 26px 4px 2px;
   overflow: hidden;
 }
@@ -136,7 +138,6 @@
 }
 .crawl-edge-fresh {
   fill: none;
-  stroke: var(--host, var(--c, var(--select)));
   stroke: var(--c, var(--select));
   stroke-width: 2.6;
   stroke-linecap: round;
@@ -148,7 +149,9 @@
   fill: var(--surface);
   stroke: var(--line-strong);
   stroke-width: 2;
-  transition: fill var(--dur-2), stroke var(--dur-2);
+  transition:
+    fill var(--dur-2),
+    stroke var(--dur-2);
 }
 .crawl-node__label {
   font-family: var(--font-ui);
@@ -222,8 +225,7 @@
   fill: var(--warn);
 }
 .crawl-node__badge--warn text {
-  fill: var(--ink-inverse);
-  fill: #16161d;
+  fill: #1a1a1a; /* dark text on the yellow warn fill in both themes */
 }
 .crawl-burst {
   fill: none;
@@ -254,7 +256,9 @@
   background: var(--surface);
   box-shadow: inset 0 0 0 1.5px var(--line);
   overflow: hidden;
-  transition: background var(--dur-2), box-shadow var(--dur-2);
+  transition:
+    background var(--dur-2),
+    box-shadow var(--dur-2);
 }
 .crawl-worker--busy {
   box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--wc) 55%, var(--line));
@@ -405,6 +409,9 @@
     grid-template-columns: 1fr 1fr;
     align-items: end;
   }
+  .crawl-controls--single {
+    grid-template-columns: 1fr;
+  }
 }
 .crawl-slider {
   display: grid;
@@ -477,7 +484,9 @@
   height: 16px;
   border-radius: 50%;
   background: #fff;
-  box-shadow: var(--shadow-sm), 0 1px 2px rgba(0, 0, 0, 0.2);
+  box-shadow:
+    var(--shadow-sm),
+    0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 /* dedupe */

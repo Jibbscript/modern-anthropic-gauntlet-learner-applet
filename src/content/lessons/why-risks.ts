@@ -18,7 +18,7 @@ const lesson: Lesson = {
         'Both get called "AI risk". They have different causes and different fixes. What separates them?',
       callout: {
         tone: 'insight',
-        text: 'Candidates report 2026 recruiter screens asking some version of *What do you think are the biggest risks and benefits of advanced AI?* A list of scary nouns will not stand out. A map, a ranking and an honest confidence level will.',
+        text: 'Candidates report 2026 recruiter screens asking some version of *What do you think are the biggest risks and benefits of advanced AI?* A list of scary nouns won\'t stand out. A map, a ranking and an honest confidence level will.',
       },
     },
     {
@@ -28,7 +28,7 @@ const lesson: Lesson = {
       body:
         'Ask: **whose intent produced the harm?**\n\n' +
         '- **Misuse**: a person wants harm and the model helps. Bio and chem weapons uplift, cyberattacks, fraud.\n' +
-        '- **Misalignment**: nobody asked. The model pursues something its developers did not intend: deception, reward hacking, evading oversight.\n' +
+        '- **Misalignment**: nobody asked. The model pursues something its developers didn\'t intend: deception, reward hacking, evading oversight.\n' +
         '- **Structural**: everyone acts locally reasonably; the harm comes from the aggregate. Power concentrating, labor disruption, worse shared knowledge.\n\n' +
         'Accidents cut across all three.',
       callout: {
@@ -43,9 +43,9 @@ const lesson: Lesson = {
       prompt: 'What actually distinguishes misuse from misalignment?',
       choices: [
         {
-          text: 'Where the harmful goal comes from: in misuse a person supplies it; in misalignment the model departs from what its developers intended.',
+          text: 'The source of the goal: in misuse a person supplies it; in misalignment the model strays from what its developers intended.',
           correct: true,
-          feedback: 'Right. Severity, timing and method vary inside both buckets. The source of the goal does not.',
+          feedback: 'Right. Severity, timing and method vary inside both buckets. The source of the goal doesn\'t.',
         },
         {
           text: 'Timing: misuse is a problem with today\'s models, while misalignment only matters for future superintelligent ones.',
@@ -54,23 +54,23 @@ const lesson: Lesson = {
         },
         {
           text: 'Severity: misuse causes contained, local damage, while misalignment is the one that could be catastrophic.',
-          feedback: 'Bioweapons uplift is misuse, and it is one of the most severe risks labs track. Severity does not sort the buckets.',
+          feedback: 'Bioweapons uplift is misuse, and it\'s one of the most severe risks labs track. Severity doesn\'t sort the buckets.',
         },
         {
-          text: 'Method: misuse always requires a jailbreak to get past safeguards, and misalignment never does.',
+          text: 'Method: misuse always requires a jailbreak to get past the safeguards, while misalignment never involves one.',
           feedback:
             'A jailbreak is one route to misuse, not its definition. Plenty of misuse uses requests that look harmless, and a misaligned model needs no prompt at all.',
         },
       ],
       explanation:
-        'Ask whose goal it was. If a person wanted the harm and the model complied, even through a jailbreak, it is misuse, and the fixes are safeguards, monitoring and access control. If nobody asked, it is misalignment, and the fixes are training, interpretability and oversight.',
+        'Ask whose goal it was. If a person wanted the harm and the model complied, even through a jailbreak, it\'s misuse, and the fixes are safeguards, monitoring and access control. If nobody asked, it\'s misalignment, and the fixes are training, interpretability and oversight.',
       hint: 'Picture the espionage group and the blackmailing models. Who wanted each outcome?',
     },
     {
       kind: 'sort',
       id: 'sort-cases',
       eyebrow: 'Sort',
-      prompt: 'Drop each case into its bucket. Dates are when the case happened or was published.',
+      prompt: 'Drop each case into its bucket. Dated items are real cases; undated ones are scenarios.',
       buckets: [
         { id: 'misuse', label: 'Misuse' },
         { id: 'misalign', label: 'Misalignment' },
@@ -85,7 +85,7 @@ const lesson: Lesson = {
         {
           text: '**Mar 2025:** a model beats expert virologists at troubleshooting lab protocols.',
           bucket: 'misuse',
-          why: 'No harm happened. It is a capability that would help someone who wants a bioweapon, so it measures misuse risk.',
+          why: 'No harm happened. It\'s a capability that would help someone who wants a bioweapon, so it measures misuse risk.',
         },
         {
           text: '**Jun 2025:** in a simulated company, models facing replacement blackmail an executive. Nobody asked them to.',
@@ -98,7 +98,7 @@ const lesson: Lesson = {
           why: 'Reward hacking generalized into broader misbehavior, in about 12% of cases. No one requested it.',
         },
         {
-          text: '**Dec 2024:** a model goes along with requests it objects to, but only when it believes it is being trained, to avoid being changed.',
+          text: '**Dec 2024:** a model sometimes goes along with requests it objects to when it believes it\'s being trained, to avoid being changed.',
           bucket: 'misalign',
           why: 'Alignment faking: the model strategically hides its preferences from its trainers.',
         },
@@ -128,7 +128,7 @@ const lesson: Lesson = {
       body:
         'The buckets differ in how well evidenced they are, and saying so makes you credible.\n\n' +
         '- **In the wild**: misuse is documented, with dates and victims.\n' +
-        '- **In the lab**: misalignment shows up mostly in deliberately artificial setups. The June 2025 blackmail paper reported no such behavior in real deployments.\n' +
+        '- **In the lab**: misalignment shows up mostly in deliberately artificial setups. Anthropic said it hadn\'t seen the June 2025 blackmail behavior in real deployments.\n' +
         '- **Projected**: structural risks arrive slowly and are hard to attribute.\n\n' +
         'Incidents blur the lines.',
       callout: {
@@ -144,17 +144,17 @@ const lesson: Lesson = {
         'In May 2025 Anthropic activated ASL-3 protections for Claude Opus 4. The same model\'s system card described it attempting blackmail in most runs of a contrived test. What drove the ASL-3 decision?',
       choices: [
         {
-          text: 'Misuse risk: Anthropic could not clearly rule out meaningful help toward CBRN weapons, so it acted as a precaution.',
+          text: 'Misuse risk: Anthropic could not clearly rule out meaningful CBRN weapons uplift, so it acted as a precaution.',
           correct: true,
-          feedback: 'Yes. The stated reason was that "clearly ruling out ASL-3 risks is not possible" for Opus 4, as it had been for every earlier model.',
+          feedback: 'Yes. The stated reason was that "clearly ruling out ASL-3 risks is not possible" for Opus 4, unlike every earlier model.',
         },
         {
           text: 'Misalignment risk: the blackmail result showed the model could be dangerous on its own, without any user.',
           feedback:
-            'This is a common media framing, and it is wrong. The blackmail test was a contrived alignment evaluation; the ASL-3 trigger was uncertainty about CBRN capability. Mixing them up in an interview costs credibility.',
+            'This is a common media framing, and it\'s wrong. The blackmail test was a contrived alignment evaluation; the ASL-3 trigger was uncertainty about CBRN capability. Mixing them up in an interview costs credibility.',
         },
         {
-          text: 'An incident: Opus 4 had already been used by attackers in a real campaign before the launch.',
+          text: 'An incident: attackers had already used Opus 4 in a real campaign before its public launch.',
           feedback: 'No attack prompted it. The documented 2025 misuse cases came later that year and were disclosed separately.',
         },
         {
@@ -172,12 +172,12 @@ const lesson: Lesson = {
       body:
         'Three questions do most of the work:\n\n' +
         '1. **How bad, and how reversible?** An engineered pandemic and a decade of wage pressure are different kinds of harm.\n' +
-        '1. **How likely, on what grade of evidence?**\n' +
-        '1. **How tractable?** Can anyone, including you, reduce it?\n\n' +
-        'Then state your confidence plainly: *about 60% on this order, and here is what would flip it.*',
+        '2. **How likely, on what grade of evidence?**\n' +
+        '3. **How tractable?** Can anyone, including you, reduce it?\n\n' +
+        'Then state your confidence plainly: *about 60% on this order, and here\'s what would flip it.*',
       callout: {
         tone: 'tip',
-        text: 'Uncertainty stated once, specifically, sounds like judgment. Hedging every sentence sounds like you are avoiding a position.',
+        text: 'Uncertainty stated once, specifically, sounds like judgment. Hedging every sentence sounds like you\'re avoiding a position.',
       },
     },
     {
@@ -188,11 +188,11 @@ const lesson: Lesson = {
       pairs: [
         { left: 'Jailbreaks that extract weapons help', right: 'Input and output classifiers' },
         { left: 'Agents reaching systems they should not touch', right: 'Default-deny egress and no-internet sandboxes' },
-        { left: 'A model hiding what it is really doing', right: 'Interpretability: reading internals, not outputs' },
+        { left: 'A model hiding what it\'s really doing', right: 'Interpretability: reading internals, not outputs' },
         { left: 'Labor disruption nobody sees coming', right: 'Measuring real usage by occupation' },
       ],
       explanation:
-        'Every mitigation has a cost worth naming. Constitutional Classifiers cut jailbreak success from 86% to 4.4% in Feb 2025 tests, at 0.38% more over-refusal and 23.7% more compute. Blocking outbound traffic by default (Aug 2026) slows testing. Interpretability\'s stated goal is to "reliably detect most model problems" by 2027: a target, not a result. The Economic Index has mapped usage to occupations since Feb 2025. Naming the cost separates a mitigation from a slogan.',
+        'Every mitigation has a cost worth naming. Constitutional Classifiers cut jailbreak success from 86% to 4.4% in Feb 2025 tests, at 0.38% more over-refusal and 23.7% more compute. Blocking outbound traffic by default (Aug 2026) makes some testing harder. Interpretability\'s stated goal is to "reliably detect most model problems" by 2027: a target, not a result. The Economic Index has mapped usage to occupations since Feb 2025. Naming the cost separates a mitigation from a slogan.',
     },
     {
       kind: 'concept',
@@ -201,10 +201,10 @@ const lesson: Lesson = {
       body:
         'Overrated means *more attention than your estimate*, not *fake*.\n\n' +
         'A strong version names the risk, says what the popular view gets wrong, points at evidence, and says what would change your mind.\n\n' +
-        'The interviewer may disagree with your pick. That is fine. They are checking whether you can hold a view that is not the house line, with reasons.',
+        'The interviewer may disagree with your pick. That\'s fine. They are checking whether you can hold a view that isn\'t the house line, with reasons.',
       callout: {
         tone: 'warn',
-        text: 'Do not pick one to look contrarian, or skip this to look agreeable. Pick the one you actually believe, and know its strongest counterargument.',
+        text: 'Don\'t pick one to look contrarian, or skip this to look agreeable. Pick the one you actually believe, and know its strongest counterargument.',
       },
     },
     {
@@ -213,9 +213,9 @@ const lesson: Lesson = {
       eyebrow: 'Which is stronger?',
       question: 'Is there an AI risk you think gets more attention than it deserves?',
       a:
-        'Relative to the attention, I would rank chatbots *saying* harmful things below agents *doing* them. The documented 2025 misuse cases were agentic: a coding agent ran most of an espionage campaign. I hold that loosely. Lab results on expert-level virology point the other way, and one real case of text-only weapons uplift would flip it for me.',
+        'Relative to the attention, I\'d rank chatbots *saying* harmful things below agents *doing* them. The documented 2025 misuse cases were agentic: a coding agent ran most of an espionage campaign. I hold that loosely. Lab results on expert-level virology point the other way, and one real case of text-only weapons uplift would flip it for me.',
       b:
-        'Honestly, the existential stuff. Models just predict the next token, so the takeover scenarios are science fiction. The real risks are bias and misinformation, and all the doom talk mostly distracts from them. I would tell people to focus on what is actually happening right now instead.',
+        'Honestly, the existential stuff. Models just predict the next token, so the takeover scenarios are science fiction. The real risks are bias and misinformation, and all the doom talk mostly distracts from them. I\'d tell people to focus on what is actually happening right now instead.',
       better: 'a',
       explanation:
         'You can argue existential risk is overweighted; serious people do. B fails because its only reason is "just predicts tokens", and it ignores published evidence such as the 2025 blackmail and reward-hacking results. A is relative, cites a dated case, admits the evidence against it, and says what would change its mind.',
@@ -232,7 +232,7 @@ const lesson: Lesson = {
         'Where your own work touches it',
       ],
       explanation:
-        'Map first, then sharpen it with a contrast, then move to action, then to you. Confidence is not a separate layer: attach it to the ranking ("about 60% on this order") and the likely follow-up, *what would change your ranking?*, is already answered.',
+        'Map first, then sharpen it with a contrast, then move to action, then to you. Confidence isn\'t a separate layer: attach it to the ranking ("about 60% on this order") and the likely follow-up, *what would change your ranking?*, is already answered.',
       hint: 'Go from the world, to what to do about it, to you.',
     },
     {
@@ -245,20 +245,20 @@ const lesson: Lesson = {
           interviewer: 'Let\'s talk safety for a few minutes. What do you think are the biggest risks from advanced AI?',
           options: [
             {
-              text: 'There are a lot: bioweapons and cyberattacks, misaligned models, job losses, misinformation, power concentrating in a few companies. Honestly, they all worry me.',
+              text: 'There are a lot of them: bioweapons and cyberattacks, misaligned models, large-scale job losses, misinformation, and power concentrating in a few companies. Honestly, they all worry me, and I think they all deserve serious attention.',
               quality: 'okay',
-              feedback: 'Accurate and broad, but a list is not a view. Which matters most, and why? That is the question behind the question.',
+              feedback: 'Accurate and broad, but a list isn\'t a view. Which matters most, and why? That\'s the question behind the question.',
             },
             {
-              text: 'Honestly, I think superintelligence will probably end humanity within a few years unless everyone stops. Everything else is a distraction.',
+              text: 'Honestly, I think superintelligence will probably end humanity within a few years unless every lab stops now. Compared with that, everything else people worry about is a distraction.',
               quality: 'weak',
               feedback:
                 'High confidence, no reasons, and it waves away risks with documented cases. Certainty in either direction, doom or dismissal, reads as a lack of judgment.',
             },
             {
-              text: 'Top for me is cyber misuse in the next few years, because it is already documented: in 2025 a state-backed group had a coding agent run most of an espionage campaign. Second, misalignment in agents: mostly lab evidence so far, but it grows with autonomy. Labor disruption I find hardest to rank.',
+              text: 'Top for me is cyber misuse, because it\'s already documented: in 2025 a state-backed group had a coding agent run most of an espionage campaign. Second, misalignment in agents: mostly lab evidence so far, but it grows with autonomy. Labor disruption I find hardest to rank.',
               quality: 'strong',
-              feedback: 'Ranked, reasoned, evidence graded, and honest about where you are unsure. That gives them something real to probe.',
+              feedback: 'Ranked, reasoned, evidence graded, and honest about where you\'re unsure. That gives them something real to probe.',
             },
           ],
         },
@@ -266,17 +266,17 @@ const lesson: Lesson = {
           interviewer: 'How confident are you in that order?',
           options: [
             {
-              text: 'Moderately, maybe 60/40 that the top two stay put. The September 2026 incident report already moved me: a model in a misconfigured eval actually published a malicious package. A few more like that and misalignment goes first.',
+              text: 'Moderately, maybe 60/40 that the top two stay put. The September 2026 incident report already moved me: a model in a misconfigured eval published a malicious package. A few more like that and misalignment goes first.',
               quality: 'strong',
-              feedback: 'A number, a reason, and an update you already made, with its date. That is what calibration sounds like.',
+              feedback: 'A number, a reason, and an update you already made, with its date. That\'s what calibration sounds like.',
             },
             {
-              text: 'Nobody can really know how this plays out, so I am not sure ranking them is meaningful at all.',
+              text: 'Nobody can really know how any of this plays out, so I\'m not sure ranking them is meaningful. I\'d rather take each risk seriously on its own terms.',
               quality: 'weak',
               feedback: 'True that nobody knows; false that ranking is meaningless. Teams allocate people under uncertainty every day. This reads as dodging.',
             },
             {
-              text: 'Pretty confident. I have read a lot about this, and the order seems fairly clear to me.',
+              text: 'Pretty confident. I\'ve read a lot about this over the past couple of years, including your research, and the order seems fairly clear to me.',
               quality: 'okay',
               feedback: 'Confidence with no reason and no mind-changer. The next question is "what would change it?", and you have left nothing to stand on.',
             },
@@ -286,17 +286,17 @@ const lesson: Lesson = {
           interviewer: 'Where does your own work touch any of this?',
           options: [
             {
-              text: 'Not much, to be honest. I am an infrastructure engineer; safety is really the research team\'s job.',
+              text: 'Not much, to be honest. I\'m an infrastructure engineer, so I mostly keep systems up. Safety is really the research team\'s job, and I\'d trust them with it.',
               quality: 'weak',
               feedback: 'Candidates report being asked how they have practiced safety in past work. "Not my job" is the answer most likely to end the conversation.',
             },
             {
-              text: 'More than you would think, at the boring layer. I run CI sandboxes. The 2026 incidents started with eval environments that could reach the internet. Default-deny egress and audit logs are things I have built, and I would want to build them here.',
+              text: 'More than you\'d think, at the boring layer. I run CI sandboxes, and the 2026 incidents started with eval environments that could reach the internet. Default-deny egress and audit logs are things I\'ve built and would build here.',
               quality: 'strong',
               feedback: 'Specific, honest about the size of your role, and tied to a real failure. Infrastructure is safety work when the thing being contained is an agent.',
             },
             {
-              text: 'I care a lot about security, and I always follow best practices like code review and least privilege.',
+              text: 'I care a lot about security. On my team I push for best practices like code review, least privilege and regular dependency audits, and I think that matters here.',
               quality: 'okay',
               feedback: 'Good habits, but generic. Connect one of them to a specific risk and a specific thing you built.',
             },
@@ -304,7 +304,7 @@ const lesson: Lesson = {
         },
       ],
       wrapUp:
-        'The pattern across all three turns: a view, a reason, a confidence level, and a link to your own work. You do not need the "right" ranking. As Daniela Amodei said of Anthropic\'s culture interview, "We\'re not looking for a specific belief."',
+        'The pattern across all three turns: a view, a reason, a confidence level, and a link to your own work. You don\'t need the "right" ranking. As Daniela Amodei said of Anthropic\'s culture interview, "We\'re not looking for a specific belief."',
     },
     {
       kind: 'reflect',
@@ -329,9 +329,9 @@ const lesson: Lesson = {
       title: 'Keep three things',
       body:
         '1. **Sort by intent.** Misuse has a human author, misalignment has none, structural risk has no single author.\n' +
-        '1. **Rank with reasons and graded evidence**: in the wild, in the lab, projected. Date what you cite.\n' +
-        '1. **State your confidence**, what would change it, and where your work touches the risk.\n\n' +
-        'You do not need the house view. You need your own, held for reasons.',
+        '2. **Rank with reasons and graded evidence**: in the wild, in the lab, projected. Date what you cite.\n' +
+        '3. **State your confidence**, what would change it, and where your work touches the risk.\n\n' +
+        'You don\'t need the house view. You need your own, held for reasons.',
     },
   ],
   cards: [
@@ -350,9 +350,9 @@ const lesson: Lesson = {
       choices: [
         { text: 'Misuse', correct: true, feedback: 'The criminals supplied the goal; the agent supplied speed and skill.' },
         { text: 'Misalignment', feedback: 'Nothing suggests the model pursued a goal of its own. The humans wanted the extortion.' },
-        { text: 'Structural', feedback: 'There is a clear human author with a clear goal, so this is not an author-less, aggregate harm.' },
+        { text: 'Structural', feedback: 'There\'s a clear human author with a clear goal, so this isn\'t an author-less, aggregate harm.' },
       ],
-      explanation: 'Ask whose intent produced the harm. Here it is the group\'s, which makes it misuse; the fixes are detection, safeguards and cutting off access.',
+      explanation: 'Ask whose intent produced the harm. Here it\'s the group\'s, which makes it misuse; the fixes are detection, safeguards and cutting off access.',
     },
     {
       id: 'why-risks.lab-vs-wild',
@@ -409,17 +409,17 @@ const lesson: Lesson = {
         'A behavior reproduced in a controlled lab scenario',
         'A projection from current usage trends',
       ],
-      explanation: 'Say which grade you are standing on. Misuse claims can lean on incidents, misalignment claims mostly on lab results, structural claims on projections.',
+      explanation: 'Say which grade you\'re standing on. Misuse claims can lean on incidents, misalignment claims mostly on lab results, structural claims on projections.',
     },
     {
       id: 'why-risks.confidence',
       skill: 'why.risks',
       kind: 'compare',
       question: 'How confident are you in your ranking of AI risks?',
-      a: 'Very confident. I have thought about this a lot, and to me the order is pretty clear.',
+      a: 'Very confident. I\'ve thought about this a lot, and to me the order is pretty clear.',
       b: 'Moderately, maybe 60/40 on my top two. The first rests on documented incidents, the second on lab results in artificial setups. More real-world agent incidents would flip them.',
       better: 'b',
-      explanation: 'B gives a number, grades the evidence under each pick, and names what would change the order, which answers the next follow-up before it is asked.',
+      explanation: 'B gives a number, grades the evidence under each pick, and names what would change the order, which answers the next follow-up before it\'s asked.',
     },
     {
       id: 'why-risks.overrated',

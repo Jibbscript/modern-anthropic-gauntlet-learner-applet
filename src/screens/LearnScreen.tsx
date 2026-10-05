@@ -117,6 +117,7 @@ function WeekStrip({ s, today, big }: { s: GauntletState; today: string; big?: b
         return (
           <li key={key} className={`learn-day learn-day--${state} ${isToday ? 'is-today' : ''}`} aria-label={label}>
             <motion.span
+              key={state}
               className="learn-day__dot"
               initial={met ? { scale: 0.3 } : false}
               animate={{ scale: 1 }}
@@ -365,10 +366,14 @@ function EndCard({ kind }: { kind: 'complete' | 'waiting' }) {
   const setTab = useNav((n) => n.setTab)
   return (
     <motion.section variants={item} className={`learn-end learn-end--${kind}`}>
-      <div className="learn-end__badge">{kind === 'complete' ? <Trophy size={30} strokeWidth={2.2} /> : <Sparkles size={28} strokeWidth={2.2} />}</div>
+      <div className="learn-end__top">
+        <div className="learn-end__badge">{kind === 'complete' ? <Trophy size={28} strokeWidth={2.2} /> : <Sparkles size={26} strokeWidth={2.2} />}</div>
+        <div className="learn-end__titles">
+          <div className="learn-end__eyebrow">{kind === 'complete' ? 'Path complete' : 'All caught up'}</div>
+          <h2>{kind === 'complete' ? 'Every lesson done' : 'New lessons are on the way'}</h2>
+        </div>
+      </div>
       <div className="learn-end__text">
-        <div className="learn-end__eyebrow">{kind === 'complete' ? 'Path complete' : 'All caught up'}</div>
-        <h2>{kind === 'complete' ? 'Every lesson done' : 'New lessons are on the way'}</h2>
         <p>
           {kind === 'complete'
             ? 'Keep it fresh: short daily reviews hold it in memory until the interview.'
@@ -581,8 +586,16 @@ export default function LearnScreen() {
               onClick={() => open('streak')}
               aria-label={streakLabel}
             >
-              <Bolt on={live.doneToday} size={18} />
-              <span className="tabular">{live.count}</span>
+              <motion.span
+                key={String(live.doneToday)}
+                className="learn-pill__icon"
+                initial={live.doneToday ? { scale: 0.6 } : false}
+                animate={{ scale: live.doneToday ? [0.6, 1.25, 0.9, 1.05, 1] : 1 }}
+                transition={{ duration: 0.6, ease: 'easeOut' }}
+              >
+                <Bolt on={live.doneToday} size={18} />
+              </motion.span>
+              <Ticker value={live.count} duration={0.5} />
             </motion.button>
             <motion.button
               type="button"
@@ -592,7 +605,7 @@ export default function LearnScreen() {
               aria-label={`${fmt.format(s.xp)} XP total`}
             >
               <Sparkles size={17} strokeWidth={2.4} />
-              <span className="tabular">{compact(s.xp)}</span>
+              <Ticker value={s.xp} duration={0.9} format={(v) => compact(Math.round(v))} />
             </motion.button>
             <motion.button
               type="button"

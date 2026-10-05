@@ -1,0 +1,399 @@
+/* Interview step: a chat transcript (interviewer left, learner right), reply tiles below, debrief card at the end. */
+
+.interview {
+  gap: var(--s-4);
+}
+
+.interview-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3);
+  min-height: 18px;
+}
+
+/* --------------------------------------------------------------- turn pips */
+
+.interview-pips {
+  display: flex;
+  gap: 5px;
+  flex: none;
+}
+.interview-pip {
+  width: 18px;
+  height: 6px;
+  border-radius: var(--r-pill);
+  background: var(--surface-3);
+  transition: background var(--dur-2), box-shadow var(--dur-2), width var(--dur-2) var(--ease-out);
+}
+.interview-pip--live {
+  width: 26px;
+  background: var(--c, var(--select));
+}
+.interview-pip--strong {
+  background: var(--good);
+}
+.interview-pip--okay {
+  background: var(--warn);
+}
+.interview-pip--weak {
+  background: var(--bad);
+}
+
+/* ---------------------------------------------------------------- transcript */
+
+.interview-log {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+}
+
+.interview-setup {
+  align-self: center;
+  max-width: 88%;
+  padding: 6px 12px;
+  border-radius: var(--r-md);
+  background: var(--surface-2);
+  color: var(--ink-3);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  line-height: 1.4;
+  text-align: center;
+  text-wrap: balance;
+  overflow-wrap: break-word;
+}
+
+.interview-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  min-width: 0;
+  margin-top: var(--s-1);
+}
+.interview-avatar {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--r-pill);
+  color: #fff;
+  font-weight: 700;
+  font-size: var(--fs-md);
+  line-height: 1;
+  background: linear-gradient(160deg, color-mix(in srgb, var(--c, var(--select)) 68%, #fff), var(--c, var(--select)) 62%);
+  box-shadow: 0 3px 0 0 var(--c-edge, var(--select-edge));
+  margin-bottom: 3px;
+}
+.interview-col {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+.interview-name {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--c-ink, var(--ink-3));
+}
+.interview-name--me {
+  color: var(--ink-3);
+  padding-right: 4px;
+}
+
+.interview-bubble {
+  max-width: 100%;
+  padding: 10px 14px;
+  border-radius: 20px;
+  overflow-wrap: break-word;
+  min-width: 0;
+}
+.interview-bubble .rich {
+  gap: 0.55em;
+}
+.interview-bubble--them {
+  border-bottom-left-radius: 6px;
+  background: var(--surface-2);
+  box-shadow: inset 0 0 0 1.5px var(--line);
+  font-size: var(--fs-lg);
+  font-weight: 600;
+  line-height: 1.38;
+  letter-spacing: -0.005em;
+  transform-origin: 0 100%;
+}
+
+/* the learner's reply: lands blue (sent), then takes the verdict colour */
+.interview-me {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  margin-left: 42px;
+  min-width: 0;
+  transform-origin: 100% 100%;
+}
+.interview-bubble--me {
+  --b-bg: var(--select-soft);
+  --b-line: var(--select);
+  border-bottom-right-radius: 6px;
+  background: var(--b-bg);
+  box-shadow: inset 0 0 0 2px var(--b-line);
+  font-size: var(--fs-md);
+  font-weight: 500;
+  line-height: 1.45;
+  transition: background var(--dur-2), box-shadow var(--dur-2);
+}
+.interview-bubble--strong {
+  --b-bg: var(--good-soft);
+  --b-line: var(--good);
+}
+.interview-bubble--okay {
+  --b-bg: var(--warn-soft);
+  --b-line: var(--warn);
+}
+.interview-bubble--weak {
+  --b-bg: var(--bad-soft);
+  --b-line: var(--bad);
+}
+
+.interview-note {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  max-width: 100%;
+  padding-right: 2px;
+}
+.interview-note__text {
+  font-size: var(--fs-sm);
+  line-height: 1.45;
+  color: var(--ink-2);
+  text-align: right;
+}
+.interview-chip {
+  padding: 3px 9px 3px 8px;
+}
+.interview-chip--strong {
+  background: var(--good-soft);
+  color: var(--good-ink);
+}
+.interview-chip--okay {
+  background: var(--warn-soft);
+  color: var(--retry-ink);
+}
+.interview-chip--weak {
+  background: var(--bad-soft);
+  color: var(--bad-ink);
+}
+
+/* typing dots */
+.interview-typing {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 14px 16px;
+  border-radius: 20px;
+  border-bottom-left-radius: 6px;
+  background: var(--surface-2);
+  box-shadow: inset 0 0 0 1.5px var(--line);
+}
+.interview-typing span {
+  width: 7px;
+  height: 7px;
+  border-radius: var(--r-pill);
+  background: var(--ink-3);
+  animation: interview-dot 0.9s var(--ease-out) infinite;
+}
+.interview-typing span:nth-child(2) {
+  animation-delay: 0.14s;
+}
+.interview-typing span:nth-child(3) {
+  animation-delay: 0.28s;
+}
+@keyframes interview-dot {
+  0%,
+  60%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.55;
+  }
+  30% {
+    transform: translateY(-5px);
+    opacity: 1;
+  }
+}
+
+/* revealed: the stronger reply under a turn the learner missed */
+.interview-reveal {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-left: 42px;
+  padding: 10px 14px 12px;
+  border-radius: 20px;
+  border-bottom-right-radius: 6px;
+  background-color: var(--surface);
+  background-image: repeating-linear-gradient(-45deg, transparent 0 8px, color-mix(in srgb, var(--good) 9%, transparent) 8px 16px);
+  box-shadow: inset 0 0 0 2px var(--good), 0 3px 0 0 var(--good-edge);
+  margin-bottom: 3px;
+  transform-origin: 100% 0;
+}
+.interview-reveal__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--good-ink);
+}
+.interview-reveal__text {
+  font-size: var(--fs-md);
+  font-weight: 500;
+  line-height: 1.45;
+  overflow-wrap: break-word;
+}
+.interview-reveal__why {
+  font-size: var(--fs-sm);
+  color: var(--ink-2);
+  line-height: 1.45;
+}
+
+/* ------------------------------------------------------------------ options */
+
+.interview-options {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  margin-top: var(--s-1);
+}
+.interview-options__how {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.interview-option.tile {
+  align-items: flex-start;
+  font-weight: 500;
+  line-height: 1.45;
+  padding-top: 14px;
+  padding-bottom: 14px;
+}
+.interview-option .tile__badge {
+  margin-top: -3px;
+}
+.interview-option .tile__body {
+  overflow-wrap: break-word;
+}
+
+/* ------------------------------------------------------------------ debrief */
+
+.interview-debrief {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  margin-top: var(--s-3);
+  padding: var(--s-4);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  box-shadow: inset 0 0 0 2px var(--line), 0 var(--edge-h) 0 0 var(--edge);
+  margin-bottom: var(--edge-h);
+}
+.interview-debrief__head {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+}
+.interview-debrief__icon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  background: var(--c-soft, var(--select-soft));
+  color: var(--c-ink, var(--select));
+}
+.interview-debrief__titles {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.interview-debrief__title {
+  font-size: var(--fs-lg);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+.interview-debrief__sub {
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  color: var(--ink-3);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.interview-tally {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--s-2);
+}
+.interview-tally__cell {
+  --q: var(--ink-3);
+  --q-soft: var(--surface-2);
+  --q-ink: var(--ink-2);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 10px 8px;
+  border-radius: var(--r-md);
+  background: var(--q-soft);
+  box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--q) 35%, transparent);
+  min-width: 0;
+}
+.interview-tally__cell--strong {
+  --q: var(--good);
+  --q-soft: var(--good-soft);
+  --q-ink: var(--good-ink);
+}
+.interview-tally__cell--okay {
+  --q: var(--warn);
+  --q-soft: var(--warn-soft);
+  --q-ink: var(--retry-ink);
+}
+.interview-tally__cell--weak {
+  --q: var(--bad);
+  --q-soft: var(--bad-soft);
+  --q-ink: var(--bad-ink);
+}
+.interview-tally__cell--zero {
+  --q-soft: var(--surface-2);
+  --q: var(--line-strong);
+  --q-ink: var(--ink-3);
+}
+.interview-tally__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--q-ink);
+  white-space: nowrap;
+}
+.interview-tally__n {
+  font-size: var(--fs-2xl);
+  font-weight: 700;
+  line-height: 1.1;
+  color: var(--q-ink);
+}
+.interview-debrief__text {
+  font-size: var(--fs-md);
+  line-height: 1.5;
+  color: var(--ink-2);
+}

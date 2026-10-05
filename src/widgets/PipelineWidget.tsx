@@ -95,7 +95,6 @@ export default function PipelineWidget({ config, onComplete }: WidgetProps<Pipel
     }
     raf = requestAnimationFrame(loop)
     return () => cancelAnimationFrame(raf)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [playing, run, speed])
 
   // ---- goal
@@ -142,7 +141,10 @@ export default function PipelineWidget({ config, onComplete }: WidgetProps<Pipel
   }
 
   // before the first tick of a run, show every image still in the inbox
-  const frame: Frame = !playing && frameIdx === 0 && clock.get() === 0 ? { t: 0, locs: run.frames[0].locs.map(() => ({ at: 'src' }) as Loc) } : frames[Math.min(frameIdx, frames.length - 1)]
+  const frame: Frame =
+    !playing && frameIdx === 0 && clock.get() === 0
+      ? { t: 0, locs: run.frames[0].locs.map(() => ({ at: 'src' }) as Loc) }
+      : frames[Math.min(frameIdx, frames.length - 1)]
   const finished = frameIdx === frames.length - 1 && frames.length > 1 && clock.get() >= run.total - 1e-9
   const goalText = goal === 'throughput' ? `Reach a throughput of at least ${fmtRate(target)} images per time unit` : 'Try three different setups'
   const slowest = bn.length ? bn.map((s) => LABELS[s]).join(' & ') : null
@@ -151,7 +153,13 @@ export default function PipelineWidget({ config, onComplete }: WidgetProps<Pipel
     <div className="pipe">
       <AnimatePresence mode="wait" initial={false}>
         {reached ? (
-          <motion.div key="done" className="w-goal" initial={{ scale: 0.85, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: 'spring', stiffness: 520, damping: 20 }}>
+          <motion.div
+            key="done"
+            className="w-goal"
+            initial={{ scale: 0.85, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ type: 'spring', stiffness: 520, damping: 20 }}
+          >
             <CheckCircle2 size={18} strokeWidth={2.6} />
             <span>Goal reached</span>
           </motion.div>
@@ -190,7 +198,18 @@ export default function PipelineWidget({ config, onComplete }: WidgetProps<Pipel
         <PipeHeader frame={frame} images={images} clock={clock} />
         <div className="pipe-line" style={{ ['--cap' as string]: queue } as CSSProperties}>
           {STAGES.map((_, s) => (
-            <StageCol key={s} s={s} frame={frame} workers={workers[s]} cost={costs[s]} util={util[s]} bottleneck={bn.includes(s)} queue={queue} clock={clock} reduce={reduce} />
+            <StageCol
+              key={s}
+              s={s}
+              frame={frame}
+              workers={workers[s]}
+              cost={costs[s]}
+              util={util[s]}
+              bottleneck={bn.includes(s)}
+              queue={queue}
+              clock={clock}
+              reduce={reduce}
+            />
           ))}
         </div>
         <TileLayer frame={frame} layoutKey={key} reduce={reduce} />
@@ -200,16 +219,30 @@ export default function PipelineWidget({ config, onComplete }: WidgetProps<Pipel
         <Button size="sm" variant="course" icon={playing ? <Pause size={16} strokeWidth={2.6} /> : <Play size={16} strokeWidth={2.6} />} onClick={togglePlay}>
           {playing ? 'Pause' : finished ? 'Run again' : clock.get() > 0 ? 'Resume' : `Run ${images} images`}
         </Button>
-        <Button size="sm" variant="secondary" icon={<RotateCcw size={16} strokeWidth={2.6} />} onClick={resetAll} disabled={!started && key === `${initialWorkers.join('')}-3`}>
+        <Button
+          size="sm"
+          variant="secondary"
+          icon={<RotateCcw size={16} strokeWidth={2.6} />}
+          onClick={resetAll}
+          disabled={!started && key === `${initialWorkers.join('')}-3`}
+        >
           Reset
         </Button>
       </div>
 
       <AnimatePresence mode="wait" initial={false}>
-        <motion.p key={`${slowest}-${workers.join('')}`} className="pipe-insight" initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} transition={{ duration: reduce ? 0 : 0.16 }}>
+        <motion.p
+          key={`${slowest}-${workers.join('')}`}
+          className="pipe-insight"
+          initial={{ opacity: 0, y: 4 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -4 }}
+          transition={{ duration: reduce ? 0 : 0.16 }}
+        >
           {slowest ? (
             <>
-              <b>{slowest}</b> {bn.length > 1 ? 'are' : 'is'} the bottleneck: {workers[bn[0]]} worker{workers[bn[0]] === 1 ? '' : 's'} ÷ {costs[bn[0]]} u = {fmtRate(thr)} images/u. Stages before it back up; stages after it wait.
+              <b>{slowest}</b> {bn.length > 1 ? 'are' : 'is'} the bottleneck: {workers[bn[0]]} worker{workers[bn[0]] === 1 ? '' : 's'} ÷ {costs[bn[0]]} u ={' '}
+              {fmtRate(thr)} images/u. Stages before it back up; stages after it wait.
             </>
           ) : (
             <>
@@ -234,8 +267,21 @@ export default function PipelineWidget({ config, onComplete }: WidgetProps<Pipel
                 <small>{costs[s]} u each</small>
               </span>
               <div className="pipe-step__ctl">
-                <Button size="sm" variant="secondary" icon={<Minus size={16} strokeWidth={2.8} />} aria-label={`Fewer ${LABELS[s]} workers`} disabled={workers[s] <= 1} onClick={() => setAlloc(s, -1)} />
-                <motion.span key={workers[s]} className="pipe-step__n tabular" initial={reduce ? false : { scale: 1.4 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 600, damping: 18 }}>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  icon={<Minus size={16} strokeWidth={2.8} />}
+                  aria-label={`Fewer ${LABELS[s]} workers`}
+                  disabled={workers[s] <= 1}
+                  onClick={() => setAlloc(s, -1)}
+                />
+                <motion.span
+                  key={workers[s]}
+                  className="pipe-step__n tabular"
+                  initial={reduce ? false : { scale: 1.4 }}
+                  animate={{ scale: 1 }}
+                  transition={{ type: 'spring', stiffness: 600, damping: 18 }}
+                >
                   {workers[s]}
                 </motion.span>
                 <Button
@@ -255,7 +301,16 @@ export default function PipelineWidget({ config, onComplete }: WidgetProps<Pipel
       <label className="pipe-slider">
         <span className="w-label">Queue size</span>
         <span className="pipe-slider__val tabular">{queue}</span>
-        <input className="w-slider" type="range" min={1} max={8} step={1} value={queue} onChange={(e) => setQ(Number(e.target.value))} aria-label="Queue size between stages" />
+        <input
+          className="w-slider"
+          type="range"
+          min={1}
+          max={8}
+          step={1}
+          value={queue}
+          onChange={(e) => setQ(Number(e.target.value))}
+          aria-label="Queue size between stages"
+        />
       </label>
     </div>
   )
@@ -347,7 +402,13 @@ function StageCol({
           <span className="tabular">{Math.round(util * 100)}%</span>
         </span>
         {bottleneck && (
-          <motion.span className="pipe-stage__flag" initial={reduce ? false : { scale: 0, rotate: -30 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: 'spring', stiffness: 500, damping: 18 }} title="Bottleneck">
+          <motion.span
+            className="pipe-stage__flag"
+            initial={reduce ? false : { scale: 0, rotate: -30 }}
+            animate={{ scale: 1, rotate: 0 }}
+            transition={{ type: 'spring', stiffness: 500, damping: 18 }}
+            title="Bottleneck"
+          >
             <Snail size={13} strokeWidth={2.6} />
           </motion.span>
         )}

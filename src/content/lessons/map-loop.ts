@@ -19,20 +19,10 @@ const lesson: Lesson = {
       },
     },
     {
-      kind: 'concept',
-      id: 'stages',
-      title: 'Five stages, as reported',
-      body: '1. **Recruiter screen**: 15-30 minutes.\n2. **Online assessment**: a 90-minute CodeSignal project with progressive levels. Some guides say referrals may skip it.\n3. **Technical screen**: 50-60 minutes of live, practical coding in Colab, Replit or CodeSignal.\n4. **Virtual onsite**: 4-5 one-hour rounds.\n5. **References and team matching**, which can go quiet for weeks.',
-      callout: {
-        tone: 'source',
-        text: "Pieced together from [Hello Interview's Anthropic guide](https://www.hellointerview.com/guides/anthropic/swe) and [interviewing.io](https://interviewing.io/anthropic-interview-questions) (2026). Anthropic's [careers page](https://www.anthropic.com/careers) confirms interviews run on Google Meet, with live coding tools like Colab and CodeSignal.",
-      },
-    },
-    {
       kind: 'order',
       id: 'order-stages',
       eyebrow: 'Warm-up',
-      prompt: 'Put the stages in the order most 2026 candidates report meeting them.',
+      prompt: 'Here are the five stages as 2026 candidates describe them. Put them in order.',
       items: [
         'A 15-30 minute call that increasingly probes AI safety',
         'A 90-minute project whose levels unlock as tests pass',
@@ -41,7 +31,7 @@ const lesson: Lesson = {
         'Reference calls, then matching to a team',
       ],
       explanation:
-        'Recruiter, assessment, technical screen, onsite, then references and team matching. Variations are common: referrals sometimes skip the assessment, some paths add a hiring-manager screen, and one August 2026 Senior+ path had a system design phone screen instead of a coding one.',
+        'Recruiter screen, online assessment, technical screen, virtual onsite, then references and team matching, which can go quiet for weeks. Variations are common: guides say referrals may skip the assessment, some paths add a hiring-manager screen, and one August 2026 Senior+ path had a design phone screen instead of coding.',
       hint: 'Cheap filters come first. The expensive day with many interviewers comes late.',
     },
     {
@@ -104,7 +94,11 @@ const lesson: Lesson = {
       kind: 'concept',
       id: 'onsite',
       title: 'The onsite: five different tests',
-      body: 'Candidates report 4-5 one-hour rounds, sometimes over two days, sometimes gated so the second half is cancelled if the first goes badly:\n\n- **Coding**: practical builds, nearly always with a concurrency follow-up\n- **System design** in a shared Google Doc, sometimes critiquing a flawed design\n- **Hiring manager**: your résumé, goals and how you work\n- **Project deep dive**: about 20 minutes presenting, then questions\n- **Culture / values**: no code, run by an employee nominated for it',
+      body: 'Candidates report 4-5 one-hour rounds, sometimes split over two days, with the second half cancelled if the first goes badly:\n\n- **Coding**: practical builds, nearly always with a concurrency follow-up\n- **System design** in a shared Google Doc, sometimes critiquing a flawed one\n- **Hiring manager**: your résumé, goals and how you work\n- **Project deep dive**: about 20 minutes presenting, then questions\n- **Culture / values**: no code, run by a nominated employee',
+      callout: {
+        tone: 'source',
+        text: "Pieced together from [Hello Interview's Anthropic guide](https://www.hellointerview.com/guides/anthropic/swe), [interviewing.io](https://interviewing.io/anthropic-interview-questions) and candidate reports (2026). Anthropic's [careers page](https://www.anthropic.com/careers) confirms interviews run on Google Meet, with live coding tools like Colab and CodeSignal.",
+      },
     },
     {
       kind: 'mcq',
@@ -187,12 +181,12 @@ const lesson: Lesson = {
           interviewer: 'Any questions about the process?',
           options: [
             {
-              text: 'Could you walk me through the rounds for this role and the format of each: environment, language, and whether any round uses AI tools?',
+              text: 'What are the rounds for this role, and the format of each: environment, language, any AI tools?',
               quality: 'strong',
               feedback: 'Strong. It targets exactly the parts that vary between loops, and asking about AI rules shows you know they change by stage.',
             },
             {
-              text: 'How long does the whole process usually take?',
+              text: 'How long does the whole process usually take, from here to an offer?',
               quality: 'okay',
               feedback: "Reasonable, but timelines swing from weeks to months, and it's the least actionable fact. Ask about format first.",
             },
@@ -207,7 +201,7 @@ const lesson: Lesson = {
           interviewer: "Before the onsite I'll send some reading on our approach to safety. Anything else you need from me?",
           options: [
             {
-              text: 'Thanks. Is there anything in particular I should focus on?',
+              text: "Thanks, I'll read it. Is there anything in particular you'd like me to focus on?",
               quality: 'okay',
               feedback: 'Polite and fine. It hands the work back to the recruiter, though, and shows nothing about your own preparation.',
             },
@@ -218,7 +212,7 @@ const lesson: Lesson = {
                 "It reads as asking for a script. Interviewers reportedly improvise from suggested questions, and Anthropic says it isn't looking for a specific belief. There's no answer key to hand over.",
             },
             {
-              text: "Great. I've read Core Views and the RSP v3 post, and I have questions about the pause change I'd like to dig into. Anything beyond those you'd suggest?",
+              text: "Thanks. I've read Core Views and the RSP v3 post and have questions about the pause change. Anything beyond those?",
               quality: 'strong',
               feedback: 'Strong. It shows you already went to primary sources, formed questions of your own, and want more. That is the habit the later rounds probe.',
             },
@@ -233,12 +227,12 @@ const lesson: Lesson = {
               feedback: "Candidates report team matching taking weeks, often with little word from the recruiter. Silence there is normal, and reading it as a verdict leads to bad decisions about your other processes.",
             },
             {
-              text: 'Understood. Is it fine if I check in every couple of weeks, and will I talk to more than one team?',
+              text: 'Understood. Can I check in every couple of weeks, and will I meet more than one team?',
               quality: 'strong',
               feedback: 'Strong. It sets a reasonable cadence and asks how matching works for you, instead of guessing.',
             },
             {
-              text: 'Okay, sounds good.',
+              text: "Okay, that sounds fine. I'll wait to hear from you then.",
               quality: 'okay',
               feedback: 'Fine. You just missed the chance to agree on how you will stay in touch.',
             },
@@ -309,12 +303,12 @@ const lesson: Lesson = {
       prompt: "An August 2026 Senior+ candidate's phone screen was system design, not coding. What should you take from reports like this?",
       choices: [
         {
-          text: 'Formats vary by role and level, so confirm your own loop with the recruiter',
+          text: 'Formats vary by role; confirm your own loop with your recruiter',
           correct: true,
           feedback: 'Yes. Reports are a good prior, and your recruiter has the actual round list.',
         },
-        { text: 'Senior candidates never get a coding screen', feedback: 'That overgeneralises from one report. Many senior candidates report coding screens.' },
-        { text: 'Candidate reports are unreliable, so ignore them', feedback: 'They are noisy, not useless. The stable patterns, like a culture round for every role, recur across many reports.' },
+        { text: 'Senior candidates no longer get coding screens at all', feedback: 'That overgeneralises from one report. Many senior candidates report coding screens.' },
+        { text: "Candidate reports are unreliable, so it's best to ignore them", feedback: 'They are noisy, not useless. The stable patterns, like a culture round for every role, recur across many reports.' },
         { text: 'Prepare for system design only and skip coding prep', feedback: 'The onsite still includes coding. One data point about one screen does not reshape the whole loop.' },
       ],
       explanation: 'Use reports to plan, then replace the guesses with facts from your recruiter: round list, formats, languages, AI rules.',

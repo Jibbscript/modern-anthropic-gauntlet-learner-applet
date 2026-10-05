@@ -245,11 +245,11 @@
   transition: background var(--dur-1);
 }
 .prac-row--tap:active {
-  background: var(--surface-2);
+  background: color-mix(in srgb, var(--ink) 5%, transparent);
 }
 @media (hover: hover) {
   .prac-row--tap:hover {
-    background: var(--surface-2);
+    background: color-mix(in srgb, var(--ink) 5%, transparent);
   }
 }
 .prac-row__icon {
@@ -643,7 +643,7 @@
   gap: var(--s-3);
   padding: var(--s-2) var(--s-3);
   border-radius: var(--r-md);
-  background: var(--surface-2);
+  background: color-mix(in srgb, var(--ink) 5%, transparent);
   font-size: var(--fs-sm);
   font-weight: 700;
   color: var(--ink-2);
