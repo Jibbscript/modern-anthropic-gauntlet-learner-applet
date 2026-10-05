@@ -74,14 +74,16 @@ export function ReviewSession({ cardIds, title = 'Review', onExit }: { cardIds: 
         })
       tally.current.answered++
       if (grade >= 3) tally.current.correct++
-      tally.current.xp += s.reviewCard(id, grade, o.ms)
+      // the second look at a missed card reschedules it, but is not paid or counted as another review
+      const secondLook = requeued.current.has(id) && pos >= firstPass.current
+      tally.current.xp += s.reviewCard(id, grade, o.ms, secondLook)
       if (grade === 1 && !requeued.current.has(id)) {
         requeued.current.add(id)
         queueLen.current++
         setQueue((q) => [...q, id])
       }
     },
-    [id, card],
+    [id, card, pos],
   )
 
   const onNext = useCallback(() => {

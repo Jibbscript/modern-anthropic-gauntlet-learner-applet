@@ -111,6 +111,17 @@ describe('store actions', () => {
     expect(store().streak).toMatchObject({ current: 1, lastDay: dayKey(T0) })
   })
 
+  it('a second look at a missed card reschedules it without paying or counting another review', () => {
+    expect(store().reviewCard('c1', 1, 1000)).toBe(XP.review[1])
+    const missed = store().cards.c1
+    vi.setSystemTime(T0 + 5 * 60_000)
+    expect(store().reviewCard('c1', 3, 1000, true)).toBe(0)
+    expect(store().cards.c1.due).toBeGreaterThan(missed.due) // rescheduled past the 10-minute retry
+    expect(store().cards.c1.reps).toBe(2)
+    expect(store().days[dayKey(T0)]).toMatchObject({ reviews: 1, answered: 1, xp: XP.review[1], activeMs: 2000 })
+    expect(store().xp).toBe(XP.review[1])
+  })
+
   it('passLabLevel: bestMs is the total time to clear every level', () => {
     store().passLabLevel('kv', 0, 60_000, 4)
     expect(store().labs.kv).toMatchObject({ levelsPassed: 1, bestMs: null, activeMs: 60_000 })

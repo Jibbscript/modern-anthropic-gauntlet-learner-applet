@@ -163,7 +163,7 @@ export default function SamplerWidget({ config, onComplete }: WidgetProps<Sample
     // same name at the same depth, but a frame above it changed: it's a different call
     const twin = [...c.missingEnds, ...c.missingBegins].find((d) => cur.prev[d] !== undefined && cur.prev[d] === cur.next[d])
     if (twin !== undefined) {
-      return `${cur.next[twin]} looks the same, but a frame above it changed, so it's a different call: the old one ends and a new one begins. ${more}`
+      return `Same name, new parent: this ${cur.next[twin]} is a different call. End the old one, begin the new one. ${more}`
     }
     if (c.missingBegins.length && c.missingBegins.some((d) => cur.prev.includes(cur.next[d]) && cur.prev[d] !== cur.next[d])) {
       return `A call at a new depth is a new frame, even with a familiar name. ${more}`
@@ -175,7 +175,7 @@ export default function SamplerWidget({ config, onComplete }: WidgetProps<Sample
   const prefixText = cur ? (cur.diff.prefix === 0 ? 'no common prefix' : `common prefix: ${cur.next.slice(0, cur.diff.prefix).join(' › ')}`) : ''
   const curEvents = cur ? eventsOf(cur) : []
   const goalText = goal === 'explore' ? 'Goal: turn the samples into a trace' : "Goal: mark every sample's events"
-  const doneText = 'Goal reached: every sample marked'
+  const doneText = goal === 'explore' ? 'Goal reached: trace built' : 'Goal reached: every sample marked'
   const rows = cur ? Math.max(cur.prev.length, cur.next.length, 1) : 0
   const canReveal = !checked && !revealed && (goal === 'explore' || fails >= 2)
   const marksCount = ends.size + begins.size
@@ -279,7 +279,7 @@ export default function SamplerWidget({ config, onComplete }: WidgetProps<Sample
                     </span>
                   </motion.div>
                 ) : marksCount === 0 ? (
-                  <motion.p key="tip" className="smp-tip" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                  <motion.p key="tip" className="smp-tip" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.12 }}>
                     Tap frames to mark them. No marks means no events.
                   </motion.p>
                 ) : null}

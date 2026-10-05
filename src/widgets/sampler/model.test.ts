@@ -12,6 +12,10 @@ describe('sampler model', () => {
     // same name at a different depth does not match
     expect(diff(['main', 'a', 'b'], ['main', 'b'])).toEqual({ prefix: 1, ends: [2, 1], begins: [1] })
     expect(diff([], ['main'])).toEqual({ prefix: 0, ends: [], begins: [0] })
+    // same name at the same depth under a changed parent is a different call: it ends and begins again
+    expect(diff(['main', 'a', 'c'], ['main', 'b', 'c'])).toEqual({ prefix: 1, ends: [2, 1], begins: [1, 2] })
+    // returning from recursion ends only the inner frame
+    expect(diff(['main', 'f', 'f', 'f'], ['main', 'f'])).toEqual({ prefix: 2, ends: [3, 2], begins: [] })
   })
 
   it('emits the expected events for the default samples', () => {

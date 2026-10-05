@@ -127,7 +127,12 @@ export interface GauntletActions {
    */
   answerStep(correctFirstTry: boolean, solved?: boolean): number
   finishLesson(lessonId: string, r: { accuracy: number; cardIds: string[]; activeMs: number }): { xp: number; streakExtended: boolean }
-  reviewCard(cardId: string, grade: Grade, activeMs: number): number
+  /**
+   * grade a review card; returns XP awarded. `repeat` marks a second look in
+   * the same session: it reschedules the card but is not another review (no
+   * XP, not counted toward the day's reviews)
+   */
+  reviewCard(cardId: string, grade: Grade, activeMs: number, repeat?: boolean): number
   saveReflection(key: string, text: string): void
   saveStory(slot: StorySlotId, patch: { layers?: Record<number, string>; notes?: string }): void
   rehearseStory(slot: StorySlotId, grade: Grade): void
@@ -309,6 +314,7 @@ function record<T>(v: unknown, f: (x: unknown) => T | null): Record<string, T> {
   const out: Record<string, T> = {}
   if (!isObj(v)) return out
   for (const [k, x] of Object.entries(v)) {
+    if (k === '__proto__') continue
     const y = f(x)
     if (y != null) out[k] = y
   }
@@ -542,14 +548,17 @@ export const useStore = create<Store>()(
         return { xp, streakExtended: extended }
       },
 
-      reviewCard: (cardId, grade, activeMs) => {
+      reviewCard: (cardId, grade, activeMs, repeat = false) => {
         const s = get()
         const t = now()
         const today = dayKey(t)
         const card = s.cards[cardId] ?? newCard(t, 0)
         const next = review(card, grade, t, scheduleOptions(s))
-        const xp = XP.review[grade]
-        const days = bumpDay(s.days, today, { xp, reviews: 1, answered: 1, correct: grade >= 3 ? 1 : 0, activeMs })
+        const xp = repeat ? 0 : XP.review[grade]
+        const ms = Math.max(0, activeMs || 0)
+        const days = repeat
+          ? bumpDay(s.days, today, { activeMs: ms })
+          : bumpDay(s.days, today, { xp, reviews: 1, answered: 1, correct: grade >= 3 ? 1 : 0, activeMs: ms })
         const { streak } = maybeExtend(s.streak, days, today)
         set({ cards: { ...s.cards, [cardId]: next }, xp: s.xp + xp, days, streak })
         return xp

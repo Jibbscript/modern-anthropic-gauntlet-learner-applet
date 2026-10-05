@@ -24,8 +24,11 @@
   z-index: 90;
   /* below the tab headers' stat pills */
   top: calc(env(safe-area-inset-top, 0px) + 68px);
-  left: 50%;
-  translate: -50% 0;
+  /* centred without left: 50%, which would cap its shrink-to-fit width at half the frame */
+  left: 0;
+  right: 0;
+  margin-inline: auto;
+  width: max-content;
   display: flex;
   align-items: center;
   gap: var(--s-3);

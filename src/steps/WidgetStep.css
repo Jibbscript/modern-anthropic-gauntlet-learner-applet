@@ -26,7 +26,7 @@
   width: 32px;
   height: 32px;
   border-radius: var(--r-pill);
-  color: #fff;
+  color: var(--c-on, #fff);
   background: var(--c, var(--select));
   box-shadow: 0 2px 0 0 var(--c-edge, var(--select-edge));
   transition:
@@ -64,6 +64,7 @@
   box-shadow: inset 0 0 0 2px var(--good);
 }
 .widget-goal--reached .widget-goal__icon {
+  color: #fff;
   background: var(--good);
   box-shadow: 0 2px 0 0 var(--good-edge);
 }
