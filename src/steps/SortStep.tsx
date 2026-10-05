@@ -1,5 +1,5 @@
 import { AnimatePresence, LayoutGroup, motion } from 'motion/react'
-import { CheckCheck, CircleCheck, CircleX, Eye } from 'lucide-react'
+import { Check, CheckCheck, CircleCheck, CircleX, Eye, MoveRight, X } from 'lucide-react'
 import { useEffect, useMemo, useState, type CSSProperties } from 'react'
 import type { SortStep as T } from '../core/types'
 import { Rich } from '../ui/Rich'
@@ -123,7 +123,6 @@ export default function SortStep({ step, phase, attempt, setController, lessonId
     return ok ? 'correct' : 'reveal'
   }
 
-  const wrongCount = st.placed.filter((p) => step.items[p.i].bucket !== p.b).length
   const total = n
   const sorted = total - st.deck.length
 
@@ -140,7 +139,7 @@ export default function SortStep({ step, phase, attempt, setController, lessonId
               {sorted}/{total}
             </span>
           </div>
-          <div className="sort-stage__well">
+          <div className={`sort-stage__well${locked ? ' sort-stage__well--compact' : ''}`}>
             {st.deck.length > 0 ? (
               <div className="sort-deck" aria-live="off">
                 {st.deck.slice(0, 3).map((i, depth) => (
@@ -148,7 +147,7 @@ export default function SortStep({ step, phase, attempt, setController, lessonId
                     key={i}
                     layoutId={lid(i)}
                     className={`sort-card${depth > 0 ? ' sort-card--behind' : ''}`}
-                    style={{ zIndex: 3 - depth }}
+                    style={{ zIndex: 3 - depth, borderRadius: 18 }}
                     initial={{ opacity: 0, y: 34, scale: 0.84 }}
                     animate={{ opacity: 1, y: depth * 9, scale: 1 - depth * 0.055 }}
                     transition={FLY}
@@ -166,7 +165,7 @@ export default function SortStep({ step, phase, attempt, setController, lessonId
                 ))}
               </div>
             ) : (
-              <StageStatus phase={phase} wrong={wrongCount} />
+              <StageStatus phase={phase} />
             )}
           </div>
         </div>
@@ -188,7 +187,8 @@ export default function SortStep({ step, phase, attempt, setController, lessonId
                 >
                   <span className="sort-bucket__face">
                     <span className="sort-bucket__label">{b.label}</span>
-                    <AnimatePresence>
+                  </span>
+                  <AnimatePresence>
                       {chips.length > 0 && (
                         <motion.span
                           key="n"
@@ -203,7 +203,6 @@ export default function SortStep({ step, phase, attempt, setController, lessonId
                         </motion.span>
                       )}
                     </AnimatePresence>
-                  </span>
                 </motion.button>
                 <div className={`sort-bucket__tray${chips.length ? '' : ' sort-bucket__tray--empty'}`}>
                   {chips.map((p) => {
@@ -214,7 +213,9 @@ export default function SortStep({ step, phase, attempt, setController, lessonId
                         key={p.i}
                         layoutId={lid(p.i)}
                         className={`sort-chip sort-chip--${s}`}
-                        transition={FLY}
+                        style={{ borderRadius: 10 }}
+                        animate={s === 'incorrect' ? { x: [0, -6, 6, -4, 4, -2, 0] } : { x: 0 }}
+                        transition={{ layout: FLY, x: { duration: 0.42 } }}
                       >
                         <motion.button
                           type="button"
@@ -223,14 +224,30 @@ export default function SortStep({ step, phase, attempt, setController, lessonId
                           disabled={locked}
                           onClick={() => unplace(p.i)}
                           aria-label={locked ? undefined : `${it.text}. Tap to put it back on the deck.`}
-                          animate={s === 'incorrect' ? { x: [0, -6, 6, -4, 4, -2, 0] } : { x: 0 }}
-                          transition={{ duration: 0.42 }}
                         >
-                          {s === 'correct' && <CircleCheck className="sort-chip__icon" size={15} strokeWidth={2.8} aria-label="Right bucket" />}
-                          {s === 'incorrect' && <CircleX className="sort-chip__icon" size={15} strokeWidth={2.8} aria-label="Wrong bucket" />}
-                          {s === 'reveal' && <Eye className="sort-chip__icon" size={15} strokeWidth={2.8} aria-label="Moved here" />}
                           <Rich text={it.text} inline className="sort-chip__text" />
                         </motion.button>
+                        <AnimatePresence>
+                          {s !== 'idle' && (
+                            <motion.span
+                              key={s}
+                              className="sort-chip__mark"
+                              initial={{ scale: 0 }}
+                              animate={{ scale: 1 }}
+                              transition={{ type: 'spring', stiffness: 600, damping: 18, delay: 0.05 }}
+                              role="img"
+                              aria-label={s === 'correct' ? 'Right bucket' : s === 'incorrect' ? 'Wrong bucket' : 'Moved here'}
+                            >
+                              {s === 'correct' ? (
+                                <Check size={12} strokeWidth={3.6} />
+                              ) : s === 'incorrect' ? (
+                                <X size={12} strokeWidth={3.6} />
+                              ) : (
+                                <MoveRight size={12} strokeWidth={3.4} />
+                              )}
+                            </motion.span>
+                          )}
+                        </AnimatePresence>
                         <AnimatePresence initial={false}>
                           {s === 'reveal' && it.why && (
                             <motion.div
@@ -259,26 +276,29 @@ export default function SortStep({ step, phase, attempt, setController, lessonId
   )
 }
 
-function StageStatus({ phase, wrong }: { phase: StepProps['phase']; wrong: number }) {
+function StageStatus({ phase }: { phase: StepProps['phase'] }) {
   const [Icon, title, sub, tone] =
     phase === 'answer'
       ? [CheckCheck, 'All sorted', 'Tap a card in a bucket to take it back.', 'done']
       : phase === 'correct'
-        ? [CircleCheck, 'Every card in the right bucket', '', 'good']
+        ? [CircleCheck, 'Every card is in the right bucket', '', 'good']
         : phase === 'incorrect'
-          ? [CircleX, wrong === 1 ? '1 card in the wrong bucket' : `${wrong} cards in the wrong bucket`, '', 'bad']
+          ? [CircleX, 'Red cards are in the wrong bucket', '', 'bad']
           : [Eye, 'Here is where each card goes', 'Striped cards were moved.', 'reveal']
+  const compact = phase !== 'answer'
   return (
     <motion.div
       key={phase}
-      className={`sort-status sort-status--${tone}`}
-      initial={{ opacity: 0, scale: 0.92 }}
+      className={`sort-status sort-status--${tone}${compact ? ' sort-status--compact' : ''}`}
+      initial={{ opacity: 0, scale: 0.94 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ type: 'spring', stiffness: 520, damping: 30 }}
     >
-      <Icon size={30} strokeWidth={2.4} className="sort-status__icon" aria-hidden />
-      <div className="sort-status__title">{title}</div>
-      {sub && <div className="sort-status__sub">{sub}</div>}
+      <Icon size={compact ? 22 : 30} strokeWidth={2.4} className="sort-status__icon" aria-hidden />
+      <div className="sort-status__words">
+        <div className="sort-status__title">{title}</div>
+        {sub && <div className="sort-status__sub">{sub}</div>}
+      </div>
     </motion.div>
   )
 }

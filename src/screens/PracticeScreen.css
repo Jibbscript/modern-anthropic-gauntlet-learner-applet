@@ -153,35 +153,35 @@
   color: var(--ink);
   font-weight: 900;
 }
-.prac-hero__done {
-  display: flex;
-  align-items: center;
-  gap: var(--s-2);
-  margin: 2px 0 2px;
-}
-.prac-hero__done h2 {
+.prac-hero__title {
+  margin-top: var(--s-2);
   font-size: var(--fs-2xl);
   font-weight: 900;
   letter-spacing: -0.02em;
 }
 .prac-hero__check {
   position: relative;
-  flex: none;
+  align-self: flex-start;
   display: grid;
   place-items: center;
-  width: 34px;
-  height: 34px;
-  border-radius: 11px;
+  width: 56px;
+  height: 56px;
+  margin: 2px 0 4px;
+  border-radius: 18px;
   color: #fff;
   background: linear-gradient(160deg, color-mix(in srgb, var(--good) 70%, #fff), var(--good) 55%, var(--good-edge));
-  box-shadow: 0 3px 0 0 var(--good-edge);
+  box-shadow: 0 4px 0 0 var(--good-edge), 0 10px 22px color-mix(in srgb, var(--good) 30%, transparent);
   overflow: hidden;
+}
+.prac-hero__check svg {
+  position: relative;
+  z-index: 1;
 }
 .prac-hero__check::after {
   content: '';
   position: absolute;
-  inset: 2px 4px 55% 4px;
-  border-radius: 8px 8px 14px 14px;
+  inset: 3px 6px 55% 6px;
+  border-radius: 14px 14px 22px 22px;
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0));
 }
 .prac-hero__ring {
@@ -291,9 +291,7 @@
   font-size: var(--fs-md);
   font-weight: 800;
   line-height: 1.25;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  text-wrap: balance;
 }
 .prac-row__big {
   flex: none;
@@ -374,6 +372,9 @@
 }
 .prac-fc__day.is-today {
   font-weight: 900;
+  fill: var(--ink-inverse);
+}
+.prac-fc__pill {
   fill: var(--ink);
 }
 
@@ -498,8 +499,12 @@
   font-weight: 700;
   color: var(--ink-3);
 }
-.prac-lab__dot {
-  opacity: 0.6;
+.prac-lab__grp {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-right: 6px;
+  white-space: nowrap;
 }
 .prac-lab__pips {
   display: inline-flex;

@@ -170,7 +170,6 @@
 }
 .crawl-node--skipped .crawl-node__label {
   fill: var(--ink-3);
-  text-decoration: line-through;
 }
 .crawl-node__ring {
   fill: none;
@@ -199,7 +198,7 @@
 }
 .crawl-node__badge text {
   font-family: var(--font-ui);
-  font-size: 8.5px;
+  font-size: 10px;
   font-weight: 900;
   text-anchor: middle;
   fill: #fff;
@@ -378,7 +377,7 @@
   grid-template-columns: 1fr;
   gap: var(--s-2);
 }
-@container (min-width: 330px) {
+@container (min-width: 290px) {
   .crawl-controls {
     grid-template-columns: 1fr 1fr;
     align-items: end;
@@ -427,6 +426,11 @@
   gap: 4px;
   font-size: var(--fs-sm);
   font-weight: 800;
+  line-height: 1.2;
+}
+.crawl-toggle.tile--compact {
+  min-height: 48px;
+  margin-bottom: var(--edge-h);
 }
 .crawl-switch {
   flex: none;

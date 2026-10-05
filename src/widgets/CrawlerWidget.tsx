@@ -267,8 +267,8 @@ export default function CrawlerWidget({ config, onComplete }: WidgetProps<Crawle
                   ))}
                   {badge && (
                     <g transform={`translate(${NODE_R - 1} ${-NODE_R + 1})`} className={`crawl-node__badge crawl-node__badge--${badge.tone}`}>
-                      <rect x={-2} y={-6.5} width={badge.text.length * 5.6 + 4} height={13} rx={6.5} />
-                      <text x={badge.text.length * 2.8} dy="0.35em">
+                      <rect x={-3} y={-7.5} width={badge.text.length * 6.2 + 6} height={15} rx={7.5} />
+                      <text x={badge.text.length * 3.1} dy="0.35em">
                         {badge.text}
                       </text>
                     </g>
@@ -385,7 +385,7 @@ export default function CrawlerWidget({ config, onComplete }: WidgetProps<Crawle
           aria-checked={opts.sameHost}
         >
           <span className="crawl-toggle__text">
-            Same host only {locked.has('sameHost') && <Lock size={11} strokeWidth={2.8} />}
+            Same host {locked.has('sameHost') && <Lock size={11} strokeWidth={2.8} />}
           </span>
           <span className={`crawl-switch${opts.sameHost ? ' is-on' : ''}`} aria-hidden>
             <motion.i layout transition={{ type: 'spring', stiffness: 600, damping: 32 }} />

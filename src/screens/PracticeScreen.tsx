@@ -208,7 +208,7 @@ export default function PracticeScreen() {
 
               {d.courses.length > 0 && (
                 <motion.section className="prac-sec" {...rise(i++)}>
-                  <SectionHead title="Memory by course" aside="Recall · cards unlocked" />
+                  <SectionHead title="Memory by course" aside="Recall" />
                   <div className="prac-card">
                     {d.courses.map(({ course, m }) => (
                       <button key={course.id} type="button" className="prac-row prac-row--tap" style={courseStyle(course.color)} onClick={() => nav.openCourse(course.id)}>
@@ -222,7 +222,7 @@ export default function PracticeScreen() {
                           </span>
                           <ProgressBar value={m.unlocked ? m.recall : 0} tone="course" height={8} label={`${course.title} recall`} />
                           <span className="prac-row__meta tabular">
-                            {m.unlocked}/{m.total} cards unlocked{m.due > 0 ? ` · ${m.due} due` : ''}
+                            {m.unlocked}/{m.total} unlocked{m.due > 0 ? ` · ${m.due} due` : ''}
                           </span>
                         </span>
                         <ChevronRight className="prac-row__chev" size={20} strokeWidth={2.6} />
@@ -297,17 +297,15 @@ function Hero(p: {
           </div>
           {caughtUp ? (
             <>
-              <div className="prac-hero__done">
-                <motion.span
-                  className="prac-hero__check"
-                  initial={{ scale: 0.4, rotate: -20 }}
-                  animate={{ scale: 1, rotate: 0 }}
-                  transition={{ type: 'spring', stiffness: 420, damping: 16, delay: 0.15 }}
-                >
-                  <Check size={22} strokeWidth={3.4} />
-                </motion.span>
-                <h2>All caught up</h2>
-              </div>
+              <motion.span
+                className="prac-hero__check"
+                initial={{ scale: 0.4, rotate: -25 }}
+                animate={{ scale: 1, rotate: -6 }}
+                transition={{ type: 'spring', stiffness: 420, damping: 15, delay: 0.15 }}
+              >
+                <Check size={32} strokeWidth={3.6} />
+              </motion.span>
+              <h2 className="prac-hero__title">All caught up</h2>
               <p className="prac-hero__sub">
                 {p.nextDue ? (
                   <>
@@ -382,7 +380,7 @@ function EmptyDeck({ onLearn }: { onLearn: () => void }) {
           <span>2</span>Its key ideas join your deck as cards
         </li>
         <li>
-          <span>3</span>Review a few minutes a day to keep them
+          <span>3</span>Review a few minutes a day
         </li>
       </ol>
       <Button block size="lg" iconRight={<ArrowRight size={20} strokeWidth={2.8} />} onClick={onLearn}>
@@ -416,6 +414,10 @@ function ForecastChart({ data }: { data: { day: string; count: number }[] }) {
   const band = (width - 2 * padX) / n
   const bw = Math.min(24, band * 0.58)
   const baseY = top + plotH
+  // "Today" in a pill when there is room, else the weekday in the pill
+  const roomy = band >= 50
+  const todayLabel = roomy ? 'Today' : weekday(data[0]?.day ?? '')
+  const pillW = roomy ? 52 : Math.min(band - 2, 40)
   return (
     <div ref={ref} className="prac-fc">
       {width > 0 && (
@@ -443,8 +445,9 @@ function ForecastChart({ data }: { data: { day: string; count: number }[] }) {
                 <text className={`prac-fc__val ${today ? 'is-today' : ''} ${x.count ? '' : 'is-zero'}`} x={cx} y={baseY - h - 7} textAnchor="middle">
                   {x.count}
                 </text>
+                {today && <rect className="prac-fc__pill" x={cx - pillW / 2} y={H - 21} width={pillW} height={21} rx={10.5} />}
                 <text className={`prac-fc__day ${today ? 'is-today' : ''}`} x={cx} y={H - 6} textAnchor="middle">
-                  {today ? 'Today' : weekday(x.day)}
+                  {today ? todayLabel : weekday(x.day)}
                 </text>
               </g>
             )
@@ -484,12 +487,13 @@ function LabCard({ lab, passed }: { lab: Lab; passed: number }) {
               <i key={k} className={k < done ? 'on' : ''} />
             ))}
           </span>
-          <span className="tabular">
+          <span className="prac-lab__grp tabular">
             {done}/{n} levels
           </span>
-          <span className="prac-lab__dot">·</span>
-          <Clock size={14} strokeWidth={2.6} />
-          <span className="tabular">{lab.minutes} min</span>
+          <span className="prac-lab__grp tabular">
+            <Clock size={14} strokeWidth={2.6} />
+            {lab.minutes} min
+          </span>
         </span>
       </span>
       <ChevronRight className="prac-lab__chev" size={20} strokeWidth={2.6} />
