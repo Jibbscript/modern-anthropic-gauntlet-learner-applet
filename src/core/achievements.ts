@@ -1,4 +1,4 @@
-import type { GauntletState } from './store'
+import type { GauntletState, LabProgress } from './store'
 import type { Catalog } from './adaptive'
 
 export interface Achievement {
@@ -16,6 +16,8 @@ const courseDone = (s: GauntletState, cat: Catalog, id: string) => {
   const c = cat.courses.find((x) => x.id === id)
   return !!c && c.lessons.length > 0 && c.lessons.every((l) => s.lessons[l.id]?.completedAt)
 }
+/** a lab is finished once its last level passes; that is when its total time (bestMs) is recorded */
+export const labFinished = (l: LabProgress | undefined) => l?.bestMs != null
 const storiesWritten = (s: GauntletState) =>
   Object.values(s.stories).filter((e) => e && Object.values(e.layers).filter((v) => v.trim().length > 20).length >= 2).length
 
@@ -36,7 +38,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   { id: 'values-done', title: 'Judgment call', desc: 'Finish the Values & Judgment course', icon: 'target', test: (s, c) => courseDone(s, c, 'values') },
   { id: 'concurrency-done', title: 'Thread safe', desc: 'Finish the Concurrency course', icon: 'code', test: (s, c) => courseDone(s, c, 'concurrency') },
   { id: 'builds-done', title: 'Builder', desc: 'Finish the Build Rounds course', icon: 'code', test: (s, c) => courseDone(s, c, 'builds') },
-  { id: 'lab-1', title: 'Shipped it', desc: 'Pass every level of a code lab', icon: 'trophy', test: (s) => Object.values(s.labs).some((l) => l.levelsPassed >= 3) },
+  { id: 'lab-1', title: 'Shipped it', desc: 'Pass every level of a code lab', icon: 'trophy', test: (s) => Object.values(s.labs).some(labFinished) },
   { id: 'xp-1000', title: 'Four digits', desc: 'Earn 1,000 XP', icon: 'zap', test: (s) => s.xp >= 1000 },
   { id: 'night-owl', title: 'Every day counts', desc: 'Hit your daily goal 5 times', icon: 'clock', test: (s) => Object.values(s.days).filter((d) => d.xp >= s.settings.dailyXpGoal).length >= 5 },
 ]

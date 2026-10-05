@@ -130,7 +130,8 @@ export default function LruWidget({ config, onComplete }: WidgetProps<LruConfig>
   function checkGoal(next: LruState, nextPos: number) {
     const finished = seqMode && nextPos >= ops.length
     if (goal === 'explore' && (next.tick >= EXPLORE_OPS || finished)) complete()
-    else if (goal === 'hits' && (next.hits >= hitTarget || (finished && hitTarget === 0))) complete()
+    // a script with no hits at all can't score any: replaying it is the goal then
+    else if (goal === 'hits' && (hitTarget > 0 ? next.hits >= hitTarget : finished)) complete()
     else if (goal === 'predict' && finished) complete()
   }
 
@@ -209,10 +210,16 @@ export default function LruWidget({ config, onComplete }: WidgetProps<LruConfig>
   const victimEntry = victim ? s.entries.find((e) => e.key === victim) : null
   const predictions = evictLog.filter(Boolean).length
 
-  let goalText = `Goal: run ${EXPLORE_OPS} operations`
-  let goalCount: string | null = `${Math.min(s.tick, EXPLORE_OPS)}/${EXPLORE_OPS}`
-  let doneText = `Goal reached: ${EXPLORE_OPS} operations`
-  if (goal === 'hits') {
+  /** explore over a short script ends with the script */
+  const exploreN = seqMode ? Math.min(EXPLORE_OPS, ops.length) : EXPLORE_OPS
+  let goalText = `Goal: run ${exploreN} operation${exploreN === 1 ? '' : 's'}`
+  let goalCount: string | null = `${Math.min(seqMode ? pos : s.tick, exploreN)}/${exploreN}`
+  let doneText = `Goal reached: ${exploreN} operation${exploreN === 1 ? '' : 's'}`
+  if (goal === 'hits' && hitTarget === 0) {
+    goalText = 'Goal: replay the sequence'
+    goalCount = `${pos}/${ops.length}`
+    doneText = 'Goal reached: sequence replayed'
+  } else if (goal === 'hits') {
     goalText = `Goal: score ${hitTarget} cache hit${hitTarget === 1 ? '' : 's'}`
     goalCount = `${Math.min(s.hits, hitTarget)}/${hitTarget}`
     doneText = `Goal reached: ${hitTarget} hit${hitTarget === 1 ? '' : 's'}`
@@ -220,8 +227,6 @@ export default function LruWidget({ config, onComplete }: WidgetProps<LruConfig>
     goalText = predict ? 'Goal: predict every eviction' : 'Goal: replay the sequence'
     goalCount = `${pos}/${ops.length}`
     doneText = predict ? 'Goal reached: every eviction called' : 'Goal reached: sequence replayed'
-  } else if (seqMode) {
-    goalCount = `${Math.min(pos, Math.min(EXPLORE_OPS, ops.length))}/${Math.min(EXPLORE_OPS, ops.length)}`
   }
 
   const showHint = !reached && !seqMode && goal === 'hits' && s.misses >= 2 && s.hits < hitTarget
@@ -315,13 +320,13 @@ export default function LruWidget({ config, onComplete }: WidgetProps<LruConfig>
                       >
                         <span className="lru-card__key">{e.key}</span>
                         <span className="lru-card__used tabular">t{e.used}</span>
-                        {e.version > 1 && (
-                          <motion.span key={e.version} className="lru-card__ver tabular" initial={reduce ? false : { scale: 0.3 }} animate={{ scale: 1 }} transition={POP}>
-                            v{e.version}
-                          </motion.span>
-                        )}
                         <motion.span className="lru-card__doom" variants={{ gone: { opacity: 1 } }} initial={{ opacity: 0 }} />
                       </motion.span>
+                      {e.version > 1 && (
+                        <motion.span key={`v${e.version}`} className="lru-card__ver tabular" aria-label={`version ${e.version}`} initial={reduce ? false : { scale: 0.3 }} animate={{ scale: 1 }} transition={POP}>
+                          v{e.version}
+                        </motion.span>
+                      )}
 
                       {fresh && flash && (flash.outcome === 'hit' || flash.outcome === 'update' || flash.outcome === 'insert') && !reduce && (
                         <motion.span

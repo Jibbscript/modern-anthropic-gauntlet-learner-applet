@@ -4,6 +4,8 @@ import type { Step } from '../../core/types'
  * Interview step fixtures:
  * - a 3-turn coding-round sim with a setup line and inline code
  * - a single-turn culture-round sim with no setup and long, multi-sentence replies
+ * - a 4-turn sim (pips) whose third turn has no strong option: revealing it must not
+ *   offer a "stronger reply" when the pick was already the best on offer
  */
 const steps: Step[] = [
   {
@@ -103,6 +105,47 @@ const steps: Step[] = [
       },
     ],
     wrapUp: 'Culture-round answers land when they show what you thought then, what you did, and how you feel about it now.',
+  },
+  {
+    kind: 'interview',
+    id: 'fx-interview-design',
+    eyebrow: 'System design sim',
+    setup: 'Design a URL shortener. Short turns.',
+    turns: [
+      {
+        interviewer: 'Where do you start?',
+        options: [
+          { text: 'Requirements: read/write ratio, scale, latency, and whether links expire.', quality: 'strong', feedback: 'Numbers before boxes.' },
+          { text: 'Pick a database.', quality: 'weak', feedback: 'A choice with nothing to choose against.' },
+          { text: 'Draw the API first.', quality: 'okay', feedback: 'Useful, but the scale drives the design.' },
+        ],
+      },
+      {
+        interviewer: 'How do you make the short code?',
+        options: [
+          { text: 'A random 7-character base62 string, retried on collision.', quality: 'okay', feedback: 'Works; say why collisions stay rare.' },
+          { text: 'A counter encoded in base62, handed out in blocks per server.', quality: 'strong', feedback: 'Unique by construction, no coordination per write.' },
+          { text: 'Hash the URL with MD5 and take the first 7 characters.', quality: 'weak', feedback: 'Collides, and the same URL always maps to the same code.' },
+        ],
+      },
+      {
+        interviewer: 'Reads are 100x writes. Where does the cache go?',
+        options: [
+          { text: 'A cache in front of the database, keyed by code.', quality: 'okay', feedback: 'Fine as far as it goes.' },
+          { text: 'No cache: the database can take it.', quality: 'weak', feedback: 'Not at 100x reads.' },
+          { text: 'Cache everything forever in every server’s memory.', quality: 'weak', feedback: 'Memory and invalidation will bite.' },
+        ],
+      },
+      {
+        interviewer: 'Last one: a link is reported as malware. What happens?',
+        options: [
+          { text: 'Flag the code, return a warning page, and purge it from caches.', quality: 'strong', feedback: 'Covers the cache you just added.' },
+          { text: 'Delete the row.', quality: 'weak', feedback: 'Caches keep serving it.' },
+          { text: 'Email the owner.', quality: 'okay', feedback: 'Polite, but the link still works.' },
+        ],
+      },
+    ],
+    wrapUp: 'Short, specific replies that carry numbers and name the next risk read as senior.',
   },
 ]
 

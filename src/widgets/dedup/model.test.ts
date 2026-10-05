@@ -73,6 +73,65 @@ describe('dedup funnel', () => {
     }
   })
 
+  it('treats small files as fully hashed by stage 2 and empty files as identical', () => {
+    const files: DFile[] = [
+      { name: 'a.txt', size: 300, head: 'ab', body: 'p' },
+      { name: 'b.txt', size: 300, head: 'ab', body: 'q' },
+      { name: 'c.txt', size: 300, head: 'cd', body: '' },
+      { name: 'e1.log', size: 0, head: '', body: '' },
+      { name: 'e2.log', size: 0, head: 'x', body: 'y' },
+      { name: 'big1', size: 9000, head: 'ab', body: '1' },
+      { name: 'big2', size: 9000, head: 'ab', body: '2' },
+    ]
+    const r = runFunnel(files)
+    // the 300-byte files: stage 2 read all 300 bytes of each, a and b match, c differs
+    expect(r[2].filesIn).toBe(7)
+    expect(r[2].filesRead).toBe(5) // empty files have nothing to read
+    expect(r[2].bytesThisStage).toBe(3 * 300 + 2 * HEAD_BYTES)
+    expect(names(files, r[2].newlyRuledOut)).toEqual(['c.txt'])
+    // stage 3 re-reads only the big files
+    expect(r[3].filesIn).toBe(6)
+    expect(r[3].filesRead).toBe(2)
+    expect(r[3].bytesThisStage).toBe(18000)
+    expect(r[3].groups.map((g) => names(files, g.files))).toEqual([
+      ['a.txt', 'b.txt'],
+      ['e1.log', 'e2.log'],
+    ])
+    expect(normalizeFiles(files).map((f) => [f.head, f.body])).toEqual([
+      ['ab', ''],
+      ['ab', ''],
+      ['cd', ''],
+      ['', ''],
+      ['', ''],
+      ['ab', '1'],
+      ['ab', '2'],
+    ])
+  })
+
+  it('agrees with an independent content oracle, including tiny and empty files', () => {
+    let seed = 29
+    const rnd = () => ((seed = (seed * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff)
+    const content = (f: DFile) => (f.size === 0 ? '' : f.size <= HEAD_BYTES ? f.head : `${f.head}|${f.body}`)
+    for (let trial = 0; trial < 300; trial++) {
+      const files: DFile[] = Array.from({ length: 2 + Math.floor(rnd() * 10) }, (_, i) => ({
+        name: `f${i}`,
+        size: [0, 0, 100, 4096, 4097, 900000][Math.floor(rnd() * 6)],
+        head: 'ab'[Math.floor(rnd() * 2)],
+        body: 'xy'[Math.floor(rnd() * 2)],
+      }))
+      const oracle = new Map<string, number[]>()
+      files.forEach((f, i) => oracle.set(`${f.size}:${content(f)}`, [...(oracle.get(`${f.size}:${content(f)}`) ?? []), i]))
+      const want = [...oracle.values()].filter((g) => g.length > 1).sort((a, b) => a[0] - b[0])
+      const r = runFunnel(files)
+      expect(r[3].groups.map((g) => g.files)).toEqual(want)
+      // stage 3 never re-reads a file that fits in its head
+      expect(r[3].bytesThisStage).toBe(r[2].groups.flatMap((g) => g.files).reduce((s, i) => s + (files[i].size > HEAD_BYTES ? files[i].size : 0), 0))
+      // each stage only reads files that entered it
+      expect(r[2].filesRead).toBeLessThanOrEqual(r[2].filesIn)
+      expect(r[3].filesIn).toBe(r[2].groups.reduce((s, g) => s + g.files.length, 0))
+    }
+  })
+
   it('formats sizes and kinds', () => {
     expect(formatBytes(640)).toBe('640 B')
     expect(formatBytes(1200)).toBe('1.2 KB')

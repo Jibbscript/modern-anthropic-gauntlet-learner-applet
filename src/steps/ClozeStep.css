@@ -17,8 +17,8 @@
   vertical-align: middle;
   box-sizing: border-box;
   width: calc(var(--cz-ch, 4) * 1ch + 18px);
-  /* never wider than the visible code area, so it can always be scrolled fully into view; long fills wrap */
-  max-width: calc(min(100vw, var(--app-max, 520px)) - 2 * var(--gutter) - 72px);
+  /* phrase-length options would push the line start out of a phone-width box: cap the pill and let long fills wrap */
+  max-width: min(22ch + 18px, calc(min(100vw, var(--app-max, 520px)) - 2 * var(--gutter) - 72px));
   min-height: 26px;
   margin: -2px 2px 0;
   padding: 2px 7px;

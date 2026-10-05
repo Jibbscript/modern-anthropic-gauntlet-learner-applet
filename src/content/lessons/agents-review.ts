@@ -197,7 +197,7 @@ async def fetch_all(session, urls):
                 queue.append(link)
     return seen`,
       bugLines: [5, 7],
-      explanation: '`queue.pop(0)` shifts the whole list and `link not in seen` scans it. Use a `deque` with `popleft()`, and a `set` for membership, keeping a list only if you need discovery order. In quick benchmarks on 20,000-node graphs, the fix took the crawl from seconds to milliseconds, a speedup of over 100x.',
+      explanation: '`queue.pop(0)` shifts the whole list and `link not in seen` scans it. Use a `deque` with `popleft()`, and a `set` for membership, keeping a list only if you need discovery order. In a quick benchmark on a 20,000-node graph, the fix took the crawl from tens of seconds to tens of milliseconds, a speedup of well over 100x; exact numbers vary by machine.',
       fix: {
         code: `from collections import deque
 
@@ -301,7 +301,7 @@ def test_rounds_to_cents():  # by hand
       prompt: "Eight worker threads call `record`. The assistant's comment explains why no lock is needed. Tap the line that loses updates.",
       code: STATS,
       bugLines: [10],
-      explanation: "Each dict operation is atomic, but line 10 is a read, an add, then a write, and another thread can run in between. In eight stress runs on one machine (CPython 3.11, 8 threads × 100,000 calls), the count ranged from about 500,000 to the full 800,000. The comment is half true, which makes it dangerous. The lock already exists; `record` just doesn't use it.",
+      explanation: "Each dict operation is atomic, but line 10 is a read, an add, then a write, and another thread can run in between. In quick stress tests on CPython 3.11 (8 threads × 100,000 calls), some runs kept all 800,000 updates and others lost over a quarter of them; how many varies by machine and version. The comment is half true, which makes it dangerous. The lock already exists; `record` just doesn't use it.",
       fix: {
         code: `def record(key: str) -> None:
     with lock:

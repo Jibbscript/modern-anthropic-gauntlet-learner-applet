@@ -19,7 +19,7 @@ const lesson: Lesson = {
         "It sounds safe. It reads as one of two things: you don't know yourself, or you won't say. Questions about dislikes, failures and limits test the same thing: ==will you tell the truth when it's unflattering?== A specific, slightly uncomfortable answer beats a polished empty one.",
       callout: {
         tone: 'insight',
-        text: 'Candidates report culture-round prompts like *When did you realize you were wrong?* and *Tell me about a time you received negative feedback*, and hiring-manager rounds asking which projects you liked and disliked. Prep write-ups list rehearsed STAR stories, and a gap between stated values and past behavior, among the reported failure modes.',
+        text: 'Candidates report culture-round prompts like *When did you realize you were wrong?*, *Tell me about a time you received negative feedback* and *Tell me about a working relationship that went badly*, and hiring-manager rounds asking which projects you liked and disliked. Prep write-ups list rehearsed STAR stories, and a gap between stated values and past behavior, among the reported failure modes.',
       },
     },
     {
@@ -287,20 +287,20 @@ const lesson: Lesson = {
     },
     {
       kind: 'reflect',
-      id: 'failure',
+      id: 'conflict',
       eyebrow: 'Story Bank',
-      prompt: 'Write your answer to *Tell me about something that went badly and was your fault.*',
+      prompt: 'Write your answer to *Tell me about a difficult working relationship.*',
       guidance:
-        'Choose something with a real cost, where your part is clear. Write your part as one sentence with *I* as the subject. Then add what you thought at the time, what it cost others, what you changed, and the evidence that the change stuck.',
+        "Your failure story already has a home in *Answers with depth*. This one tests the same honesty with another person in it. Describe the situation without a villain and give their side the way they would. Then your part, as plain *I* sentences, including what made it worse. End with where it landed and what you do differently now.",
       rubric: [
-        'States your part in one sentence, with I as the subject',
-        'Says what you thought at the time, not just in hindsight',
-        'Names the cost to others',
-        'Describes what you changed, with evidence it stuck',
-        'Shifts no blame and makes no one a villain',
+        'Describes the situation without making anyone a villain',
+        "States the other person's view in terms they would agree with",
+        'Names your own part, including something you got wrong',
+        'Says what you did to repair it, and where it landed',
+        'Names one habit you changed afterwards',
       ],
-      slot: 'failure',
-      placeholder: 'I …',
+      slot: 'conflict',
+      placeholder: 'I worked with … and we kept clashing over …',
     },
     {
       kind: 'concept',

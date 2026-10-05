@@ -169,7 +169,7 @@ const lesson: Lesson = {
         { left: 'Pushing for chip export controls', right: 'Denying advanced chips to China may be the single most important step' },
       ],
       explanation:
-        'Sources: Core Views (2023: large models are "qualitatively different"); the RSP v3 announcement (Feb 2026); the Department of War statement (Feb 2026: current frontier AI is "simply not reliable enough" for fully autonomous weapons); *We Must Pace the Frontier* (Sep 2026); *The Adolescence of Technology* (Jan 2026). Other live topics: open versus closed weights, and political spending ($20M to Public First Action in Feb 2026, later $40M). These are topics, not verdicts. Pick one you have actually thought about.',
+        'Sources: Core Views (2023: large models are "qualitatively different"); the RSP v3 announcement (Feb 2026); the Department of War statement (Feb 2026: current frontier AI is "simply not reliable enough" for fully autonomous weapons); *We Must Pace the Frontier* (Sep 2026); *The Adolescence of Technology* (Jan 2026). Other live topics: open versus closed weights, and political spending ($20M to Public First Action in Feb 2026, later doubled to $40M). These are topics, not verdicts. Pick one you have actually thought about.',
     },
     {
       kind: 'mcq',
@@ -209,17 +209,17 @@ const lesson: Lesson = {
           interviewer: 'So, why Anthropic?',
           options: [
             {
-              text: 'I use Claude every day and I\'m impressed by the research you publish. I want to work somewhere safety is central to the product rather than an afterthought, and that\'s rare.',
+              text: 'I use Claude every day and I\'m impressed by the research you publish. I want to work somewhere safety is central to the product rather than an afterthought, and honestly that\'s rare in this industry.',
               quality: 'okay',
               feedback: 'Sincere, but it survives the swap test. Which research, and what has it got to do with you?',
             },
             {
-              text: 'Honestly, you\'re the most ethical AI company out there, and everyone in the industry knows it. I\'d be honored to be part of the team and help however I can.',
+              text: 'Honestly, you\'re the most ethical AI company out there, and everyone in the industry knows it. I\'d be honored to be part of the team and to help in whatever way I can.',
               quality: 'weak',
               feedback: 'Flattery with no content. Reported failure modes for these conversations include rehearsed enthusiasm and reciting the mission.',
             },
             {
-              text: 'Three years on fraud models taught me to care about "why did it flag this?" Your March 2025 circuit-tracing work asks that at the frontier, and I want to build tooling for it. If interpretability lost headcount here, I\'d be less keen.',
+              text: 'Three years on fraud models taught me to ask "why did it flag this?" Your March 2025 circuit-tracing work asks that at the frontier, and I want to build its tooling. If interpretability lost headcount, I\'d be less keen.',
               quality: 'strong',
               feedback: 'A dated paper, the personal history that makes it matter to you, a concrete role, and a condition that would make the reason false.',
             },
@@ -229,17 +229,17 @@ const lesson: Lesson = {
           interviewer: 'Lots of labs say they care about safety. What is actually different here?',
           options: [
             {
-              text: 'Some differences are real, some aren\'t. Frameworks aren\'t anymore: OpenAI and DeepMind adopted their own soon after the RSP. Governance is: a PBC from day one, and a trust-appointed board majority since April 2026. Does that hold up against commercial pressure? I\'d want to know.',
+              text: 'Frameworks no longer differ: OpenAI and DeepMind adopted their own soon after the RSP. Governance does: a PBC from day one, and a trust-appointed board majority since April 2026. Whether that holds under commercial pressure, I\'d want to know.',
               quality: 'strong',
               feedback: 'Credits others, cites checkable facts with dates, and ends on an honest open question instead of a sales pitch.',
             },
             {
-              text: 'The others are basically in it for the money, whatever they say in public. You\'re the only ones who actually care about where this goes.',
+              text: 'The others are basically in it for the money, whatever they say in public about safety. You\'re the only lab that actually cares about where all of this is going.',
               quality: 'weak',
               feedback: 'A smear, and an unfalsifiable one. It tells the recruiter how you will talk about Anthropic after you leave.',
             },
             {
-              text: 'You seem more focused on safety research than the others, and you publish more of it, even when it makes your own models look bad. That research culture matters a lot to me.',
+              text: 'You seem more focused on safety research than the others, and you publish more of it, even when it makes your own models look bad. That research culture matters a lot to me personally.',
               quality: 'okay',
               feedback: 'Plausible, but vague. Name one paper or one structural fact and it becomes an answer.',
             },
@@ -249,18 +249,18 @@ const lesson: Lesson = {
           interviewer: 'Last one. Where do you disagree with us?',
           options: [
             {
-              text: 'Honestly, nowhere I can think of. I\'ve read a lot of your material over the past year, and I\'m fully aligned with the mission and the approach.',
+              text: 'Honestly, nowhere I can think of. I\'ve read a lot of your material over the past year, including the RSP and Dario\'s essays, and I\'m fully aligned with both the mission and the approach.',
               quality: 'weak',
               feedback: 'Candidates report that evaluators look for a willingness to critique Anthropic. "Nothing" signals you haven\'t thought hard, or won\'t say.',
             },
             {
-              text: 'Commercial pace. Your case: careful labs must win commercially so labs compete on safety. My worry: at this growth, every safety delay costs more internally. Holding back Mythos Preview counts for you; if that holds when a rival ships first, I\'d drop it. I\'d still join.',
+              text: 'Commercial pace. Your case: careful labs must win so safety becomes competitive. My worry: at this growth, every delay costs more. Keeping Mythos without safeguards to vetted defenders counts for you; if that survives a rival shipping first, I\'d drop it. I\'d still join.',
               quality: 'strong',
               feedback:
                 'Steelman, view, evidence on both sides, a mind-changer and the close, in about thirty seconds. Same topic as the hedged answer, done properly.',
             },
             {
-              text: 'Maybe the pace of product launches? It feels very fast from the outside, though I assume you have good reasons for it that I can\'t see from here.',
+              text: 'Maybe the pace of product launches? It feels very fast from the outside, and I do wonder about it, though I assume you have good reasons for it that I just can\'t see from where I sit.',
               quality: 'okay',
               feedback: 'A real topic, hedged into nothing. What exactly worries you, and what would change your mind?',
             },

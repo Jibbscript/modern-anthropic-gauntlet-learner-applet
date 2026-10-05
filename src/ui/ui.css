@@ -104,7 +104,7 @@
 }
 .btn--course {
   --face: var(--c, var(--select));
-  --face-ink: #ffffff;
+  --face-ink: var(--c-on, #ffffff);
   --face-edge: var(--c-edge, var(--select-edge));
 }
 

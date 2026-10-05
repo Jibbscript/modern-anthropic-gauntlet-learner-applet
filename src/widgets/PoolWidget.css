@@ -100,10 +100,10 @@
   text-anchor: end;
 }
 .pool-rowlabel--lane {
-  font-size: 9.5px;
+  font-size: 9px;
   fill: var(--ink-2);
   text-transform: uppercase;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.02em;
 }
 
 .pool-bar--cpu {

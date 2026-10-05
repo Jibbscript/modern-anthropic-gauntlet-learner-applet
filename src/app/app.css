@@ -22,7 +22,8 @@
 .toast {
   position: absolute;
   z-index: 90;
-  top: calc(env(safe-area-inset-top, 0px) + 12px);
+  /* below the tab headers' stat pills */
+  top: calc(env(safe-area-inset-top, 0px) + 68px);
   left: 50%;
   translate: -50% 0;
   display: flex;

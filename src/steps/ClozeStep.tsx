@@ -70,6 +70,9 @@ type SlotState = 'empty' | 'active' | 'filled' | 'correct' | 'incorrect' | 'reve
  */
 const memory = new Map<string, (number | null)[]>()
 
+const smooth = (): ScrollBehavior =>
+  typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'
+
 export default function ClozeStep({ step, phase, attempt, setController, onHint, lessonId, mode }: StepProps<T>) {
   const lang = step.lang ?? 'python'
   const lines = useMemo(() => parseCloze(step.code, lang, step.blanks.length), [step.code, lang, step.blanks.length])
@@ -121,8 +124,33 @@ export default function ClozeStep({ step, phase, attempt, setController, onHint,
   // keep the active slot visible inside a horizontally scrolling code box
   useEffect(() => {
     if (active == null || !touched.current) return
-    slotRefs.current.get(active)?.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' })
+    slotRefs.current.get(active)?.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: smooth() })
   }, [active])
+
+  // Once every blank is filled, or the step is graded, slide a narrow code box back to the line starts
+  // (keeping the first wrong blank in view) so the snippet reads from the left again.
+  const firstWrong = phase === 'incorrect' ? order.find((i) => fill[i] !== step.blanks[i].answer) : undefined
+  useEffect(() => {
+    if (active != null && !locked) return
+    if (!touched.current && !locked) return
+    const anySlot = slotRefs.current.values().next().value
+    const sc = anySlot?.closest<HTMLElement>('.code__scroll')
+    if (!sc || sc.scrollWidth <= sc.clientWidth) return
+    const t = window.setTimeout(
+      () => {
+        const el = firstWrong == null ? undefined : slotRefs.current.get(firstWrong)
+        let left = 0
+        if (el) {
+          const right = el.getBoundingClientRect().right - sc.getBoundingClientRect().left + sc.scrollLeft
+          left = Math.max(0, right + 24 - sc.clientWidth)
+        }
+        sc.scrollTo({ left, behavior: smooth() })
+      },
+      // let the last fill's pop play where the learner is looking
+      locked ? 0 : 520,
+    )
+    return () => window.clearTimeout(t)
+  }, [active, locked, firstWrong])
 
   const pick = (k: number, viaKeyboard = false) => {
     if (locked || active == null) return

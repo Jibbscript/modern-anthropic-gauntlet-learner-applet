@@ -6,6 +6,9 @@
  *   3. hash the whole file for files that still collide
  * `head` stands for the first-4KB hash and `body` for the rest of the
  * content, so two files are identical iff size, head and body all match.
+ * A file of 4 KB or less has no "rest": its head hash covers every byte, so
+ * its body is ignored. An empty file has no content at all, so every empty
+ * file is identical to every other one.
  */
 
 export interface DFile {
@@ -30,7 +33,9 @@ export interface StageResult {
   ruledOut: Map<number, Stage>
   /** files ruled out by this stage */
   newlyRuledOut: number[]
-  /** files read (partly or fully) during this stage */
+  /** files that entered this stage (members of the previous stage's groups) */
+  filesIn: number
+  /** files this stage actually read bytes from */
   filesRead: number
   bytesThisStage: number
   /** cumulative bytes read up to and including this stage */
@@ -56,19 +61,38 @@ export function normalizeFiles(files: unknown): DFile[] {
   if (!Array.isArray(files)) return DEFAULT_FILES
   const out = files
     .filter((f): f is Record<string, unknown> => !!f && typeof f === 'object')
-    .map((f, i) => ({
-      name: typeof f.name === 'string' && f.name ? f.name : `file-${i + 1}`,
-      size: Math.max(0, Math.round(Number(f.size) || 0)),
-      head: String(f.head ?? ''),
-      body: String(f.body ?? ''),
-    }))
+    .map((f, i) => {
+      const size = Math.max(0, Math.round(Number(f.size) || 0))
+      // canonical content: an empty file has no head, a small file has no body beyond its head
+      return {
+        name: typeof f.name === 'string' && f.name ? f.name : `file-${i + 1}`,
+        size,
+        head: size === 0 ? '' : String(f.head ?? ''),
+        body: size <= HEAD_BYTES ? '' : String(f.body ?? ''),
+      }
+    })
   return out.length ? out : DEFAULT_FILES
+}
+
+/** the head hash as stage 2 would see it: an empty file hashes to nothing */
+function headOf(f: DFile): string {
+  return f.size === 0 ? '' : f.head
+}
+
+/** the full-content hash: small files are entirely covered by their head */
+function bodyOf(f: DFile): string {
+  return f.size <= HEAD_BYTES ? '' : f.body
+}
+
+/** two files are byte-for-byte identical iff their content keys match */
+export function contentKey(f: DFile): string {
+  return `s${f.size}|h${headOf(f)}|b${bodyOf(f)}`
 }
 
 const keyFns: Record<1 | 2 | 3, (f: DFile) => string> = {
   1: (f) => `s${f.size}`,
-  2: (f) => `s${f.size}|h${f.head}`,
-  3: (f) => `s${f.size}|h${f.head}|b${f.body}`,
+  2: (f) => `s${f.size}|h${headOf(f)}`,
+  3: contentKey,
 }
 
 /** bytes a stage reads from one file that reached it */
@@ -82,7 +106,7 @@ export function bytesFor(stage: Stage, f: DFile): number {
 export function runFunnel(files: DFile[]): StageResult[] {
   const all = files.map((_, i) => i)
   const results: StageResult[] = [
-    { stage: 0, groups: [{ key: 'all', files: all }], ruledOut: new Map(), newlyRuledOut: [], filesRead: 0, bytesThisStage: 0, bytesTotal: 0 },
+    { stage: 0, groups: [{ key: 'all', files: all }], ruledOut: new Map(), newlyRuledOut: [], filesIn: files.length, filesRead: 0, bytesThisStage: 0, bytesTotal: 0 },
   ]
   for (const stage of [1, 2, 3] as const) {
     const prev = results[results.length - 1]
@@ -91,7 +115,9 @@ export function runFunnel(files: DFile[]): StageResult[] {
     const newly: number[] = []
     let bytes = 0
     let filesRead = 0
+    let filesIn = 0
     for (const g of prev.groups) {
+      filesIn += g.files.length
       const sub = new Map<string, number[]>()
       for (const i of g.files) {
         const b = bytesFor(stage, files[i])
@@ -110,7 +136,7 @@ export function runFunnel(files: DFile[]): StageResult[] {
     }
     groups.sort((a, b) => a.files[0] - b.files[0])
     newly.sort((a, b) => a - b)
-    results.push({ stage, groups, ruledOut, newlyRuledOut: newly, filesRead, bytesThisStage: bytes, bytesTotal: prev.bytesTotal + bytes })
+    results.push({ stage, groups, ruledOut, newlyRuledOut: newly, filesIn, filesRead, bytesThisStage: bytes, bytesTotal: prev.bytesTotal + bytes })
   }
   return results
 }
@@ -123,7 +149,7 @@ export function naiveBytes(files: DFile[]): number {
 /** brute force: files with identical size, head and body, groups of 2+ */
 export function bruteForceGroups(files: DFile[]): number[][] {
   const m = new Map<string, number[]>()
-  files.forEach((f, i) => m.set(keyFns[3](f), [...(m.get(keyFns[3](f)) ?? []), i]))
+  files.forEach((f, i) => m.set(contentKey(f), [...(m.get(contentKey(f)) ?? []), i]))
   return [...m.values()].filter((g) => g.length > 1).sort((a, b) => a[0] - b[0])
 }
 

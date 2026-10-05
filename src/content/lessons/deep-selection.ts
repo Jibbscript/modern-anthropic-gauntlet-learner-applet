@@ -4,7 +4,7 @@ const lesson: Lesson = {
   id: 'deep-selection',
   title: 'Picking the project',
   summary: 'Choose the project that shows your decisions best: real ownership, real tradeoffs, numbers you can defend, and something that went wrong.',
-  minutes: 8,
+  minutes: 9,
   skills: ['deep.selection'],
   steps: [
     {
@@ -117,7 +117,7 @@ const lesson: Lesson = {
       kind: 'match',
       id: 'tests-questions',
       eyebrow: 'Why the tests matter',
-      prompt: "Each test is insurance against a question you'll get. Match them.",
+      prompt: "Each test is insurance against a question you're likely to get. Match them.",
       pairs: [
         { left: 'Ownership', right: 'Which part did you personally build?' },
         { left: 'Tradeoffs', right: 'Why not just use the obvious alternative?' },
@@ -228,6 +228,57 @@ const lesson: Lesson = {
       ],
       explanation:
         "A team project becomes a good pick once you scope it to the slice you owned. An old project can work too, but only after you've rebuilt its details. What never works is filling the gaps on the spot.",
+    },
+    {
+      kind: 'interview',
+      id: 'pick-sim',
+      eyebrow: 'Put it together',
+      setup:
+        'A mock session a week before your onsite, with a friend playing the interviewer. Your two candidates: a famous checkout redesign where you built the address form, and a payment-retry service you designed with one other engineer, which once charged some customers twice.',
+      turns: [
+        {
+          interviewer: 'Which project are you going to present in the deep dive?',
+          options: [
+            {
+              text: 'The payment-retry service. I designed it with one other engineer, so I can go three levels down on idempotency and backoff, and it had an incident I can walk through honestly.',
+              quality: 'strong',
+              feedback: 'Picked on ownership, depth and scar tissue, and the incident is counted as an asset rather than a risk.',
+            },
+            {
+              text: "Probably the payment-retry service, since it's more recent and I was closer to it. The checkout redesign is better known inside the company, though, so I'm still deciding.",
+              quality: 'okay',
+              feedback: 'Right instinct, weak reason. *Closer to it* is vague: say which decisions were yours, and what went wrong.',
+            },
+            {
+              text: "The checkout redesign. It was the company's biggest launch that year, and leadership showed it at the all-hands, so it proves I've worked on high-impact projects.",
+              quality: 'weak',
+              feedback: 'Prestige is not one of the tests. Your slice was the address form, so expect *what did you design?* in minute one.',
+            },
+          ],
+        },
+        {
+          interviewer: "Isn't the double-charge incident risky to bring up?",
+          options: [
+            {
+              text: "I'd leave it out. It was fixed within a day, nobody outside the team really noticed, and it would only distract from the design decisions I want to show.",
+              quality: 'weak',
+              feedback: "Hiding it throws away your best evidence that you were there. And if *what went wrong?* comes up anyway, you'll be improvising.",
+            },
+            {
+              text: "It's the best part. I shipped retries before the idempotency check was enforced, and 40 customers were charged twice. I'll cover how we caught it, the refunds, and the check I added.",
+              quality: 'strong',
+              feedback: 'Your part named plainly, its cost, and the fix. Told like an incident review, a failure is evidence, not a weakness.',
+            },
+            {
+              text: "A little. I'd mention it briefly near the end so it doesn't dominate, and spend most of the time on what went well and the final results.",
+              quality: 'okay',
+              feedback: 'Better than hiding it, but tucking it at the end treats it as a liability. What broke is where interviewers see your judgment.',
+            },
+          ],
+        },
+      ],
+      wrapUp:
+        'Pick the project whose decisions were yours and where something pushed back, then lead with what broke instead of hiding it. Prestige and polish are not the tests.',
     },
     {
       kind: 'concept',

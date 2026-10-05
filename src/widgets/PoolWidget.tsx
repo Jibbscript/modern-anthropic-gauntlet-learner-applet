@@ -26,7 +26,7 @@ const SETTLE_MS = 600
 
 // chart geometry (viewBox units)
 const VB_W = 320
-const LABEL_W = 26
+const LABEL_W = 30
 const X0 = LABEL_W + 2
 const X1 = VB_W - 6
 const TOP = 16
@@ -281,6 +281,8 @@ function Gantt({ result, tMax, drawKey, reduce }: { result: PoolResult; tMax: nu
   const ease = [0.22, 1, 0.36, 1] as const
   const draw = reduce ? { duration: 0 } : { duration: DRAW_S, ease }
   const barH = Math.max(3, Math.min(17, rowH - (rowH > 12 ? 6 : 3)))
+  const labelEvery = rowH < 9 ? 4 : 1
+  const labelSize = labelEvery > 1 ? 8 : Math.min(10, rowH * 0.75)
   const laneLabel = result.executor === 'thread' ? 'GIL' : 'loop'
 
   return (
@@ -312,11 +314,14 @@ function Gantt({ result, tMax, drawKey, reduce }: { result: PoolResult; tMax: nu
         ))}
 
         {/* row labels */}
-        {result.rows.map((r, i) => (
-          <text key={i} x={LABEL_W - 3} y={rowsTop + i * rowH + rowH / 2} dy="0.35em" className="pool-rowlabel" style={{ fontSize: Math.min(10, rowH * 0.75) }}>
-            {r.label}
-          </text>
-        ))}
+        {result.rows.map((r, i) =>
+          // dense charts (many coroutines) label every 4th row at a readable size instead of every row at a tiny one
+          labelEvery === 1 || i === 0 || (i + 1) % labelEvery === 0 ? (
+            <text key={i} x={LABEL_W - 3} y={rowsTop + i * rowH + rowH / 2} dy="0.35em" className="pool-rowlabel" style={{ fontSize: labelSize }}>
+              {r.label}
+            </text>
+          ) : null,
+        )}
         {hasLane && (
           <text x={LABEL_W - 3} y={laneY + LANE_H / 2} dy="0.35em" className="pool-rowlabel pool-rowlabel--lane">
             {laneLabel}

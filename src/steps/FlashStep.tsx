@@ -7,7 +7,7 @@ import { scheduleOptions, useStore } from '../core/store'
 import { Button, type ButtonVariant } from '../ui/Button'
 import { CodeFromBlock } from '../ui/code/Code'
 import { Rich } from '../ui/Rich'
-import { sfx } from '../ui/fx'
+import { haptic, sfx } from '../ui/fx'
 import type { StepProps } from './types'
 import './steps.css'
 import './FlashStep.css'
@@ -54,6 +54,7 @@ export default function FlashStep({ step, complete }: StepProps<T & { id: string
     if (flipped) return
     setFlipped(true)
     sfx('flip')
+    haptic('light')
   }
   useEffect(() => {
     if (flipped) backRef.current?.focus({ preventScroll: true })
@@ -74,7 +75,8 @@ export default function FlashStep({ step, complete }: StepProps<T & { id: string
       const tag = (e.target as HTMLElement)?.tagName
       if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return
       const { flipped: f, flip: doFlip, grade: doGrade } = live.current
-      if (!f && (e.key === ' ' || e.key === 'Enter')) {
+      // a focused button activates itself on Space/Enter; flipping here too would double the flip
+      if (!f && (e.key === ' ' || e.key === 'Enter') && tag !== 'BUTTON') {
         e.preventDefault()
         doFlip()
       } else if (f && ['1', '2', '3', '4'].includes(e.key)) {
@@ -105,6 +107,11 @@ export default function FlashStep({ step, complete }: StepProps<T & { id: string
       <div className="flash-face__label flash-face__label--back">Answer</div>
       <div className="flash-face__main flash-face__main--back">
         <Rich text={step.front} className="flash-context" />
+        {step.code && (
+          <div className="flash-context-code">
+            <CodeFromBlock block={step.code} />
+          </div>
+        )}
         <div className="flash-rule" aria-hidden />
         <Rich text={step.back} className="flash-back" />
       </div>
@@ -149,7 +156,7 @@ export default function FlashStep({ step, complete }: StepProps<T & { id: string
         <AnimatePresence mode="wait" initial={false}>
           {!flipped ? (
             <motion.div key="show" className="flash-show" exit={{ opacity: 0, y: 6, transition: { duration: 0.12 } }}>
-              <Button block onClick={flip} icon={<RotateCw size={19} strokeWidth={2.8} />} aria-keyshortcuts="Space">
+              <Button block feedback={false} onClick={flip} icon={<RotateCw size={19} strokeWidth={2.8} />} aria-keyshortcuts="Space">
                 Show answer
               </Button>
               <div className="flash-keys">

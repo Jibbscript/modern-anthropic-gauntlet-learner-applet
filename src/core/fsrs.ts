@@ -130,9 +130,11 @@ export function review(card: CardState, grade: Grade, now: number, opts: Schedul
 
   let due: number
   if (grade === 1) {
-    // failed: see it again soon (same session if still practising)
-    if (!firstReview) lapses += 1
-    phase = firstReview ? 'learning' : 'relearning'
+    // failed: see it again soon (same session if still practising). Only
+    // forgetting a graduated card is a lapse; missing it again while it is
+    // still (re)learning is not a new lapse.
+    if (!firstReview && phase === 'review') lapses += 1
+    phase = firstReview || phase === 'new' || phase === 'learning' ? 'learning' : 'relearning'
     due = now + 10 * MINUTE
   } else {
     phase = 'review'

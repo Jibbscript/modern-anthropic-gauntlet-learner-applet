@@ -43,6 +43,12 @@ export default function CrawlerWidget({ config, onComplete }: WidgetProps<Crawle
     sameHost: config.sameHost ?? true,
   }))
   const [sim, setSim] = useState<CrawlState>(() => initCrawl(graph, opts))
+  // content guard: 'no-dupes' needs 2+ workers AND atomic dedupe (check-then-add races with 2-4 workers on every graph)
+  useEffect(() => {
+    if (!import.meta.env.DEV || goal !== 'no-dupes') return
+    if ((locked.has('dedupe') && opts.dedupe !== 'atomic') || (locked.has('workers') && opts.workers < 2))
+      console.warn('crawler: goal "no-dupes" is unreachable with these locked controls', config)
+  }, [])
   const [playing, setPlaying] = useState(false)
   const [reached, setReached] = useState(false)
   const doneRef = useRef(false)
@@ -140,7 +146,8 @@ export default function CrawlerWidget({ config, onComplete }: WidgetProps<Crawle
   const dupMessage = (wi: number, page: number, fresh: boolean) => {
     const label = graph.pages[page].label
     const other = sim.workers.findIndex((w, i) => i !== wi && w.page === page && !w.dup)
-    if (!fresh) return other >= 0 ? `W${other + 1} and W${wi + 1} are both fetching ${label}. One fetch is wasted.` : `W${wi + 1} is fetching ${label} a second time.`
+    if (!fresh)
+      return other >= 0 ? `W${other + 1} and W${wi + 1} are both fetching ${label}. One fetch is wasted.` : `W${wi + 1} is fetching ${label} a second time.`
     if (opts.dedupe === 'check-then-add' && other >= 0) return `W${wi + 1} grabs ${label} while W${other + 1} is still fetching it: not in visited yet.`
     if (other >= 0) return `W${wi + 1} fetches ${label} too, while W${other + 1} is on it. No visited set.`
     return `W${wi + 1} fetches ${label} again: nothing remembers it was fetched.`

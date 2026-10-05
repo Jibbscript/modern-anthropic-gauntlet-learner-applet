@@ -13,7 +13,7 @@ const course: Course = {
   subtitle: 'The reported problems, built in levels',
   color: 'green',
   icon: 'layers',
-  why: '',
+  why: "These are the problems candidates report, rebuilt the way the rounds reportedly run them: make it work, extend it, make it concurrent or scalable, then test it yourself. Each one pairs with a Code Lab you can actually run.",
   lessons: [buildCrawler, buildImage, buildStacktrace, buildCache, buildDedup, buildInterpreter, buildKvstore],
 }
 

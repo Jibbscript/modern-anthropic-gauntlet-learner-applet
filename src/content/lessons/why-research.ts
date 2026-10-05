@@ -54,7 +54,7 @@ const lesson: Lesson = {
         },
       ],
       explanation:
-        "The argument creates a real tension, and Core Views names it: 'We must make every effort to avoid a scenario in which safety-motivated research accelerates the deployment of dangerous technologies. But we also cannot let excessive caution make it so that the most safety-conscious research efforts only ever engage with systems that are far behind the frontier.' Building at the frontier feeds the race you worry about. Expect to be asked whether you buy that trade.",
+        "The argument creates a real tension, and Core Views names it: 'We must make every effort to avoid a scenario in which safety-motivated research accelerates the deployment of dangerous technologies. But we also cannot let excessive caution make it so that the most safety-conscious research efforts only ever engage with systems that are far behind the frontier.' Critics say building at the frontier feeds the race it warns about; Anthropic's reply is that the alternative is safety research on stale models. Be ready to say whether you buy that trade.",
     },
     {
       kind: 'mcq',
@@ -192,7 +192,7 @@ const lesson: Lesson = {
       id: 'race',
       title: 'The race to the top, and its limit',
       body:
-        "Why publish a study where your own model ties for the highest blackmail rate? Anthropic's answer is a ==race to the top==: make safety something labs compete on. Its evidence: OpenAI and Google DeepMind adopted RSP-style frameworks within months, and laws like SB 53 now require published ones.\n\n" +
+        "Why publish a study where your own model ties for the highest blackmail rate? Anthropic's stated theory of change is a ==race to the top==: make safety something labs compete on. Its evidence: OpenAI and Google DeepMind adopted RSP-style frameworks within months, and laws like SB 53 now require published ones.\n\n" +
         'The limit: in September 2026 Anthropic disclosed four incidents in third-party cyber evaluations that pre-release auditing had missed. Publishing is not catching.',
       callout: {
         tone: 'source',
@@ -230,7 +230,7 @@ const lesson: Lesson = {
               feedback: 'Specific, fair to the competition, and anchored in a paper and a dated commitment you could be asked about.',
             },
             {
-              text: 'They put more of their effort into interpretability and alignment research than other labs do, and safety seems more central to how the whole company runs, from research through to product.',
+              text: 'They put more of their effort into interpretability and alignment research than other labs do, and safety seems more central to how the whole company runs, from the research side right through to product.',
               quality: 'okay',
               feedback: 'Plausible, but with nothing behind it. Name one piece of work and what it showed.',
             },
@@ -245,15 +245,15 @@ const lesson: Lesson = {
               feedback: 'You defended it by assertion. Engage with why the suspicion is reasonable before answering it.',
             },
             {
-              text: "Partly it helps the brand, I'd grant that. But the paper calls its scenarios contrived, Claude sits at the top of the table, and the methods are open. My question is how often findings like these change training.",
-              quality: 'strong',
-              feedback: 'You conceded the fair part, used evidence, and ended on the question that actually matters.',
-            },
-            {
-              text: "Yes, mostly. It's fear-based marketing: scare people about AI so that regulation gets written in a way that protects the incumbents and locks out smaller competitors.",
+              text: "Yes, mostly. It's fear-based marketing: scare people about AI so that regulation gets written in a way that protects the big incumbents and locks smaller competitors out.",
               quality: 'weak',
               feedback:
-                'A version of this critique exists (White House AI adviser David Sacks made it in October 2025). Asserting it without engaging the evidence reads as cynicism, not judgment.',
+                "A version of this critique exists: White House AI adviser David Sacks made it in October 2025, and Jack Clark called it 'perplexing'. You can hold it, but asserting it without engaging the evidence reads as cynicism, not judgment.",
+            },
+            {
+              text: "Partly, it helps the brand. But the paper calls its scenarios contrived, Claude ties for the top of the table, and the methods are open. My real question is how often findings like these change training.",
+              quality: 'strong',
+              feedback: 'You conceded the fair part, used evidence, and ended on the question that actually matters.',
             },
           ],
         },

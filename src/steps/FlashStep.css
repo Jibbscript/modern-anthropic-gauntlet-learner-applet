@@ -9,7 +9,7 @@
 .flash {
   flex: 1;
   gap: var(--s-5);
-  padding-bottom: var(--s-4);
+  padding-bottom: 0;
 }
 
 /* ------------------------------------------------------------------ card */
@@ -23,7 +23,9 @@
 .flash-card {
   position: relative;
   display: grid;
-  min-height: clamp(280px, 54vh, 460px);
+  /* fill what the review chrome (header, chip, grade keys: ~380px) leaves, within sane bounds */
+  min-height: clamp(240px, calc(100vh - 380px), 460px);
+  min-height: clamp(240px, calc(100dvh - 380px), 460px);
   perspective: 1400px;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
@@ -67,6 +69,26 @@
 }
 .flash-face--back {
   transform: rotateY(180deg);
+}
+
+/* the unflipped card is one big pressable: it sinks into its edge like a tile */
+.flash-face--front {
+  transition:
+    transform 90ms var(--ease-out),
+    box-shadow var(--dur-2);
+}
+.flash-card:not(.flash-card--flipped):active .flash-face--front {
+  transform: translateY(3px);
+  box-shadow:
+    inset 0 0 0 2px var(--line),
+    0 3px 0 0 var(--edge);
+}
+@media (hover: hover) and (pointer: fine) {
+  .flash-card:not(.flash-card--flipped):hover .flash-face--front {
+    box-shadow:
+      inset 0 0 0 2px var(--line-strong),
+      0 6px 0 0 var(--edge);
+  }
 }
 .flash-face:focus,
 .flash-face:focus-visible {
@@ -138,6 +160,11 @@
   color: var(--ink-3);
   overflow-wrap: break-word;
 }
+/* the front's code stays on the back: the answer usually refers to it */
+.flash-context-code {
+  position: relative;
+  min-width: 0;
+}
 .flash-rule {
   height: 2px;
   border-radius: 2px;
@@ -153,12 +180,31 @@
 
 /* -------------------------------------------------------------- controls */
 
+/* pinned to the bottom of the scroll area so the grade keys stay in thumb reach when a long answer scrolls */
 .flash-controls {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
   flex: none;
-  min-height: 112px;
+  /* as tall as the grade state, so the card does not shift when the keys swap in */
+  min-height: 123px;
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
+  margin: 0 calc(-1 * var(--gutter));
+  padding: var(--s-2) var(--gutter) var(--s-4);
+  background: var(--bg);
+}
+.flash-controls::before {
+  /* a soft fade where the card scrolls under the keys */
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 100%;
+  height: 20px;
+  background: linear-gradient(to top, var(--bg), color-mix(in srgb, var(--bg) 0%, transparent));
+  pointer-events: none;
 }
 .flash-show,
 .flash-grades {
@@ -237,6 +283,9 @@
 @media (hover: hover) and (pointer: fine) {
   .flash-keys {
     display: flex;
+  }
+  .flash-controls {
+    min-height: 155px;
   }
 }
 

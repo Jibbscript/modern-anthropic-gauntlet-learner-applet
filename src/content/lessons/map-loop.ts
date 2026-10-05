@@ -202,7 +202,7 @@ const lesson: Lesson = {
           interviewer: "Before the onsite I'll send some reading on our approach to safety. Anything else you need from me?",
           options: [
             {
-              text: "Thanks, I'll read it. Is there anything in particular you'd like me to focus on?",
+              text: "Thanks, I'll read all of it. Is there anything in particular you'd like me to focus on before the onsite?",
               quality: 'okay',
               feedback: 'Polite and fine. It hands the work back to the recruiter, though, and shows nothing about your own preparation.',
             },
@@ -247,7 +247,7 @@ const lesson: Lesson = {
       kind: 'concept',
       id: 'recap',
       title: 'Remember',
-      body: '1. **The shape**: recruiter screen, online assessment, technical screen, onsite (coding, design, hiring manager, deep dive, culture), then references and team matching.\n2. **Each round scores something different**, and the culture round is where strong coders most often fail.\n3. **Formats vary** by role, level and month. Use this map as a prior, and get your own loop from your recruiter.',
+      body: '1. **The shape**: recruiter screen, online assessment, technical screen, onsite (coding, design, hiring manager, deep dive, culture), then references and team matching.\n2. **Each round scores something different**, and reports name the culture round as where strong coders most often fail.\n3. **Formats vary** by role, level and month. Use this map as a prior, and get your own loop from your recruiter.',
     },
   ],
   cards: [

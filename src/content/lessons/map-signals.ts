@@ -12,7 +12,7 @@ const lesson: Lesson = {
       id: 'hook',
       eyebrow: 'A different kind of high',
       title: 'Sunk without a hard algorithm',
-      body: "A Staff-level engineer describes an Anthropic onsite coding round that went wrong with no hard algorithm in sight. The task was an image-processing pipeline. They didn't know the image library's API, had to look it up live, and never finished converting a single image end to end. They were rejected without feedback.\n\nThe bar here is high. It's a different kind of high.",
+      body: "A Staff-level engineer describes an Anthropic onsite coding round that went wrong with no hard algorithm in sight. The task was an image-processing pipeline. They didn't know the image library's API, had to look it up live, and never finished converting a single image end to end. They were rejected, with no feedback on which round decided it.\n\nThe bar here is high. It's a different kind of high.",
       callout: {
         tone: 'source',
         text: 'Candidate report on [Aced](https://www.aced.io/experiences/anthropic-staff-software-engineer-interview-6ecf1d), from an interview around 2025.',
@@ -152,7 +152,7 @@ const lesson: Lesson = {
       kind: 'concept',
       id: 'prep-allocation',
       title: 'Spend prep where the signal is',
-      body: 'If the rounds score practical work, writing and judgment, LeetCode grinding is the wrong default. Shift your hours to:\n\n1. Practical Python\n2. Concurrency\n3. Debugging unfamiliar code\n4. Reading docs quickly\n5. Testing your own implementation\n6. Explaining a real project deeply\n7. Real opinions on AI safety and Anthropic\'s mission\n\nThe coding bank is small and widely leaked, and interviewers notice memorized answers. Learn patterns, not scripts.',
+      body: 'If the rounds score practical work, writing and judgment, LeetCode grinding is the wrong default. Shift your hours to:\n\n1. Practical Python\n2. Concurrency\n3. Debugging unfamiliar code\n4. Reading docs quickly\n5. Testing your own implementation\n6. Explaining a real project deeply\n7. Real opinions on AI safety and Anthropic\'s mission\n\nThe coding bank is small and widely leaked, and interviewers reportedly notice memorized answers. Learn patterns, not scripts.',
     },
     {
       kind: 'numeric',
@@ -222,12 +222,12 @@ const lesson: Lesson = {
               feedback: 'Strong: a deterministic test double aimed at the known failure modes, with assertions that would catch a race.',
             },
             {
-              text: "It returned the right URLs on the example input and the output looked clean, so I'm fairly confident.",
+              text: "It returned the right URLs on the example input, and the output looked clean every time I ran it, so I'm fairly confident.",
               quality: 'weak',
               feedback: "One happy-path run can't expose a race or a hang. Concurrency bugs need inputs designed to trigger them.",
             },
             {
-              text: "I'd add logging around each fetch, then run it against a couple of real sites a few times.",
+              text: "I'd add logging around each fetch, then run it against a couple of real sites a few times and compare the results.",
               quality: 'okay',
               feedback: 'Better than nothing, but real sites are slow and nondeterministic, and logs need a human to notice the bug.',
             },
@@ -320,7 +320,7 @@ const lesson: Lesson = {
         {
           text: 'It shows little about how you think, and rehearsal is easy to spot',
           correct: true,
-          feedback: 'Right. The bank is small and widely shared, interviewers notice memorized answers, and saying so up front is the honest move.',
+          feedback: 'Right. The bank is small and widely shared, interviewers reportedly notice memorized answers, and saying so up front is the honest move.',
         },
         { text: 'Memorized solutions are usually wrong in subtle ways', feedback: "Often they're fine. The problem is the missing signal, not the code." },
         { text: "Interviewers must fail anyone who's seen the problem before", feedback: 'No such rule is reported. One candidate who said so got a fresh problem in an extra round, and an offer, a level below the one they applied for.' },

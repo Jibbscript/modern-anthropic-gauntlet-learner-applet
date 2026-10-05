@@ -208,7 +208,7 @@ export default function NumericStep({ step, phase, attempt, setController, onHin
   const big = Math.abs(step.answer) >= 1000
   // never show an example that would itself be accepted (a probability step must not suggest "1/16")
   const examples = useMemo(() => {
-    const pool = big ? ['1.2k', '3M', '4e6', '2.5B', '750k'] : step.answer > 0 && step.answer < 1 ? ['3/8', '0.4', '15%', '1/3'] : []
+    const pool = big ? ['1.2k', '3M', '4e6', '2.5B', '750k'] : step.answer > 0 && step.answer < 1 ? ['3/8', '15%', '1/3', '40%'] : []
     return pool.filter((e) => !judge(parseNumber(e) ?? NaN, step.answer, Math.max(tol, 0.1)).correct).slice(0, 3)
   }, [big, step.answer, tol])
 
@@ -255,7 +255,7 @@ export default function NumericStep({ step, phase, attempt, setController, onHin
     status = !raw.trim() ? (
       examples.length > 0 ? (
         <span className="numeric__help">
-          {big ? 'Shorthand works: ' : 'Fractions work too: '}
+          {big ? 'Shorthand works: ' : 'Fractions and % work: '}
           {examples.map((e, i) => (
             <span key={e}>
               {i > 0 && ', '}

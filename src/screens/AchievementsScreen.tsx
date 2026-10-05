@@ -118,7 +118,7 @@ export function achievementProgress(id: string, s: GauntletState, cat: Catalog):
     case 'builds-done':
       return course('builds')
     case 'lab-1':
-      return { cur: Math.max(0, ...Object.values(s.labs).map((l) => l.levelsPassed)), goal: 3, unit: 'levels' }
+      return { cur: Math.max(0, ...Object.values(s.labs).map((l) => l.levelsPassed)), goal: 4, unit: 'levels' } // every lab has 4 levels
     case 'xp-1000':
       return { cur: s.xp, goal: 1000, unit: 'XP' }
     case 'night-owl':

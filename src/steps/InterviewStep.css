@@ -172,17 +172,19 @@
   max-width: 100%;
   padding: 0 2px;
 }
+/* one line tall (19px chip on a 21px line), so only the first line of the note wraps beside it */
 .interview-note .interview-chip {
   float: left;
-  margin: 0 8px 2px 0;
+  margin: 1px 8px 0 0;
+  padding: 2px 8px 2px 7px;
+  gap: 4px;
 }
 .interview-note__text.rich {
   display: block;
   min-width: 0;
   font-size: var(--fs-sm);
-  line-height: 1.45;
+  line-height: 1.5;
   color: var(--ink-2);
-  padding-top: 2px;
 }
 .interview-note__text.rich > * + * {
   margin-top: 0.5em;

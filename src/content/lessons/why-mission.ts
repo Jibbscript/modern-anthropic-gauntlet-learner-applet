@@ -67,7 +67,7 @@ const lesson: Lesson = {
       title: "What 'Public Benefit Corporation' means",
       body:
         "From the company page: 'Anthropic is a Public Benefit Corporation, whose purpose is the responsible development and maintenance of advanced AI for the long-term benefit of humanity.'\n\n" +
-        "A PBC is still a for-profit company with shareholders. But its charter names a public benefit, and directors are expected to ==balance== it against shareholder returns, not maximize returns.\n\n" +
+        "A PBC is still a for-profit company with shareholders. But its charter names a public benefit, and directors are expected to ==balance== it against shareholder returns, rather than only maximize returns.\n\n" +
         "That gives them cover to choose the mission over profit. It doesn't require it.",
       callout: { tone: 'source', text: '[anthropic.com/company](https://www.anthropic.com/company), accessed Oct 2026.' },
     },

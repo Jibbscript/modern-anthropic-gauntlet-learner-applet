@@ -139,23 +139,26 @@ export default function DedupWidget({ config, onComplete }: WidgetProps<DedupCon
     note = outNames.length
       ? `Sizes come from stat(), so this read 0 bytes. ${list(outNames)} ${outNames.length === 1 ? 'has a unique size and' : 'have unique sizes and'} can't have a twin.`
       : 'Sizes come from stat(), so this read 0 bytes. Every file shares its size with another.'
+  else if (r.filesIn === 0)
+    note = stage === 2 ? 'No two files share a size, so there is nothing to hash. 0 bytes read.' : 'Nothing left to compare: every file was already ruled out.'
   else if (stage === 2)
-    note = `Read ${r.bytesThisStage < r.filesRead * HEAD_BYTES ? 'up to ' : ''}4 KB from each of ${r.filesRead} file${r.filesRead === 1 ? '' : 's'} (${formatBytes(r.bytesThisStage)}). ${
+    note = `Read ${r.bytesThisStage < r.filesIn * HEAD_BYTES ? 'up to ' : ''}4 KB from each of ${r.filesIn} file${r.filesIn === 1 ? '' : 's'} (${formatBytes(r.bytesThisStage)}). ${
       outNames.length ? `${list(outNames)} started differently, so ${outNames.length === 1 ? "it's" : "they're"} out.` : 'Every start matched, so nothing is ruled out yet.'
     }`
   else if (r.filesRead === 0)
-    note = `No extra reads: every remaining file fits inside its first 4 KB, so stage 2 already hashed all of it. ${
-      outNames.length ? `${list(outNames)} turned out different.` : 'Equal hashes, equal files.'
-    }`
-  else
-    note = `Read ${r.filesRead} file${r.filesRead === 1 ? '' : 's'} in full (${formatBytes(r.bytesThisStage)}). ${
-      outNames.length ? `${list(outNames)} matched on size and first 4 KB, but the full hash differs.` : 'Every candidate matched all the way through.'
-    }`
+    note = 'No extra reads: every remaining file fits inside its first 4 KB, so stage 2 already hashed all of it. Equal hashes, equal files.'
+  else {
+    const small = r.filesIn - r.filesRead
+    note = `Read ${r.filesRead} file${r.filesRead === 1 ? '' : 's'} in full (${formatBytes(r.bytesThisStage)})${
+      small > 0 ? `; ${small} small file${small === 1 ? ' was' : 's were'} already fully hashed in stage 2` : ''
+    }. ${outNames.length ? `${list(outNames)} matched on size and first 4 KB, but the full hash differs.` : 'Every candidate matched all the way through.'}`
+  }
 
   const saved = naive > 0 ? 1 - r.bytesTotal / naive : 0
   const freed = reclaimable(files, dups)
   const goalText = goal === 'explore' ? 'Goal: run all three stages' : 'Goal: find and tap every duplicate group'
-  const goalCount = final && goal !== 'explore' ? `${confirmed.size}/${dups.length}` : `${stage}/3`
+  // groups goal: the count is groups tapped, which only exists once the funnel has run
+  const goalCount = goal === 'explore' ? `${stage}/3` : final ? `${confirmed.size}/${dups.length}` : null
   const doneText = goal === 'explore' ? 'Goal reached: all three stages run' : dups.length ? 'Goal reached: every duplicate group found' : 'Goal reached: no duplicates here'
 
   const pile = [...r.ruledOut.entries()].sort((a, b) => a[1] - b[1] || a[0] - b[0])
@@ -172,7 +175,7 @@ export default function DedupWidget({ config, onComplete }: WidgetProps<DedupCon
           <motion.div key="todo" className="w-goal dd-goal dd-goal--todo" exit={{ opacity: 0, scale: 0.96 }} transition={{ duration: 0.12 }}>
             <Target size={16} strokeWidth={2.6} />
             <span className="dd-goal__text">{goalText}</span>
-            <span className="dd-goal__count tabular">{goalCount}</span>
+            {goalCount && <span className="dd-goal__count tabular">{goalCount}</span>}
           </motion.div>
         )}
       </AnimatePresence>
@@ -381,9 +384,24 @@ function FileCard({ f, layoutId, reduce }: { f: DFile; layoutId: string; reduce:
         <Icon size={16} strokeWidth={2.4} />
       </span>
       <span className="dd-file__text">
-        <span className="dd-file__name">{f.name}</span>
+        <span className="dd-file__name">
+          <BreakableName name={f.name} />
+        </span>
         <span className="dd-file__size tabular">{formatBytes(f.size)}</span>
       </span>
     </motion.span>
+  )
+}
+
+/** offer a line break before the extension so a wrapped name reads "IMG_2041 / .jpg", not "IMG_2041.j / pg" */
+function BreakableName({ name }: { name: string }) {
+  const dot = name.lastIndexOf('.')
+  if (dot <= 0) return <>{name}</>
+  return (
+    <>
+      {name.slice(0, dot)}
+      <wbr />
+      {name.slice(dot)}
+    </>
   )
 }

@@ -1,7 +1,7 @@
 import type { AreaId, Course, Lesson, ReviewCard, SkillId } from './types'
 import { recallNow, type CardState } from './fsrs'
 import type { GauntletState } from './store'
-import { DAY_MS, addDays, dayKey } from './dates'
+import { addDays, dayKey, daysBetween } from './dates'
 
 /** Indexed view of all content, built once in content/index.ts */
 export interface Catalog {
@@ -73,9 +73,10 @@ export function recommendedLesson(s: GauntletState, cat: Catalog, now: number): 
 
 /* --------------------------------------------------------------- review */
 
-export function dueCardIds(s: GauntletState, now: number): string[] {
+/** due card ids; pass the catalog to skip cards whose content no longer exists (they can never be reviewed) */
+export function dueCardIds(s: GauntletState, now: number, cat?: Catalog): string[] {
   return Object.entries(s.cards)
-    .filter(([, c]) => c.due <= now)
+    .filter(([id, c]) => c.due <= now && (!cat || !!cat.cards[id]))
     .map(([id]) => id)
 }
 
@@ -138,10 +139,12 @@ function interleave(ids: string[], cat: Catalog): string[] {
     buckets.get(k)!.push(id)
   }
   const out: string[] = []
-  while (out.length < ids.length) {
+  // one card per non-empty bucket per round; always terminates (every round empties at least one slot)
+  for (let left = ids.length; left > 0; ) {
     for (const list of buckets.values()) {
-      const next = list.shift()
-      if (next) out.push(next)
+      if (!list.length) continue
+      out.push(list.shift() as string)
+      left--
     }
   }
   return out
@@ -205,21 +208,21 @@ export function areaMastery(s: GauntletState, cat: Catalog, now: number): Record
   return out
 }
 
-/** number of cards falling due on each of the next `days` days (index 0 = today, incl. overdue) */
-export function forecast(s: GauntletState, now: number, days = 7): { day: string; count: number }[] {
+/**
+ * number of cards falling due on each of the next `days` days (index 0 =
+ * today, incl. overdue). Offsets are local calendar days, so 23h/25h DST days
+ * don't shift cards due near midnight into the wrong column. Pass the catalog
+ * to skip cards whose content no longer exists.
+ */
+export function forecast(s: GauntletState, now: number, days = 7, cat?: Catalog): { day: string; count: number }[] {
   const start = dayKey(now)
   const out = Array.from({ length: days }, (_, i) => ({ day: addDays(start, i), count: 0 }))
-  for (const c of Object.values(s.cards)) {
-    const offset = c.due <= now ? 0 : Math.floor((c.due - startOfDay(now)) / DAY_MS)
+  for (const [id, c] of Object.entries(s.cards)) {
+    if (cat && !cat.cards[id]) continue
+    const offset = c.due <= now ? 0 : daysBetween(start, dayKey(c.due))
     if (offset >= 0 && offset < days) out[offset].count++
   }
   return out
-}
-
-function startOfDay(t: number): number {
-  const d = new Date(t)
-  d.setHours(0, 0, 0, 0)
-  return d.getTime()
 }
 
 /** cards the learner keeps forgetting */

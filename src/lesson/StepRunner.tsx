@@ -1,4 +1,4 @@
-import { AnimatePresence, motion } from 'motion/react'
+import { AnimatePresence, motion, useIsPresent } from 'motion/react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Check, RotateCcw, Eye, ArrowRight } from 'lucide-react'
 import type { Step, WidgetStep } from '../core/types'
@@ -25,7 +25,8 @@ type RunnableStep = Step | (Record<string, unknown> & { kind: string; id: string
 /**
  * Runs one step: renders the view, owns phase/attempt state, and renders the
  * footer (Check / Continue / feedback panel). Calls onResolved exactly once
- * when the step's outcome is known and onNext when the learner moves on.
+ * when the step's outcome is known (it may return the XP it awarded, shown on
+ * the feedback banner) and onNext when the learner moves on.
  */
 export function StepRunner({
   step,
@@ -37,7 +38,7 @@ export function StepRunner({
   step: RunnableStep
   mode: 'lesson' | 'review'
   lessonId?: string
-  onResolved: (o: StepOutcome) => void
+  onResolved: (o: StepOutcome) => number | void
   onNext: () => void
 }) {
   const kind = step.kind
@@ -48,9 +49,17 @@ export function StepRunner({
   const widgetOptional = kind === 'widget' && (step as WidgetStep).requireComplete === false
 
   const [phase, setPhase] = useState<StepPhase>('answer')
+  /**
+   * the committed phase, for handlers that may fire from a stale render (a
+   * double click on a button that is animating out still runs its old onClick)
+   */
+  const phaseRef = useRef(phase)
+  phaseRef.current = phase
   const [attempt, setAttempt] = useState(0)
   const [ready, setReady] = useState(false)
   const [result, setResult] = useState<CheckResult | null>(null)
+  /** XP the driver reported for this step, if any */
+  const [awarded, setAwarded] = useState<number | null>(null)
   const ctl = useRef<StepController | null>(null)
   const usedHint = useRef(false)
   const t0 = useRef(performance.now())
@@ -65,7 +74,7 @@ export function StepRunner({
     (correct: boolean, firstTry: boolean, graded: boolean, grade?: 1 | 2 | 3 | 4) => {
       if (resolved.current) return
       resolved.current = true
-      onResolved({
+      const xp = onResolved({
         correct,
         firstTry,
         attempts: attempt + 1,
@@ -74,6 +83,7 @@ export function StepRunner({
         graded,
         grade,
       })
+      if (typeof xp === 'number') setAwarded(xp)
     },
     [attempt, onResolved],
   )
@@ -99,20 +109,24 @@ export function StepRunner({
   const complete = useCallback(
     (r: CheckResult) => {
       if (isFlash) {
+        // a second grade (double tap, key + click) must not advance twice
+        if (resolved.current) return
         resolve(r.correct, r.correct, true, r.grade)
         onNext()
         return
       }
-      if (phase !== 'answer') return
+      if (phaseRef.current !== 'answer') return
+      phaseRef.current = r.correct ? 'correct' : 'incorrect'
       if (r.correct) markCorrect(r)
       else markWrong(r)
     },
-    [isFlash, resolve, onNext, phase, markCorrect, markWrong],
+    [isFlash, resolve, onNext, markCorrect, markWrong],
   )
 
   const check = () => {
     const c = ctl.current
-    if (!c || !c.ready) return
+    if (!c || !c.ready || phaseRef.current !== 'answer') return
+    phaseRef.current = 'correct' // provisional: blocks a second check before the re-render
     const r = c.check()
     if (r.correct) markCorrect(r)
     else markWrong(r)
@@ -125,6 +139,8 @@ export function StepRunner({
   }
 
   const retry = () => {
+    if (phaseRef.current !== 'incorrect') return
+    phaseRef.current = 'answer'
     setAttempt((a) => a + 1)
     setPhase('answer')
     setResult(null)
@@ -142,14 +158,31 @@ export function StepRunner({
   }
 
   // Enter = primary action on desktop
-  const primary = useRef<() => void>(() => {})
+  const primary = useRef<(() => void) | null>(null)
+  // a step sliding out (AnimatePresence exit) stays mounted for a moment: it must not react to keys
+  const present = useIsPresent()
+  const presentRef = useRef(present)
+  presentRef.current = present
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key !== 'Enter' || e.shiftKey || e.metaKey || e.ctrlKey) return
-      const tag = (e.target as HTMLElement)?.tagName
-      if (tag === 'TEXTAREA' || tag === 'BUTTON') return
+      if (e.key !== 'Enter' || e.shiftKey || e.metaKey || e.ctrlKey || e.altKey) return
+      // held key, IME composition, or a control that already handled it
+      if (e.repeat || e.isComposing || e.defaultPrevented || !presentRef.current) return
+      const el = e.target instanceof HTMLElement ? e.target : null
+      if (el) {
+        const tag = el.tagName
+        // these activate themselves (or insert a newline) on Enter
+        if (tag === 'TEXTAREA' || tag === 'BUTTON' || tag === 'SELECT' || tag === 'A' || el.isContentEditable) return
+        // a field inside a <form> (e.g. a widget's answer box) submits that form
+        if (tag === 'INPUT' && (el as HTMLInputElement).form) return
+        // keys typed in an open dialog belong to the dialog
+        if (el.closest('[role="dialog"]')) return
+      }
+      if (document.querySelector('[role="dialog"][aria-modal="true"]')) return
+      const action = primary.current
+      if (!action) return
       e.preventDefault()
-      primary.current()
+      action()
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
@@ -159,7 +192,7 @@ export function StepRunner({
   if (phase === 'answer') {
     if (isFlash || kind === 'interview') {
       footer = null
-      primary.current = () => {}
+      primary.current = null
     } else if (ungraded) {
       const label = kind === 'reflect' ? (ready ? 'Save & continue' : 'Skip for now') : 'Continue'
       primary.current = advanceUngraded
@@ -169,14 +202,14 @@ export function StepRunner({
         </Button>
       )
     } else if (selfGraded) {
-      primary.current = widgetOptional ? next : () => {}
+      primary.current = widgetOptional ? next : null
       footer = (
         <Button block disabled={!widgetOptional} onClick={next}>
           {widgetOptional ? 'Continue' : 'Reach the goal to continue'}
         </Button>
       )
     } else {
-      primary.current = check
+      primary.current = ready ? check : null
       footer = (
         <Button block disabled={!ready} onClick={check} icon={<Check size={20} strokeWidth={3} />}>
           Check
@@ -228,7 +261,7 @@ export function StepRunner({
               phase={phase}
               feedback={result?.feedback}
               explanation={explanation}
-              xp={mode === 'lesson' && !ungraded ? (attempt === 0 ? XP.firstTry : XP.retry) : undefined}
+              xp={mode === 'lesson' && !ungraded ? (awarded ?? (attempt === 0 ? XP.firstTry : XP.retry)) : undefined}
               actions={
                 phase === 'incorrect' ? (
                   <div className="fb__actions">

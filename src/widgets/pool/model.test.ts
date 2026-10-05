@@ -100,7 +100,9 @@ describe('pool model', () => {
 
 describe('pool model invariants (QA)', () => {
   const all = (['thread', 'process', 'async'] as Executor[]).flatMap((executor) =>
-    (['cpu', 'io'] as const).flatMap((kind) => [1, 2, 3, 4, 5, 6, 7, 8].flatMap((workers) => [1, 2, 4].map((cores) => ({ executor, kind, workers, cores, tasks: 8 })))),
+    (['cpu', 'io'] as const).flatMap((kind) =>
+      [1, 2, 3, 4, 5, 6, 7, 8].flatMap((workers) => [1, 2, 4].map((cores) => ({ executor, kind, workers, cores, tasks: 8 }))),
+    ),
   )
   const busyAt = (r: ReturnType<typeof simulatePool>, t: number, kind: string) =>
     r.rows.filter((row) => row.bars.some((b) => b.kind === kind && b.start <= t + 1e-9 && b.end > t + 1e-9)).length
@@ -117,7 +119,10 @@ describe('pool model invariants (QA)', () => {
     for (const p of all.filter((x) => x.executor !== 'process')) {
       const r = simulatePool(p)
       const held = r.token.reduce((a, t) => a + t.end - t.start, 0)
-      const cpu = r.rows.flatMap((row) => row.bars).filter((b) => b.kind === 'cpu').reduce((a, b) => a + b.end - b.start, 0)
+      const cpu = r.rows
+        .flatMap((row) => row.bars)
+        .filter((b) => b.kind === 'cpu')
+        .reduce((a, b) => a + b.end - b.start, 0)
       expect(held).toBeCloseTo(cpu, 6)
     }
   })

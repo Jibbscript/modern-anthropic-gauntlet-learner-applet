@@ -11,5 +11,7 @@ export function courseStyle(color: CourseColor): CSSProperties {
     ['--c-soft' as string]: `var(--c-${color}-soft)`,
     ['--c-edge' as string]: `var(--c-${color}-edge)`,
     ['--c-ink' as string]: `var(--c-${color}-ink)`,
+    // text on a course-coloured face: white fails contrast on amber
+    ['--c-on' as string]: color === 'amber' ? '#3d2e00' : '#ffffff',
   }
 }

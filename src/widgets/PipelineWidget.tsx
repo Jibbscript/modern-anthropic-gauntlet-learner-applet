@@ -105,16 +105,19 @@ export default function PipelineWidget({ config, onComplete }: WidgetProps<Pipel
   // ---- goal
   const key = `${workers.join('')}-${queue}`
   const met = goal === 'throughput' ? thr >= target - 1e-9 : false
+  // a config whose default allocation already meets the target still waits for the learner to act (run or
+  // change something), so it never completes on mount, before any user gesture
+  const [touched, setTouched] = useState(false)
   useEffect(() => {
     seenRef.current.add(key)
-    const ok = goal === 'throughput' ? met : seenRef.current.size >= 3
+    const ok = goal === 'throughput' ? met && touched : seenRef.current.size >= 3
     if (!ok || doneRef.current) return
     doneRef.current = true
     setReached(true)
     sfx('correct')
     haptic('success')
     completeRef.current(true)
-  }, [key, met, goal])
+  }, [key, met, goal, touched])
 
   const restartWith = (play: boolean) => {
     clock.set(0)
@@ -122,16 +125,19 @@ export default function PipelineWidget({ config, onComplete }: WidgetProps<Pipel
     setPlaying(play)
   }
   const setAlloc = (s: number, d: number) => {
+    setTouched(true)
     const next = workers.slice()
     next[s] += d
     setWorkers(next)
     if (started) setPlaying(true)
   }
   const setQ = (q: number) => {
+    setTouched(true)
     setQueue(q)
     if (started) setPlaying(true)
   }
   const togglePlay = () => {
+    setTouched(true)
     setStarted(true)
     if (playing) return setPlaying(false)
     if (clock.get() >= run.total - 1e-9) clock.set(0)
@@ -419,7 +425,7 @@ function StageCol({
           </motion.span>
         )}
         <span className="visually-hidden">
-          {LABELS[s]}: {workers} workers, {cost} time units per image{bottleneck ? ', bottleneck' : ''}
+          {LABELS[s]}: {workers} worker{workers === 1 ? '' : 's'}, {cost} time unit{cost === 1 ? '' : 's'} per image{bottleneck ? ', bottleneck' : ''}
           {blocked ? ', blocked by a full queue' : ''}
         </span>
       </div>

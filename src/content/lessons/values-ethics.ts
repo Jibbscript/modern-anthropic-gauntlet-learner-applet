@@ -289,15 +289,15 @@ const lesson: Lesson = {
             'Suppose your team had a capability breakthrough that also carried serious risk if released. Would you support delaying it? What if other labs would not delay?',
           options: [
             {
-              text: "That's really leadership's call more than mine. They see far more of the picture than I would, so I'd trust them to weigh it and go with whatever they decide is best.",
-              quality: 'weak',
-              feedback: 'The question asks for your judgment. Deferring entirely suggests you would have no view inside the company either.',
-            },
-            {
               text: "Yes, if the delay buys something concrete, like evals or safeguards. If others won't wait, it buys less; that's Anthropic's RSP v3 argument. But less isn't zero. Where the line sits, I'm unsure.",
               quality: 'strong',
               feedback:
                 'Takes a position, asks what the delay buys, engages the follow-up instead of dodging it, and admits uncertainty without hiding behind it.',
+            },
+            {
+              text: "That's really leadership's call more than mine. They see far more of the picture than I would, so I'd trust them to weigh it and go with whatever they decide is best.",
+              quality: 'weak',
+              feedback: 'The question asks for your judgment. Deferring entirely suggests you would have no view inside the company either.',
             },
             {
               text: "Yes. If it's risky, we shouldn't release it until it's safe, whatever other labs decide to do. Someone in the industry has to hold the line, and it might as well be us.",

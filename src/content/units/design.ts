@@ -11,7 +11,7 @@ const course: Course = {
   subtitle: 'System design in a shared doc',
   color: 'amber',
   icon: 'pen',
-  why: '',
+  why: "Some design rounds reportedly happen in a shared doc rather than on a whiteboard, so clear writing counts as much as boxes and arrows. You work through a Collaborative Prompt Playground: collaboration, versions, prompt execution, storage and scale.",
   lessons: [designDoc, designRequirements, designCollab, designVersions, designScale],
 }
 

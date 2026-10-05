@@ -136,7 +136,7 @@ export function App() {
   }, [state.lessons, state.days, state.streak, state.stories, state.labs, state.xp])
 
   const badges = useMemo(
-    () => ({ practice: dueCardIds(state, now).length, stories: dueStories(state, now).length }),
+    () => ({ practice: dueCardIds(state, now, CATALOG).length, stories: dueStories(state, now).length }),
     [state, now],
   )
 

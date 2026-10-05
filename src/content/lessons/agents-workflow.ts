@@ -221,17 +221,17 @@ const lesson: Lesson = {
           interviewer: 'How do you want to start?',
           options: [
             {
-              text: "Hand it the whole task and let it run. It types far faster than I do, so that's the best use of 40 minutes.",
+              text: "Hand it the whole task and let it run while I watch. It types far faster than I do, so that's the best use of our 40 minutes.",
               quality: 'weak',
               feedback: "You'll get one large diff you can't fully review, and the interviewer sees nothing of how you think.",
             },
             {
-              text: 'First I read the scheduler and its tests. Then a plan, out loud: timeout field, enforcement in the runner, a test for each. Then one slice at a time to the agent.',
+              text: 'Read the scheduler and its tests first. Then a plan, out loud: timeout field, enforcement in the runner, a test for each. Then one slice at a time to the agent.',
               quality: 'strong',
               feedback: 'Strong. You build a model of the code, decompose, and make the plan visible before anything is generated.',
             },
             {
-              text: 'Ask the agent to summarise the codebase and propose a plan, then follow that plan so we move fast from the start.',
+              text: 'Ask the agent to summarise the codebase and propose a plan, then follow that plan step by step so we move fast right from the start.',
               quality: 'okay',
               feedback: "A reasonable accelerator, but now it's the agent's plan. Read enough code to judge the summary, and edit the plan before following it.",
             },
@@ -261,17 +261,17 @@ const lesson: Lesson = {
           interviewer: "Its third attempt at cancelling a timed-out job fails with a new error. Now what?",
           options: [
             {
-              text: "Paste the full traceback back in, point out that it's a new error this time, and ask it to try again with all that context.",
+              text: "Paste the full traceback back in, point out that it's a different error this time, and ask it to try again with all of that extra context.",
               quality: 'okay',
               feedback: 'Sometimes fine. On a fourth attempt with errors that keep changing, it is more likely a loop than progress.',
             },
             {
-              text: 'Ask it for a completely different approach, and keep iterating with it until something finally passes the test suite.',
+              text: 'Ask it for a completely different approach, and keep iterating with it, however many rounds it takes, until something finally passes the whole test suite.',
               quality: 'weak',
               feedback: "That's the loop, accelerated. 'Until something passes' invites a green that games the test.",
             },
             {
-              text: "Take the wheel: three different errors means neither of us understands the bug. Python can't safely kill a thread, so it's a cooperative check or a subprocess. I'll pick one and say why.",
+              text: "Take the wheel: three different errors means neither of us understands it. Python can't safely kill a thread, so it's a cooperative check or a subprocess. I'll pick one, and say why.",
               quality: 'strong',
               feedback: 'Strong. You stopped the loop, named the real constraint, and turned it into a decision the interviewer can see.',
             },
@@ -281,7 +281,7 @@ const lesson: Lesson = {
           interviewer: 'Five minutes left. What do you do?',
           options: [
             {
-              text: "Squeeze in one more feature with the agent. There's time for a quick one, and more coverage looks better.",
+              text: "Squeeze in one more feature with the agent. There's just about time for a quick one, and finishing more of the task looks better.",
               quality: 'weak',
               feedback: 'An unreviewed change in the last five minutes is how stray edits ship. Finishing cleanly beats finishing more.',
             },
@@ -291,7 +291,7 @@ const lesson: Lesson = {
               feedback: 'Strong. A verified, honest status is the best last five minutes of any round.',
             },
             {
-              text: 'Ask the agent to write a summary of everything that changed, and read that out as my wrap-up.',
+              text: 'Ask the agent to write a summary of everything that changed in the session, and read that out to you as my wrap-up.',
               quality: 'okay',
               feedback: 'A useful draft, but a summary of your work should come from you, checked against the diff.',
             },

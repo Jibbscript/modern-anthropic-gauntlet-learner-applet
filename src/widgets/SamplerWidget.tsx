@@ -160,6 +160,11 @@ export default function SamplerWidget({ config, onComplete }: WidgetProps<Sample
     }
     const missing = c.missingEnds.length + c.missingBegins.length
     const more = `${missing} more to mark.`
+    // same name at the same depth, but a frame above it changed: it's a different call
+    const twin = [...c.missingEnds, ...c.missingBegins].find((d) => cur.prev[d] !== undefined && cur.prev[d] === cur.next[d])
+    if (twin !== undefined) {
+      return `${cur.next[twin]} looks the same, but a frame above it changed, so it's a different call: the old one ends and a new one begins. ${more}`
+    }
     if (c.missingBegins.length && c.missingBegins.some((d) => cur.prev.includes(cur.next[d]) && cur.prev[d] !== cur.next[d])) {
       return `A call at a new depth is a new frame, even with a familiar name. ${more}`
     }

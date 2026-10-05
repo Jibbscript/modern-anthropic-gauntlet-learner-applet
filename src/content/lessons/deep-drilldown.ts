@@ -215,7 +215,7 @@ const lesson: Lesson = {
         "The good move: say what's right in their point, separate what you knew then from what you know now, and state what changes and what doesn't. Update as far as the argument earns, and no further.",
       callout: {
         tone: 'insight',
-        text: "The values round probes this too. A September 2026 candidate was asked for *a time someone changed your mind on something you felt strongly about*; prep write-ups also list holding unpopular convictions. Both halves count.",
+        text: "The values round probes this too. A September 2026 write-up of a values round lists *Tell me about a time someone changed your mind on something you felt strongly about*; prep write-ups also list holding unpopular convictions. Both halves count.",
       },
     },
     {
@@ -270,12 +270,12 @@ const lesson: Lesson = {
             'You mentioned two weeks of shadow mode. That shows what the limiter *would* have rejected. How did you tell abuse from legitimate traffic?',
           options: [
             {
-              text: "We matched the would-be rejections against security's list of known bad clients, and treated everyone else as legitimate traffic.",
+              text: "We matched the would-be rejections against security's list of known bad clients, and treated everyone else who hit the limit as legitimate traffic.",
               quality: 'okay',
               feedback: 'A real method, but you skipped its blind spot: new abusers are not on any list yet. Say what the method could not see.',
             },
             {
-              text: "It was obvious from the traffic patterns which clients were abusive. Real customers never come anywhere near limits like ours.",
+              text: "It was obvious from the traffic patterns which clients were abusive. Real paying customers never come anywhere near limits like ours, so it was easy.",
               quality: 'weak',
               feedback: 'Asserts the conclusion. *Never* is a claim you cannot back, and *how do you know?* was the question.',
             },

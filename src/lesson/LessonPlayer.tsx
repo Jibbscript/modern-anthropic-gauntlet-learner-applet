@@ -2,7 +2,7 @@ import { AnimatePresence, motion } from 'motion/react'
 import { useCallback, useMemo, useRef, useState } from 'react'
 import { X, Sparkles } from 'lucide-react'
 import { CATALOG } from '../content'
-import { useStore } from '../core/store'
+import { lessonStart, useStore, type LessonRun } from '../core/store'
 import { courseStyle } from '../ui/course'
 import { ProgressBar } from '../ui/ProgressBar'
 import { IconButton, Button } from '../ui/Button'
@@ -16,65 +16,84 @@ import './lesson.css'
 export function LessonPlayer({ lessonId, onExit }: { lessonId: string; onExit: () => void }) {
   const lesson = CATALOG.lessons[lessonId]
   const course = CATALOG.courses.find((c) => c.id === lesson?.courseId)
-  const store = useStore()
-  const resume = store.lessons[lessonId]?.completedAt ? 0 : (store.lessons[lessonId]?.resumeStep ?? 0)
-  const [index, setIndex] = useState(Math.min(resume, Math.max(0, (lesson?.steps.length ?? 1) - 1)))
+  // read once: the player owns its position from here on
+  const [start] = useState(() => lessonStart(useStore.getState().lessons[lessonId], lesson?.steps.length ?? 0))
+  const [index, setIndex] = useState(start.index)
   const [summary, setSummary] = useState<LessonSummary | null>(null)
   const [confirmExit, setConfirmExit] = useState(false)
   const [xpPops, setXpPops] = useState<{ id: number; xp: number }[]>([])
   const [comboFlash, setComboFlash] = useState<number | null>(null)
-  const stats = useRef({ graded: 0, firstTry: 0, xp: 0, started: performance.now() })
+  const stats = useRef({ ...start, started: performance.now() })
+  const finished = useRef(false)
   const popId = useRef(0)
 
   const steps = lesson?.steps ?? []
   const step = steps[index]
 
+  /** the run so far, as persisted with each checkpoint */
+  const snapshot = useCallback((): LessonRun => {
+    const r = stats.current
+    return { graded: [...r.graded], firstTry: r.firstTry, xp: r.xp, ms: r.msBefore + (performance.now() - r.started) }
+  }, [])
+
+  const stepId = step?.id
   const onResolved = useCallback(
     (o: StepOutcome) => {
-      if (!o.graded) return
-      stats.current.graded++
-      if (o.firstTry) stats.current.firstTry++
-      const xp = useStore.getState().answerStep(o.firstTry)
-      stats.current.xp += xp
-      const id = ++popId.current
-      setXpPops((p) => [...p, { id, xp }])
-      setTimeout(() => setXpPops((p) => p.filter((x) => x.id !== id)), 1100)
+      if (!o.graded || !stepId) return
+      const run = stats.current
+      // answered (and paid) before leaving mid-lesson: practice only this time
+      if (run.graded.has(stepId)) return 0
+      run.graded.add(stepId)
+      if (o.firstTry) run.firstTry++
+      const xp = useStore.getState().answerStep(o.firstTry, o.correct)
+      run.xp += xp
+      useStore.getState().checkpointLesson(lessonId, index, snapshot())
+      if (xp > 0) {
+        const id = ++popId.current
+        setXpPops((p) => [...p, { id, xp }])
+        setTimeout(() => setXpPops((p) => p.filter((x) => x.id !== id)), 1100)
+      }
       const combo = useStore.getState().combo
       if (o.firstTry && combo >= 3) {
         setComboFlash(combo)
         if (combo % 5 === 0) sfx('combo')
       } else setComboFlash(null)
+      return xp
     },
-    [],
+    [stepId, index, lessonId, snapshot],
   )
 
   const finish = useCallback(() => {
-    const accuracy = stats.current.graded ? stats.current.firstTry / stats.current.graded : 1
-    const activeMs = performance.now() - stats.current.started
+    if (finished.current) return
+    finished.current = true
+    const run = snapshot()
+    const graded = run.graded.length
+    const accuracy = graded ? run.firstTry / graded : 1
     const before = useStore.getState().streak.current
-    const r = useStore.getState().finishLesson(lessonId, { accuracy, cardIds: lesson.cards.map((c) => c.id), activeMs })
+    const r = useStore.getState().finishLesson(lessonId, { accuracy, cardIds: lesson.cards.map((c) => c.id), activeMs: run.ms })
     setSummary({
-      xp: stats.current.xp + r.xp,
+      xp: run.xp + r.xp,
       accuracy,
-      ms: activeMs,
+      ms: run.ms,
       cards: lesson.cards.length,
       streakExtended: r.streakExtended,
       streakBefore: before,
       streakAfter: useStore.getState().streak.current,
     })
-  }, [lessonId, lesson])
+  }, [lessonId, lesson, snapshot])
 
   const onNext = useCallback(() => {
+    if (finished.current) return
     if (index + 1 >= steps.length) finish()
     else {
       setIndex(index + 1)
-      useStore.getState().checkpointLesson(lessonId, index + 1)
+      useStore.getState().checkpointLesson(lessonId, index + 1, snapshot())
     }
-  }, [index, steps.length, finish, lessonId])
+  }, [index, steps.length, finish, lessonId, snapshot])
 
   const style = useMemo(() => (course ? courseStyle(course.color) : {}), [course])
 
-  if (!lesson || !course) {
+  if (!lesson || !course || !step) {
     return (
       <div className="screen lesson">
         <div className="step">That lesson could not be found.</div>

@@ -70,10 +70,16 @@ export default function ReflectStep({ step, setController, lessonId }: StepProps
     }
   }, [saveDraft])
   useEffect(() => {
-    // leaving the lesson unmounts the step; closing the tab does not, so flush on pagehide too
+    // leaving the lesson unmounts the step; closing the tab or backgrounding the app does not, so flush then too
+    // (mobile browsers often skip pagehide when an app is swiped away, but do report it as hidden first)
+    const onHidden = () => {
+      if (document.visibilityState === 'hidden') flush()
+    }
     window.addEventListener('pagehide', flush)
+    document.addEventListener('visibilitychange', onHidden)
     return () => {
       window.removeEventListener('pagehide', flush)
+      document.removeEventListener('visibilitychange', onHidden)
       flush()
     }
   }, [flush])

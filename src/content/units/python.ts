@@ -11,7 +11,7 @@ const course: Course = {
   subtitle: 'Usable code, tested and debugged',
   color: 'blue',
   icon: 'code',
-  why: '',
+  why: "The coding rounds reward usable code over puzzle tricks: the right container, clean interfaces, building in levels without rewrites, testing your own work and debugging unfamiliar code fast. This is the toolkit the build rounds assume.",
   lessons: [pyIdioms, pyCollections, pyProgressive, pyTesting, pyDebugging],
 }
 

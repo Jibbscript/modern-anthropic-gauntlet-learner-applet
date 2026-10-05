@@ -36,6 +36,14 @@ export function ReviewSession({ cardIds, title = 'Review', onExit }: { cardIds: 
   const [pos, setPos] = useState(0)
   const [done, setDone] = useState(false)
   const requeued = useRef(new Set<string>())
+  /** cards in the session before any second looks */
+  const firstPass = useRef(queue.length)
+  /**
+   * live queue length: a flashcard grades and advances in one handler, before
+   * a requeue re-renders, so onNext must not read a stale `queue.length`
+   */
+  const queueLen = useRef(queue.length)
+  const finished = useRef(false)
   const tally = useRef({ answered: 0, correct: 0, xp: 0, recallBefore: 0, recallAfter: 0 })
   const before = useMemo(() => {
     const s = useStore.getState()
@@ -69,6 +77,7 @@ export function ReviewSession({ cardIds, title = 'Review', onExit }: { cardIds: 
       tally.current.xp += s.reviewCard(id, grade, o.ms)
       if (grade === 1 && !requeued.current.has(id)) {
         requeued.current.add(id)
+        queueLen.current++
         setQueue((q) => [...q, id])
       }
     },
@@ -76,7 +85,9 @@ export function ReviewSession({ cardIds, title = 'Review', onExit }: { cardIds: 
   )
 
   const onNext = useCallback(() => {
-    if (pos + 1 >= queue.length) {
+    if (finished.current) return
+    if (pos + 1 >= queueLen.current) {
+      finished.current = true
       const s = useStore.getState()
       const now = Date.now()
       const ids = cardIds.filter((x) => s.cards[x])
@@ -86,7 +97,11 @@ export function ReviewSession({ cardIds, title = 'Review', onExit }: { cardIds: 
       sfx('complete')
       setTimeout(() => celebrate('small'), 200)
     } else setPos(pos + 1)
-  }, [pos, queue.length, cardIds, before])
+  }, [pos, cardIds, before])
+
+  // vary the shuffle seed per review so choices don't settle into a memorisable order, but
+  // fix it per position: grading bumps `reps`, and a new seed would reshuffle the answered card
+  const seed = useMemo(() => (id ? (useStore.getState().cards[id]?.reps ?? 0) : 0), [id, pos])
 
   if (done || !card) {
     const t = tally.current
@@ -156,8 +171,7 @@ export function ReviewSession({ cardIds, title = 'Review', onExit }: { cardIds: 
     )
   }
 
-  // vary the seed per review so shuffled choices don't settle into a memorisable order
-  const stepLike = { ...card, id: `${card.id}~${useStore.getState().cards[card.id]?.reps ?? 0}` }
+  const stepLike = { ...card, id: `${card.id}~${seed}` }
   return (
     <div className="screen lesson safe-top" style={course ? courseStyle(course.color) : undefined}>
       <header className="lesson__head">
@@ -173,7 +187,7 @@ export function ReviewSession({ cardIds, title = 'Review', onExit }: { cardIds: 
       </header>
       <div className="review__meta">
         <span className="chip chip--course">{SKILL_BY_ID[card.skill]?.name ?? title}</span>
-        {requeued.current.has(card.id) && pos >= cardIds.length && <span className="chip chip--warn">Second look</span>}
+        {requeued.current.has(card.id) && pos >= firstPass.current && <span className="chip chip--warn">Second look</span>}
       </div>
       <div className="lesson__stage">
         <AnimatePresence mode="popLayout" initial={false}>

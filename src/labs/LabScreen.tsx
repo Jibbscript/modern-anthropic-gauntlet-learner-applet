@@ -81,11 +81,11 @@ function readNum(key: string): number {
   }
 }
 
-function writeNum(key: string, v: number) {
+function removeKey(key: string) {
   try {
-    localStorage.setItem(key, String(Math.round(v)))
+    localStorage.removeItem(key)
   } catch {
-    /* private mode: the timer simply restarts next session */
+    /* storage unavailable */
   }
 }
 
@@ -218,19 +218,29 @@ export function lineDiff(a: string, b: string, context = 2): DiffRow[] {
 
 /**
  * Active-time timer: starts at the learner's first edit, pauses while the
- * page is hidden or the lab is closed. Accumulated time is kept per lab in
- * localStorage (a per-device convenience); the store holds `startedAt`.
+ * page is hidden or the lab is closed. Accumulated time is saved with the
+ * lab's progress in the store (`activeMs`, next to `startedAt`), so it
+ * survives reloads and travels with export/import.
  */
 function useLabTimer(labId: string, startedAt: number | null, active: boolean) {
-  const key = `gauntlet:lab-time:${labId}`
-  const acc = useRef(readNum(key))
+  const legacyKey = `gauntlet:lab-time:${labId}`
+  // older builds kept this time in its own localStorage key: adopt it once
+  const [initial] = useState(() => Math.max(useStore.getState().labs[labId]?.activeMs ?? 0, readNum(legacyKey)))
+  const acc = useRef(initial)
   const seg = useRef<number | null>(null)
   const [, setTick] = useState(0)
   const started = startedAt != null || acc.current > 0
   const running = started && active
 
   useEffect(() => {
+    if (readNum(legacyKey) <= 0) return
+    if (initial > (useStore.getState().labs[labId]?.activeMs ?? 0)) useStore.getState().saveLab(labId, { activeMs: Math.round(initial) })
+    removeKey(legacyKey)
+  }, [labId, legacyKey, initial])
+
+  useEffect(() => {
     if (!running) return
+    const store = (ms: number) => useStore.getState().saveLab(labId, { activeMs: Math.round(ms) })
     const begin = () => {
       if (seg.current == null && document.visibilityState !== 'hidden') seg.current = Date.now()
     }
@@ -238,12 +248,12 @@ function useLabTimer(labId: string, startedAt: number | null, active: boolean) {
       if (seg.current != null) {
         acc.current += Date.now() - seg.current
         seg.current = null
-        writeNum(key, acc.current)
+        store(acc.current)
       }
     }
     begin()
     const tick = setInterval(() => setTick((t) => t + 1), 1000)
-    const save = setInterval(() => seg.current != null && writeNum(key, acc.current + Date.now() - seg.current), 10_000)
+    const save = setInterval(() => seg.current != null && store(acc.current + Date.now() - seg.current), 10_000)
     const vis = () => (document.visibilityState === 'hidden' ? pause() : begin())
     document.addEventListener('visibilitychange', vis)
     window.addEventListener('pagehide', pause)
@@ -254,7 +264,7 @@ function useLabTimer(labId: string, startedAt: number | null, active: boolean) {
       document.removeEventListener('visibilitychange', vis)
       window.removeEventListener('pagehide', pause)
     }
-  }, [running, key])
+  }, [running, labId])
 
   const elapsed = useCallback(() => acc.current + (seg.current != null ? Date.now() - seg.current : 0), [])
   return { started, running, elapsed }
@@ -421,7 +431,7 @@ function LabView({ lab, onExit }: { lab: Lab; onExit: () => void }) {
   const passLevel = useCallback(
     (level: number) => {
       const ms = Math.max(1000, timerElapsed())
-      useStore.getState().passLabLevel(labId, level, ms)
+      useStore.getState().passLabLevel(labId, level, ms, n)
       if (!alive.current) return
       setCleared({ level, ms })
       // the Spec tab now shows the level just unlocked
@@ -597,7 +607,7 @@ function LabView({ lab, onExit }: { lab: Lab; onExit: () => void }) {
                 onAskSolution={() => setAskSolution('solution')}
                 onBackToCurrent={() => pickLevel(current)}
                 onReset={() => setAskReset(true)}
-                elapsedMs={elapsedMs}
+                elapsedMs={complete ? (progress?.bestMs ?? elapsedMs) : elapsedMs}
               />
             </motion.div>
           )}

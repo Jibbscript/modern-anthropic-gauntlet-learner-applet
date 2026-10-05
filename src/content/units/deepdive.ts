@@ -9,7 +9,7 @@ const course: Course = {
   subtitle: 'Explaining one project all the way down',
   color: 'orange',
   icon: 'search',
-  why: '',
+  why: "Expect to explain one real project far below the summary: your ownership, the decisions and the alternatives you rejected, the numbers, and what broke. Choose the project and rehearse the drill-downs before an interviewer does it for you.",
   lessons: [deepSelection, deepLayers, deepDrilldown],
 }
 

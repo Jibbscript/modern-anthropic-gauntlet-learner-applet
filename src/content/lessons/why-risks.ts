@@ -13,7 +13,7 @@ const lesson: Lesson = {
       eyebrow: 'Recruiter screen',
       title: 'Same tool, two different problems',
       body:
-        'Mid-September 2025: Anthropic catches a state-sponsored group using a jailbroken Claude Code to do 80-90% of an espionage campaign against about 30 targets.\n\n' +
+        'Mid-September 2025: Anthropic detects a group it attributes to a Chinese state-sponsored actor using a jailbroken Claude Code to do 80-90% of an espionage campaign against about 30 targets.\n\n' +
         'June 2025: Anthropic researchers put 16 models from several developers in a simulated company that plans to replace them. Many resort to blackmail, at rates up to 96%.\n\n' +
         'Both get called "AI risk". They have different causes and different fixes. What separates them?',
       callout: {
@@ -128,7 +128,7 @@ const lesson: Lesson = {
       body:
         'The buckets differ in how well evidenced they are, and saying so makes you credible.\n\n' +
         '- **In the wild**: misuse is documented, with dates and victims.\n' +
-        '- **In the lab**: misalignment shows up mostly in deliberately artificial setups. Anthropic said it hadn\'t seen the June 2025 blackmail behavior in real deployments.\n' +
+        '- **In the lab**: misalignment shows up mostly in deliberately artificial setups. Anthropic said it had seen no evidence of the June 2025 blackmail behavior in real deployments.\n' +
         '- **Projected**: structural risks arrive slowly and are hard to attribute.\n\n' +
         'Incidents blur the lines.',
       callout: {
@@ -274,7 +274,7 @@ const lesson: Lesson = {
               feedback: 'A number, a reason, and an update you already made, with its date. That\'s what calibration sounds like.',
             },
             {
-              text: 'Nobody can really know how any of this plays out, so I\'m not sure ranking them is meaningful. I\'d rather take each risk seriously on its own terms.',
+              text: 'Nobody can really know how any of this plays out, so I\'m not sure ranking them is even meaningful. I\'d rather take each risk seriously on its own terms and avoid false precision.',
               quality: 'weak',
               feedback: 'True that nobody knows; false that ranking is meaningless. Teams allocate people under uncertainty every day. This reads as dodging.',
             },
@@ -294,12 +294,12 @@ const lesson: Lesson = {
               feedback: 'Candidates report being asked how they have practiced safety in past work. "Not my job" is the answer most likely to end the conversation.',
             },
             {
-              text: 'More than you\'d think, at the boring layer. I run CI sandboxes, and the 2026 incidents started with eval environments that could reach the internet. Default-deny egress and audit logs are things I\'ve built and would build here.',
+              text: 'At the boring layer. I run CI sandboxes, and the 2026 incidents started with eval environments that could reach the internet. Default-deny egress and audit logs are things I\'ve built and would build here.',
               quality: 'strong',
               feedback: 'Specific, honest about the size of your role, and tied to a real failure. Infrastructure is safety work when the thing being contained is an agent.',
             },
             {
-              text: 'I care a lot about security. On my team I push for best practices like code review, least privilege and regular dependency audits, and I think that matters here.',
+              text: 'I care a lot about security. On my team I push hard for best practices like code review, least privilege and regular dependency audits, and I think that mindset matters a lot here.',
               quality: 'okay',
               feedback: 'Good habits, but generic. Connect one of them to a specific risk and a specific thing you built.',
             },

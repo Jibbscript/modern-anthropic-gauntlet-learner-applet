@@ -262,17 +262,17 @@ Thanks, Priya`,
           interviewer: 'What did it get wrong?',
           options: [
             {
-              text: "Nothing, really. It's very good at this kind of editing, so I accepted most of what it suggested.",
+              text: "Nothing, really. It's very good at this kind of editing, so I accepted almost everything it suggested and moved on.",
               quality: 'weak',
               feedback: "Uncritical, and it suggests you didn't evaluate what it gave you. Tools get things wrong; say where.",
             },
             {
-              text: "It made a few sentences stiff and formal, so I changed those back to how I'd actually say them.",
+              text: "It made a few sentences a bit stiff and formal in places, so I changed those back to how I'd actually say them out loud.",
               quality: 'okay',
               feedback: "Honest and fine, but thin. It shows you read the output, not that you judged it.",
             },
             {
-              text: "It wanted to close on being 'deeply aligned with the mission'. Press-release voice, not mine, so I cut it and ended on the team I want to join.",
+              text: "It wanted to close on being 'deeply aligned with the mission'. Press-release voice, so I cut it and ended on the team I want to join.",
               quality: 'strong',
               feedback: 'Strong. A concrete rejected suggestion, with a reason, shows the judgment in the document is yours.',
             },
@@ -282,17 +282,17 @@ Thanks, Priya`,
           interviewer: 'Some people think using AI on an application at all is cheating. What do you think?',
           options: [
             {
-              text: "Depends what's measured. When your form asked for no AI, using it was cheating. Refining my own draft, disclosed, seems fair, though it weakens polish as a signal. My line: opinions or experiences the AI supplied.",
+              text: "Depends what's measured. When your form asked for no AI, using it was cheating. Refining my own draft, disclosed, seems fair, though polish stops being a signal. My line: opinions or experiences AI supplied.",
               quality: 'strong',
               feedback: 'Strong. You reasoned from what is being measured, used the real policy history, named a cost of the current rule, and drew your own line.',
             },
             {
-              text: "Honestly, everyone uses it now, so I don't think the question really applies anymore. It's a bit like asking whether spellcheck is cheating.",
+              text: "Honestly, everyone uses it now, so I don't think the question really applies anymore. It's a bit like asking whether spellcheck or a thesaurus counts as cheating.",
               quality: 'weak',
               feedback: 'Dodges the question and leans on the crowd. The round wants your judgment, not a trend report.',
             },
             {
-              text: "Your policy explicitly allows refining a draft, so no, I don't think it's cheating. If the rule allows it, and I followed it, then it's fair.",
+              text: "Your policy explicitly allows refining a draft, so no, I don't think it's cheating. If the rule allows it, and I followed the rule carefully, then it's fair by definition.",
               quality: 'okay',
               feedback: 'Accurate, but it hands the ethics to the policy. A rule says what is permitted; the question asks what you think is right.',
             },

@@ -143,7 +143,7 @@ export default function InterviewStep({ step, phase, attempt, complete }: StepPr
     if (n === 0) return undefined
     if (w > 0) return `${w} weak ${w === 1 ? 'reply' : 'replies'} out of ${n}. The bar is no weak replies.`
     if (o === 0) return n === 1 ? 'Your reply was strong.' : `All ${n} replies were strong.`
-    if (s === 0) return n === 1 ? 'Not weak, but not strong either.' : `No weak replies, but none strong either.`
+    if (s === 0) return n === 1 ? 'Passable, but not yet strong.' : 'No weak replies, but none strong yet.'
     return `No weak replies: ${s} strong, ${o} okay.`
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [counts.strong, counts.okay, counts.weak, turns.length])
@@ -168,10 +168,13 @@ export default function InterviewStep({ step, phase, attempt, complete }: StepPr
    */
   const [floor, setFloor] = useState(0)
   const busy = useRef(false)
+  /** the last pick came from the keyboard: hand focus to the next turn's first reply */
+  const viaKeys = useRef(false)
 
-  const pick = (opt: number) => {
+  const pick = (opt: number, keyboard = false) => {
     if (!optionsOpen || chosen != null || busy.current) return
     busy.current = true
+    viaKeys.current = keyboard
     const root = rootRef.current
     const sc = root && scrollParent(root)
     if (root && sc) {
@@ -212,12 +215,19 @@ export default function InterviewStep({ step, phase, attempt, complete }: StepPr
       const order = orders[current]
       if (Number.isInteger(n) && n >= 1 && n <= order.length) {
         e.preventDefault()
-        pick(order[n - 1])
+        pick(order[n - 1], true)
       }
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   })
+
+  // keyboard users keep their place: the next turn's replies take focus (the picked tile is gone)
+  useEffect(() => {
+    if (!optionsOpen || !viaKeys.current) return
+    const id = requestAnimationFrame(() => rootRef.current?.querySelector<HTMLElement>('.interview-option')?.focus({ preventScroll: true }))
+    return () => cancelAnimationFrame(id)
+  }, [optionsOpen, current])
 
   // keep the newest message (and the reply tiles under it) in view, never scrolling its top out of sight;
   // on reveal, go back up to the first stronger reply
@@ -355,7 +365,7 @@ export default function InterviewStep({ step, phase, attempt, complete }: StepPr
                     badge={String.fromCharCode(65 + k)}
                     state={chosen === i ? 'selected' : chosen != null ? 'dimmed' : 'idle'}
                     disabled={chosen != null}
-                    onClick={() => pick(i)}
+                    onClick={(e) => pick(i, e.detail === 0)}
                     aria-keyshortcuts={String(k + 1)}
                   >
                     <Rich text={turns[current].options[i].text} inline />

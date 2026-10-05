@@ -12,7 +12,7 @@ const course: Course = {
   subtitle: 'The round people actually fear',
   color: 'rose',
   icon: 'heart',
-  why: '',
+  why: "Reports describe the values round as unusually deep: what you actually thought at the time, how you feel about it now, when you disagreed with your company, how you trade speed against safety. Blind agreement is a weak strategy. Interviewers are looking for your own judgment, explained honestly, and a willingness to update.",
   lessons: [valuesProbes, valuesDepth, valuesDisagree, valuesEthics, valuesUpdating, valuesSelf],
 }
 
