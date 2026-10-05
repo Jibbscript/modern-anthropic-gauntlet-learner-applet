@@ -1,0 +1,221 @@
+/* ------------------------------------------------------------ code + slots */
+
+/* lines that hold a slot get a little extra air so the pills don't touch */
+.cloze__code .cloze__line--slots > span {
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+
+.cloze__slot {
+  --sl-bg: color-mix(in srgb, var(--surface) 70%, transparent);
+  --sl-line: var(--line-strong);
+  --sl-ink: var(--code-ink);
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: middle;
+  box-sizing: border-box;
+  width: calc(var(--cz-ch, 4) * 1ch + 18px);
+  height: 26px;
+  margin: -2px 2px 0;
+  padding: 0 7px;
+  border-radius: var(--r-pill);
+  border: 2px dashed var(--sl-line);
+  background: var(--sl-bg);
+  color: var(--sl-ink);
+  font: inherit;
+  line-height: 1;
+  white-space: pre;
+  scroll-margin: 24px;
+  transition:
+    background var(--dur-2),
+    border-color var(--dur-2),
+    color var(--dur-2),
+    box-shadow var(--dur-2);
+}
+/* bigger hit area than the visible pill */
+.cloze__slot::before {
+  content: '';
+  position: absolute;
+  inset: -8px -3px;
+}
+.cloze__slot:disabled {
+  cursor: default;
+}
+.cloze__slot:focus-visible {
+  outline: 3px solid var(--select);
+  outline-offset: 2px;
+  border-radius: var(--r-pill);
+}
+
+.cloze__slot--active {
+  --sl-bg: var(--select-soft);
+  --sl-line: var(--select);
+  border-style: solid;
+  animation: cloze-pulse 1.6s var(--ease-out) infinite;
+}
+.cloze__slot--filled {
+  --sl-bg: var(--surface);
+  --sl-line: var(--line-strong);
+  border-style: solid;
+  box-shadow: 0 2px 0 0 var(--edge);
+}
+/* a filled slot that is active again keeps its token but gets the blue ring */
+.cloze__slot--active:has(.cloze__tok) {
+  --sl-bg: var(--surface);
+}
+.cloze__slot--correct,
+.cloze__slot--incorrect,
+.cloze__slot--reveal {
+  border-style: solid;
+  font-weight: 700;
+}
+.cloze__slot--correct {
+  --sl-bg: var(--good-soft);
+  --sl-line: var(--good);
+  --sl-ink: var(--good-ink);
+  box-shadow: 0 2px 0 0 var(--good-edge);
+}
+.cloze__slot--incorrect {
+  --sl-bg: var(--bad-soft);
+  --sl-line: var(--bad);
+  --sl-ink: var(--bad-ink);
+  box-shadow: 0 2px 0 0 var(--bad-edge);
+}
+.cloze__slot--reveal {
+  --sl-bg: var(--good-soft);
+  --sl-line: var(--good);
+  --sl-ink: var(--good-ink);
+  background-image: repeating-linear-gradient(-45deg, transparent 0 6px, color-mix(in srgb, var(--good) 14%, transparent) 6px 12px);
+  box-shadow: 0 2px 0 0 var(--good-edge);
+}
+/* graded tokens read in the feedback colour, not syntax colours */
+.cloze__slot--correct .cloze__tok *,
+.cloze__slot--incorrect .cloze__tok *,
+.cloze__slot--reveal .cloze__tok * {
+  color: inherit;
+}
+
+.cloze__tok {
+  display: inline-block;
+}
+
+@keyframes cloze-pulse {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--select) 45%, transparent);
+  }
+  70%,
+  100% {
+    box-shadow: 0 0 0 7px color-mix(in srgb, var(--select) 0%, transparent);
+  }
+}
+
+/* ------------------------------------------------------------------ bank */
+
+.cloze__bank {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  overflow: hidden;
+  /* room for the chips' bottom edges and press travel */
+  padding-bottom: 2px;
+}
+.cloze__bank-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3);
+  min-height: 20px;
+}
+.cloze__dots {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.cloze__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--r-pill);
+  background: var(--line-strong);
+  transition:
+    width var(--dur-2) var(--ease-out),
+    background var(--dur-2);
+}
+.cloze__dot--filled {
+  background: var(--ink-3);
+}
+.cloze__dot--active {
+  width: 20px;
+  background: var(--select);
+}
+
+.cloze__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-3);
+}
+.cloze__chip {
+  --ch-bg: var(--surface);
+  --ch-line: var(--line);
+  --ch-edge: var(--edge);
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 64px;
+  min-height: 50px;
+  max-width: 100%;
+  margin-bottom: var(--edge-h);
+  padding: 0 var(--s-4);
+  border-radius: var(--r-md);
+  background: var(--ch-bg);
+  box-shadow:
+    inset 0 0 0 2px var(--ch-line),
+    0 var(--edge-h) 0 0 var(--ch-edge);
+  color: var(--code-ink);
+  font-family: var(--font-code);
+  font-size: 16px;
+  font-weight: 600;
+  white-space: pre;
+  overflow-wrap: anywhere;
+  transition:
+    background var(--dur-2),
+    box-shadow 90ms var(--ease-out);
+}
+.cloze__chip::after {
+  content: '';
+  position: absolute;
+  inset: 2px 2px 50% 2px;
+  border-radius: calc(var(--r-md) - 2px) calc(var(--r-md) - 2px) 0 0;
+  background: var(--gloss);
+  opacity: 0.5;
+  pointer-events: none;
+}
+.cloze__chip:active {
+  box-shadow:
+    inset 0 0 0 2px var(--ch-line),
+    0 2px 0 0 var(--ch-edge);
+}
+.cloze__chip--on {
+  --ch-bg: var(--select-soft);
+  --ch-line: var(--select);
+  --ch-edge: var(--select-edge);
+}
+
+.cloze__done {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  min-height: 54px;
+  padding: 0 var(--s-4);
+  border-radius: var(--r-md);
+  background: var(--surface-2);
+  color: var(--ink-2);
+  font-size: var(--fs-sm);
+  font-weight: 700;
+}
+.cloze__done svg {
+  flex: none;
+  color: var(--good);
+}

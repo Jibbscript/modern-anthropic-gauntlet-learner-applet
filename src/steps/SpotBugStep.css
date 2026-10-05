@@ -1,0 +1,152 @@
+.spotbug__instr {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3);
+  min-height: 24px;
+  margin-bottom: calc(var(--s-2) * -1);
+}
+.spotbug__count {
+  font-variant-numeric: tabular-nums;
+  transition:
+    background var(--dur-2),
+    color var(--dur-2);
+}
+.spotbug__count--full {
+  background: var(--select-soft);
+  color: var(--select);
+}
+
+/* ------------------------------------------------------------- the code */
+
+.spotbug__frame {
+  min-width: 0;
+}
+
+/* taller rows: every line is a tap target */
+.spotbug__code .code__scroll {
+  padding: var(--s-2) 0;
+}
+.spotbug__code .code__line > span {
+  padding-top: 6px;
+  padding-bottom: 6px;
+  transition:
+    background var(--dur-2),
+    box-shadow var(--dur-2),
+    color var(--dur-2),
+    opacity var(--dur-2);
+}
+.spotbug__code .code__line + .code__line > span {
+  border-top: 1px solid color-mix(in srgb, var(--code-line) 70%, transparent);
+}
+.spotbug__code .code__no {
+  padding-left: var(--s-4);
+}
+
+.spotbug__line {
+  --ln-tint: transparent;
+  --ln-bar: transparent;
+  background: var(--ln-tint);
+  transition: background var(--dur-2);
+}
+.spotbug__line > .code__no {
+  box-shadow: inset 4px 0 0 0 var(--ln-bar);
+}
+.spotbug__line--tap {
+  cursor: pointer;
+  -webkit-user-select: none;
+  user-select: none;
+}
+@media (hover: hover) {
+  .spotbug__line--tap:hover {
+    --ln-tint: color-mix(in srgb, var(--select) 6%, transparent);
+  }
+}
+.spotbug__line--tap:active {
+  --ln-tint: color-mix(in srgb, var(--select) 20%, transparent);
+}
+.spotbug__line:focus-visible {
+  outline: 2px solid var(--select);
+  outline-offset: -2px;
+  border-radius: 0;
+}
+
+.spotbug__line--selected {
+  --ln-tint: color-mix(in srgb, var(--select) 15%, transparent);
+  --ln-bar: var(--select);
+}
+.spotbug__line--selected:active {
+  --ln-tint: color-mix(in srgb, var(--select) 24%, transparent);
+}
+.spotbug__line--correct {
+  --ln-tint: color-mix(in srgb, var(--good) 16%, transparent);
+  --ln-bar: var(--good);
+}
+.spotbug__line--incorrect {
+  --ln-tint: color-mix(in srgb, var(--bad) 15%, transparent);
+  --ln-bar: var(--bad);
+}
+.spotbug__line--reveal {
+  --ln-tint: color-mix(in srgb, var(--good) 16%, transparent);
+  --ln-bar: var(--good);
+  background-image: repeating-linear-gradient(-45deg, transparent 0 8px, color-mix(in srgb, var(--good) 9%, transparent) 8px 16px);
+}
+
+.spotbug__line--selected > .code__no,
+.spotbug__line--correct > .code__no,
+.spotbug__line--incorrect > .code__no,
+.spotbug__line--reveal > .code__no {
+  opacity: 1;
+  font-weight: 800;
+}
+.spotbug__line--selected > .code__no {
+  color: var(--select);
+}
+.spotbug__line--correct > .code__no,
+.spotbug__line--reveal > .code__no {
+  color: var(--good-ink);
+}
+.spotbug__line--incorrect > .code__no {
+  color: var(--bad-ink);
+}
+.spotbug__line--dim > .code__src {
+  opacity: 0.55;
+}
+
+/* ------------------------------------------------------------------ fix */
+
+.spotbug__fix {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+}
+.spotbug__fix-label {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+}
+.spotbug__fix-label .eyebrow {
+  color: var(--good-ink);
+}
+.spotbug__fix-icon {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: var(--r-pill);
+  background: var(--good);
+  color: #fff;
+  box-shadow: 0 2px 0 0 var(--good-edge);
+}
+.spotbug__fixcode {
+  box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--good) 40%, var(--code-line));
+}
+.spotbug__fixline {
+  background: color-mix(in srgb, var(--good) 14%, transparent);
+}
+.spotbug__fixline > .code__no {
+  box-shadow: inset 4px 0 0 0 var(--good);
+  color: var(--good-ink);
+  opacity: 1;
+  font-weight: 800;
+}
