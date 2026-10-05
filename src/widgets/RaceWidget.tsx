@@ -189,6 +189,17 @@ export default function RaceWidget({ config, onComplete }: WidgetProps<RaceConfi
   const hint = goal === 'lose-update' ? 'Try switching threads between a LOAD and its STORE.' : 'Let each thread STORE before another thread LOADs.'
 
   const perInc = lock ? 5 : 3
+  /** schedule indexes of STOREs that overwrote someone else's increment */
+  const badStores = useMemo(() => {
+    const out = new Set<number>()
+    let w = 0
+    state.schedule.forEach((e, i) => {
+      if (e.op !== 'STORE') return
+      if (state.writes[w]?.dropped.length) out.add(i)
+      w++
+    })
+    return out
+  }, [state])
 
   return (
     <div className="race" ref={rootRef}>
@@ -289,7 +300,7 @@ export default function RaceWidget({ config, onComplete }: WidgetProps<RaceConfi
                 <div className="race-reg__box" ref={(el) => void (regRefs.current[t] = el)}>
                   <SwapValue k={regKey} value={th.reg ?? '–'} from={regFrom} delay={regFrom === 'above' ? delay : 0} />
                   <AnimatePresence>
-                    {lastOp?.t === t && lastOp.op === 'ADD' && th.pc > 0 && program[th.pc - 1] === 'ADD' && (
+                    {lastOp?.t === t && lastOp.op === 'ADD' && (
                       <motion.span
                         key={`plus-${regKey}`}
                         className="race-reg__plus"
@@ -334,20 +345,21 @@ export default function RaceWidget({ config, onComplete }: WidgetProps<RaceConfi
             </div>
           )
         })}
-        {flyers.map((f) => (
-          <motion.span
-            key={f.id}
-            className="race-flyer"
-            style={{ ...threadVars(f.t), left: f.from.x - 15, top: f.from.y - 15 }}
-            initial={{ x: 0, y: 0, scale: 0.6, opacity: 0 }}
-            animate={{ x: f.to.x - f.from.x, y: f.to.y - f.from.y, scale: [0.6, 1.15, 0.9], opacity: [0, 1, 1, 0] }}
-            transition={{ duration: FLIGHT, ease: [0.3, 0.7, 0.3, 1], opacity: { duration: FLIGHT, times: [0, 0.15, 0.85, 1] } }}
-            onAnimationComplete={() => setFlyers((all) => all.filter((x) => x.id !== f.id))}
-          >
-            {f.value}
-          </motion.span>
-        ))}
       </div>
+
+      {flyers.map((f) => (
+        <motion.span
+          key={f.id}
+          className="race-flyer"
+          style={{ ...threadVars(f.t), left: f.from.x - 15, top: f.from.y - 15 }}
+          initial={{ x: 0, y: 0, scale: 0.6, opacity: 0 }}
+          animate={{ x: f.to.x - f.from.x, y: f.to.y - f.from.y, scale: [0.6, 1.15, 0.9], opacity: [0, 1, 1, 0] }}
+          transition={{ duration: FLIGHT, ease: [0.3, 0.7, 0.3, 1], opacity: { duration: FLIGHT, times: [0, 0.15, 0.85, 1] } }}
+          onAnimationComplete={() => setFlyers((all) => all.filter((x) => x.id !== f.id))}
+        >
+          {f.value}
+        </motion.span>
+      ))}
 
       {/* the interleaving the learner chose */}
       <div className="race-sched">
@@ -356,7 +368,7 @@ export default function RaceWidget({ config, onComplete }: WidgetProps<RaceConfi
           {state.schedule.length === 0 && <span className="race-sched__empty">Tap Step on any thread</span>}
           <AnimatePresence initial={false}>
             {state.schedule.map((e, i) => {
-              const bad = e.op === 'STORE' && state.writes.find((w, wi) => wi === state.schedule.slice(0, i + 1).filter((s) => s.op === 'STORE').length - 1)?.dropped.length
+              const bad = e.op === 'STORE' && badStores.has(i)
               return (
                 <motion.span
                   key={i}
@@ -423,7 +435,7 @@ export default function RaceWidget({ config, onComplete }: WidgetProps<RaceConfi
       </AnimatePresence>
 
       <AnimatePresence>
-        {failedRuns >= 2 && !reached && !done && (
+        {failedRuns >= 2 && !reached && (
           <motion.p key="hint" className="race-hint" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
             <Lightbulb size={15} strokeWidth={2.6} />
             {hint}
