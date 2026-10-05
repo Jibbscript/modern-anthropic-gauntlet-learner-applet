@@ -22,6 +22,12 @@ const SQ2 = Math.SQRT2
 
 /** 2:1 dimetric projection: +x runs right-down, +y runs left-down, +z up */
 const P = (x: number, y: number, z = 0): Pt => [OX + x - y, OY + (x + y) / 2 - z]
+/** iso footprint (w = d = size) whose base centre lands on screen point (sx, sy) */
+const onScreen = (sx: number, sy: number, size: number) => {
+  const a = sx - OX
+  const b = 2 * (sy - OY)
+  return { x: (a + b) / 2 - size / 2, y: (b - a) / 2 - size / 2, z: 0, w: size, d: size }
+}
 const pts = (ps: Pt[]) => ps.map(([a, b]) => `${r1(a)},${r1(b)}`).join(' ')
 const r1 = (n: number) => Math.round(n * 10) / 10
 
@@ -144,14 +150,9 @@ function Defs() {
         <stop offset="0.6" stopColor="#000" stopOpacity="0" />
         <stop offset="1" stopColor="#000" stopOpacity="0.22" />
       </linearGradient>
-      <linearGradient id={`${id}-face`} x1="0" y1="0" x2="0.4" y2="1">
-        <stop offset="0" className="ca-c" style={{ stopColor: 'var(--t)' }} />
-        <stop offset="0.6" className="ca-c" style={{ stopColor: 'var(--l)' }} />
-        <stop offset="1" className="ca-c" style={{ stopColor: 'var(--r)' }} />
-      </linearGradient>
       <radialGradient id={`${id}-shadow`}>
         <stop offset="0" className="ca-shadow-stop" />
-        <stop offset="1" className="ca-shadow-stop" stopOpacity="0" />
+        <stop offset="1" className="ca-shadow-stop" style={{ stopOpacity: 0 }} />
       </radialGradient>
       {(['c', 'gold', 'paper'] as const).map((t) => (
         <radialGradient key={t} id={`${id}-ball-${t}`} className={`ca-${t}`} cx="0.38" cy="0.34" r="0.72">
@@ -279,7 +280,7 @@ function ValuesArt() {
         <Ball cx={px} cy={py - 2} r={6} tone="gold" />
         <g className="ca-pan ca-pan--l">
           <Pan cx={px - L} top={py + 2} />
-          <Box x={-3} y={-3} z={0} w={10} d={10} h={10} tone="gold" className="ca-onpan-l" />
+          <Box {...onScreen(px - L, py + 37, 11)} h={11} tone="gold" />
         </g>
         <g className="ca-pan ca-pan--r">
           <Pan cx={px + L} top={py + 2} />
@@ -364,8 +365,9 @@ function ConcurrencyArt() {
         {/* the fork: where work fans out */}
         <Box x={-34} y={-30} z={8} w={9} d={54} h={14} tone="deep" />
         {lanes.map((l) => (
-          <g key={l.cls} className={`ca-token ${l.cls}`}>
-            <Box x={l.at} y={l.y + 1} z={9.6} w={8} d={8} h={8} tone={l.tone} />
+          // static spread via inline transform; the run animation overrides it
+          <g key={l.cls} className={`ca-token ${l.cls}`} style={{ transform: `translate(${l.at + 4}px, ${(l.at + 4) / 2}px)` }}>
+            <Box x={-4} y={l.y + 1} z={9.6} w={8} d={8} h={8} tone={l.tone} />
           </g>
         ))}
       </g>

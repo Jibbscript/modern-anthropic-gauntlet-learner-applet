@@ -8,7 +8,7 @@
 
 .cloze__slot {
   --sl-bg: color-mix(in srgb, var(--surface) 70%, transparent);
-  --sl-line: var(--line-strong);
+  --sl-line: color-mix(in srgb, var(--ink-3) 60%, transparent);
   --sl-ink: var(--code-ink);
   position: relative;
   display: inline-flex;
@@ -143,7 +143,7 @@
     background var(--dur-2);
 }
 .cloze__dot--filled {
-  background: var(--ink-3);
+  background: var(--ink-2);
 }
 .cloze__dot--active {
   width: 20px;

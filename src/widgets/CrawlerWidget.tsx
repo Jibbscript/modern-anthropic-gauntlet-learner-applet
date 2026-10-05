@@ -246,16 +246,18 @@ export default function CrawlerWidget({ config, onComplete }: WidgetProps<Crawle
                     </text>
                   </motion.g>
                   {fetching && (
-                    <motion.circle
-                      className="crawl-node__ring"
-                      r={NODE_R + 3.5}
-                      style={dupNow ? undefined : workerVar(fw[0])}
-                      data-dup={dupNow || undefined}
-                      transform="rotate(-90)"
-                      initial={{ pathLength: 0 }}
-                      animate={{ pathLength: frac }}
-                      transition={reduce ? { duration: 0 } : { duration: playing ? TICK_MS / 1000 : 0.3, ease: playing ? 'linear' : 'easeOut' }}
-                    />
+                    <g transform="rotate(-90)">
+                      <motion.circle
+                        key={`r${w0?.total}-${fw[0]}-${sim.workers[fw[0]].entry}`}
+                        className="crawl-node__ring"
+                        r={NODE_R + 3.5}
+                        style={dupNow ? undefined : workerVar(fw[0])}
+                        data-dup={dupNow || undefined}
+                        initial={{ pathLength: 0 }}
+                        animate={{ pathLength: frac }}
+                        transition={reduce ? { duration: 0 } : { duration: playing ? TICK_MS / 1000 : 0.3, ease: playing ? 'linear' : 'easeOut' }}
+                      />
+                    </g>
                   )}
                   {fw.map((wi, k) => (
                     <g key={wi} transform={`translate(${-NODE_R + 1 + k * 11} ${NODE_R + 1})`} className="crawl-node__worker" style={workerVar(wi)}>
