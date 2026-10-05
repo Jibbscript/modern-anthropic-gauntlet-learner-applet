@@ -126,25 +126,59 @@ export function bottlenecks(p: Pick<PipeParams, 'workers' | 'costs'>): number[] 
 }
 
 /**
- * Steady-state throughput, measured on a long run (independent of the batch
- * size): saved images per time unit once the pipeline is full.
+ * Steady-state throughput: images saved per time unit once the pipeline is
+ * full. With deterministic costs and queues of capacity >= 1 this is exactly
+ * the slowest stage's rate (verified against long simulated runs in
+ * model.test.ts), independent of batch size and queue capacity.
  */
-export function steadyThroughput(p: Omit<PipeParams, 'images'>): number {
-  const N = 240
-  const run = simulatePipeline({ ...p, images: N }, false)
-  const c = run.completions
-  const a = 80
-  const b = N - 1
-  // align the window to whole "bursts" so equal timestamps don't skew it
-  let i = a
-  while (i > 0 && Math.abs(c[i - 1] - c[a]) < EPS) i--
-  let j = b
-  while (j > i && Math.abs(c[j] - c[b]) < EPS && j + 1 < N && Math.abs(c[j + 1] - c[b]) < EPS) j++
-  const span = c[j] - c[i]
-  return span > 0 ? (j - i) / span : Infinity
+export function throughput(p: Pick<PipeParams, 'workers' | 'costs'>): number {
+  return Math.min(...stageRates(p))
+}
+
+/** least-squares slope of completions over time, skipping the warm-up */
+export function measuredThroughput(run: PipeRun, warmup: number): number {
+  const xs = run.completions.slice(warmup)
+  const n = xs.length
+  if (n < 2) return NaN
+  const mx = xs.reduce((a, b) => a + b, 0) / n
+  const my = (n - 1) / 2
+  let num = 0
+  let den = 0
+  xs.forEach((x, i) => {
+    num += (x - mx) * (i - my)
+    den += (x - mx) ** 2
+  })
+  return den > 0 ? num / den : Infinity
+}
+
+/** most images sitting in queues at any moment of the run */
+export function peakBuffered(run: PipeRun): number {
+  let peak = 0
+  for (const f of run.frames) peak = Math.max(peak, f.locs.filter((l) => l.at === 'queue').length)
+  return peak
 }
 
 /** fraction of each stage's worker time spent working, in steady state */
 export function utilization(p: Pick<PipeParams, 'workers' | 'costs'>, throughput: number): number[] {
   return p.workers.map((w, s) => Math.min(1, (throughput * p.costs[s]) / w))
+}
+
+export const MAX_PER_STAGE = 4
+
+/** an even split of the budget (each stage gets 1..4 workers) */
+export function defaultAllocation(budget: number): number[] {
+  const b = Math.max(4, Math.min(4 * MAX_PER_STAGE, Math.round(budget)))
+  const base = Math.floor(b / 4)
+  return [0, 1, 2, 3].map((i) => Math.min(MAX_PER_STAGE, base + (i < b % 4 ? 1 : 0)))
+}
+
+/** best steady-state throughput any allocation within the budget can reach */
+export function bestThroughput(budget: number, costs: number[]): number {
+  let best = 0
+  const r = [1, 2, 3, 4]
+  for (const a of r) for (const b of r) for (const c of r) for (const d of r) {
+    if (a + b + c + d > budget) continue
+    best = Math.max(best, throughput({ workers: [a, b, c, d], costs }))
+  }
+  return best
 }
