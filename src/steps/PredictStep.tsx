@@ -54,10 +54,31 @@ export function gradeOutput(input: string, answers: string[]): PredictGrade {
 
 /* ---------------------------------------------------------------- view */
 
-export default function PredictStep({ step, phase, attempt, setController, onHint }: StepProps<T>) {
-  const [text, setText] = useState('')
+/** last answer per step, so "Try again" lets the learner edit instead of retyping */
+const memory = new Map<string, string>()
+
+export default function PredictStep({ step, phase, attempt, setController, onHint, lessonId, mode }: StepProps<T>) {
+  const memKey = `${lessonId ?? mode}:${step.id}`
+  const [text, setText] = useState(() => (attempt > 0 ? (memory.get(memKey) ?? '') : ''))
   const ta = useRef<HTMLTextAreaElement>(null)
   const locked = phase !== 'answer'
+
+  useEffect(() => {
+    memory.set(memKey, text)
+  }, [memKey, text])
+
+  // retry: put the caret back at the end of the previous answer
+  useEffect(() => {
+    const el = ta.current
+    if (attempt === 0 || !el) return
+    el.focus({ preventScroll: true })
+    el.setSelectionRange(el.value.length, el.value.length)
+  }, [attempt])
+
+  // drop the keyboard once graded so the feedback panel is visible
+  useEffect(() => {
+    if (locked) ta.current?.blur()
+  }, [locked])
   const grade = useMemo(() => gradeOutput(text, step.answers), [text, step.answers])
   const expected = step.answers[0] ?? ''
   const expectedLines = lines(expected).length
@@ -76,12 +97,17 @@ export default function PredictStep({ step, phase, attempt, setController, onHin
     })
   }, [text, grade, expectedLines, setController])
 
-  // grow with content
+  // grow with content (and re-measure when the width changes, e.g. rotation)
   useLayoutEffect(() => {
     const el = ta.current
     if (!el) return
-    el.style.height = 'auto'
-    el.style.height = `${el.scrollHeight}px`
+    const fit = () => {
+      el.style.height = 'auto'
+      el.style.height = `${el.scrollHeight}px`
+    }
+    fit()
+    window.addEventListener('resize', fit)
+    return () => window.removeEventListener('resize', fit)
   }, [text])
 
   const state = phase === 'answer' ? 'answer' : phase === 'correct' ? 'correct' : 'incorrect'

@@ -6,6 +6,9 @@
   height: 100%;
   min-height: 0;
   background: var(--bg);
+  /* memory / review hue */
+  --mem: var(--c-violet);
+  --mem-edge: var(--c-violet-edge);
 }
 
 .prac-head {
@@ -20,8 +23,8 @@
 .prac-head h1 {
   padding: var(--s-4) 0 var(--s-3);
   font-size: 30px;
-  font-weight: 900;
-  letter-spacing: -0.025em;
+  font-weight: 700;
+  letter-spacing: -0.015em;
 }
 .prac-head__deck {
   display: inline-flex;
@@ -33,7 +36,7 @@
   box-shadow: inset 0 0 0 2px var(--line);
   color: var(--ink-2);
   font-size: var(--fs-sm);
-  font-weight: 800;
+  font-weight: 700;
   white-space: nowrap;
 }
 
@@ -58,7 +61,7 @@
 }
 .prac-sec__head h2 {
   font-size: var(--fs-xl);
-  font-weight: 900;
+  font-weight: 700;
   letter-spacing: -0.015em;
 }
 .prac-sec__aside {
@@ -84,19 +87,19 @@
 
 /* ---------------------------------------------------------------- hero */
 .prac-hero {
-  --prac-ring-track: color-mix(in srgb, var(--xp) 16%, var(--surface-3));
+  --prac-ring-track: color-mix(in srgb, var(--mem) 16%, var(--surface-3));
   position: relative;
   display: flex;
   flex-direction: column;
   gap: var(--s-4);
   padding: var(--s-5) var(--s-5) calc(var(--s-5) + 2px);
-  border-radius: var(--r-xl);
+  border-radius: var(--r-lg);
   background:
-    radial-gradient(90% 70% at 100% 0%, color-mix(in srgb, var(--xp) 18%, transparent) 0%, transparent 70%),
-    linear-gradient(170deg, color-mix(in srgb, var(--xp) 9%, var(--surface)) 0%, var(--surface) 75%);
+    radial-gradient(90% 70% at 100% 0%, color-mix(in srgb, var(--mem) 18%, transparent) 0%, transparent 70%),
+    linear-gradient(170deg, color-mix(in srgb, var(--mem) 9%, var(--surface)) 0%, var(--surface) 75%);
   box-shadow:
-    inset 0 0 0 2px color-mix(in srgb, var(--xp) 28%, var(--line)),
-    0 var(--edge-h) 0 0 color-mix(in srgb, var(--xp) 40%, var(--edge));
+    inset 0 0 0 2px color-mix(in srgb, var(--mem) 28%, var(--line)),
+    0 var(--edge-h) 0 0 color-mix(in srgb, var(--mem) 40%, var(--edge));
   margin-bottom: var(--edge-h);
 }
 .prac-hero--done {
@@ -126,13 +129,13 @@
   gap: 6px;
   margin-bottom: var(--s-1);
   font-size: var(--fs-xs);
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--ink-2);
 }
 .prac-hero__eyebrow svg {
-  color: var(--xp);
+  color: var(--mem);
 }
 .prac-hero--done .prac-hero__eyebrow svg {
   color: var(--good);
@@ -140,9 +143,9 @@
 .prac-hero__count {
   font-family: var(--font-display);
   font-size: 60px;
-  font-weight: 900;
+  font-weight: 700;
   line-height: 0.95;
-  letter-spacing: -0.04em;
+  letter-spacing: -0.015em;
 }
 .prac-hero__sub {
   font-size: var(--fs-md);
@@ -151,13 +154,13 @@
 }
 .prac-hero__sub b {
   color: var(--ink);
-  font-weight: 900;
+  font-weight: 700;
 }
 .prac-hero__title {
   margin-top: var(--s-2);
   font-size: var(--fs-2xl);
-  font-weight: 900;
-  letter-spacing: -0.02em;
+  font-weight: 700;
+  letter-spacing: -0.015em;
 }
 .prac-hero__check {
   position: relative;
@@ -195,12 +198,12 @@
 }
 .prac-hero__ring-in b {
   font-size: var(--fs-xl);
-  font-weight: 900;
-  letter-spacing: -0.02em;
+  font-weight: 700;
+  letter-spacing: -0.015em;
 }
 .prac-hero__ring-in span {
   font-size: 11px;
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--ink-3);
@@ -217,11 +220,11 @@
   gap: 6px;
   padding: 5px 11px;
   border-radius: var(--r-pill);
-  background: color-mix(in srgb, var(--xp) 10%, var(--surface));
-  box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--xp) 22%, var(--line));
+  background: color-mix(in srgb, var(--mem) 10%, var(--surface));
+  box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--mem) 22%, var(--line));
   color: var(--ink-2);
   font-size: 13px;
-  font-weight: 800;
+  font-weight: 700;
   white-space: nowrap;
 }
 
@@ -269,6 +272,17 @@
   border-radius: 10px 10px 16px 16px;
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.42), rgba(255, 255, 255, 0));
 }
+.prac-row__art {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  margin: -4px -2px -4px -8px;
+}
+.prac-row__art .ca {
+  margin: -4px;
+}
 .prac-row__icon svg {
   position: relative;
   z-index: 1;
@@ -289,14 +303,14 @@
 .prac-row__title {
   min-width: 0;
   font-size: var(--fs-md);
-  font-weight: 800;
+  font-weight: 700;
   line-height: 1.25;
   text-wrap: balance;
 }
 .prac-row__big {
   flex: none;
   font-size: var(--fs-md);
-  font-weight: 900;
+  font-weight: 700;
 }
 .prac-row__meter {
   display: flex;
@@ -311,12 +325,12 @@
   min-width: 34px;
   text-align: right;
   font-size: 13px;
-  font-weight: 800;
+  font-weight: 700;
   color: var(--ink-2);
 }
 .prac-row__meta {
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--ink-3);
   white-space: nowrap;
   overflow: hidden;
@@ -343,21 +357,21 @@
   stroke-width: 1;
 }
 .prac-fc__bar {
-  fill: color-mix(in srgb, var(--xp) 30%, var(--surface-3));
+  fill: color-mix(in srgb, var(--mem) 30%, var(--surface-3));
 }
 .prac-fc__bar--today {
-  fill: var(--xp);
+  fill: var(--mem);
 }
 .prac-fc__val {
   font-family: var(--font-ui);
   font-size: 13px;
-  font-weight: 800;
+  font-weight: 700;
   fill: var(--ink-2);
   font-variant-numeric: tabular-nums;
 }
 .prac-fc__val.is-today {
   font-size: 15px;
-  font-weight: 900;
+  font-weight: 700;
   fill: var(--ink);
 }
 .prac-fc__val.is-zero {
@@ -371,7 +385,7 @@
   fill: var(--ink-3);
 }
 .prac-fc__day.is-today {
-  font-weight: 900;
+  font-weight: 700;
   fill: var(--ink-inverse);
 }
 .prac-fc__pill {
@@ -386,7 +400,7 @@
   padding: var(--s-4);
   border-radius: var(--r-lg);
   background: var(--warn-soft);
-  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--warn) 35%, var(--line));
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--warn) 45%, var(--line));
 }
 .prac-trouble__top {
   display: flex;
@@ -401,13 +415,13 @@
   width: 44px;
   height: 44px;
   border-radius: 14px;
-  color: #fff;
-  background: linear-gradient(160deg, var(--streak-2), var(--warn) 50%, var(--streak));
-  box-shadow: 0 3px 0 0 color-mix(in srgb, var(--streak) 75%, #000);
+  color: color-mix(in srgb, var(--retry-edge) 30%, #000);
+  background: linear-gradient(160deg, color-mix(in srgb, var(--warn) 55%, #fff), var(--warn) 60%);
+  box-shadow: 0 3px 0 0 var(--retry-edge);
 }
 .prac-trouble__title {
   font-size: var(--fs-lg);
-  font-weight: 900;
+  font-weight: 700;
   letter-spacing: -0.01em;
 }
 .prac-trouble__text {
@@ -476,7 +490,7 @@
 }
 .prac-lab__title {
   font-size: var(--fs-lg);
-  font-weight: 900;
+  font-weight: 700;
   line-height: 1.2;
   letter-spacing: -0.01em;
 }
@@ -532,15 +546,15 @@
   align-items: center;
   gap: var(--s-3);
   padding: var(--s-6) var(--s-5) var(--s-5);
-  border-radius: var(--r-xl);
+  border-radius: var(--r-lg);
   text-align: center;
-  background: radial-gradient(120% 70% at 50% 0%, color-mix(in srgb, var(--xp) 13%, var(--surface)) 0%, var(--surface) 70%);
+  background: radial-gradient(120% 70% at 50% 0%, color-mix(in srgb, var(--mem) 13%, var(--surface)) 0%, var(--surface) 70%);
   box-shadow: inset 0 0 0 2px var(--line);
 }
 .prac-empty h2 {
   font-size: var(--fs-2xl);
-  font-weight: 900;
-  letter-spacing: -0.02em;
+  font-weight: 700;
+  letter-spacing: -0.015em;
 }
 .prac-empty__lead {
   color: var(--ink-2);
@@ -589,8 +603,8 @@
   width: 96px;
   height: 120px;
   margin: -62px 0 0 -48px;
-  background: linear-gradient(160deg, color-mix(in srgb, var(--xp) 65%, #fff), var(--xp) 55%, color-mix(in srgb, var(--xp) 70%, #000));
-  box-shadow: 0 6px 0 0 color-mix(in srgb, var(--xp) 70%, #000), 0 16px 30px color-mix(in srgb, var(--xp) 35%, transparent);
+  background: linear-gradient(160deg, color-mix(in srgb, var(--mem) 65%, #fff), var(--mem) 55%, var(--mem-edge));
+  box-shadow: 0 6px 0 0 var(--mem-edge), 0 16px 30px color-mix(in srgb, var(--mem) 35%, transparent);
 }
 .prac-empty__steps {
   list-style: none;
@@ -623,5 +637,5 @@
   background: var(--ink);
   color: var(--ink-inverse);
   font-size: 13px;
-  font-weight: 900;
+  font-weight: 700;
 }

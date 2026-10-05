@@ -52,9 +52,9 @@ export function Logo({ size = 28, wordmark = true, className }: { size?: number;
           className="logo__word"
           style={{
             fontFamily: 'var(--font-display)',
-            fontWeight: 900,
+            fontWeight: 700,
             fontSize: Math.round(size * 0.78),
-            letterSpacing: '-0.035em',
+            letterSpacing: '-0.03em',
             lineHeight: 1,
             color: 'var(--ink)',
             whiteSpace: 'nowrap',

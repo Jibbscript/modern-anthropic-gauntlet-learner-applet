@@ -11,7 +11,7 @@
 .me-head {
   padding-left: var(--gutter);
   padding-right: var(--gutter);
-  background: radial-gradient(120% 100% at 0% 0%, color-mix(in srgb, var(--xp) 10%, var(--bg)) 0%, var(--bg) 70%);
+  background: radial-gradient(120% 100% at 0% 0%, color-mix(in srgb, var(--c) 12%, var(--bg)) 0%, var(--bg) 70%);
 }
 .me-head__bar {
   display: flex;
@@ -22,7 +22,7 @@
 }
 .me-head__label {
   font-size: var(--fs-xs);
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--ink-3);
@@ -50,8 +50,8 @@
 .me-id h1 {
   max-width: 100%;
   font-size: var(--fs-2xl);
-  font-weight: 900;
-  letter-spacing: -0.025em;
+  font-weight: 700;
+  letter-spacing: -0.015em;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -88,7 +88,7 @@
   z-index: 1;
   font-family: var(--font-display);
   font-size: 36px;
-  font-weight: 900;
+  font-weight: 700;
   line-height: 1;
   text-shadow: 0 2px 0 rgba(0, 0, 0, 0.15);
 }
@@ -108,7 +108,7 @@
   background: var(--select-soft);
   color: var(--ink);
   font-size: 13px;
-  font-weight: 800;
+  font-weight: 700;
   white-space: nowrap;
 }
 .me-chip svg {
@@ -158,7 +158,7 @@
 }
 .me-sec__head h2 {
   font-size: var(--fs-xl);
-  font-weight: 900;
+  font-weight: 700;
   letter-spacing: -0.015em;
 }
 .me-sec__aside {
@@ -176,7 +176,7 @@
   margin-right: -6px;
   border-radius: var(--r-pill);
   color: var(--ink-2);
-  font-weight: 800;
+  font-weight: 700;
 }
 .me-link:active {
   background: var(--surface-2);
@@ -208,27 +208,29 @@
 }
 .me-stat--streak {
   --st: var(--streak);
-  --st-edge: color-mix(in srgb, var(--streak) 72%, #000);
+  --st-edge: var(--streak-2);
+  --st-ink: color-mix(in srgb, var(--streak-2) 30%, #000);
 }
 .me-stat--amber {
   --st: var(--c-amber);
   --st-edge: var(--c-amber-edge);
+  --st-ink: color-mix(in srgb, var(--c-amber-edge) 45%, #000);
 }
 .me-stat--xp {
-  --st: var(--xp);
-  --st-edge: color-mix(in srgb, var(--xp) 70%, #000);
+  --st: var(--good);
+  --st-edge: var(--good-edge);
 }
 .me-stat--blue {
   --st: var(--c-blue);
   --st-edge: var(--c-blue-edge);
 }
+.me-stat--violet {
+  --st: var(--c-violet);
+  --st-edge: var(--c-violet-edge);
+}
 .me-stat--teal {
   --st: var(--c-teal);
   --st-edge: var(--c-teal-edge);
-}
-.me-stat--good {
-  --st: var(--good);
-  --st-edge: var(--good-edge);
 }
 .me-stat__icon {
   position: relative;
@@ -238,13 +240,10 @@
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  color: #fff;
+  color: var(--st-ink, #fff);
   background: radial-gradient(circle at 50% 20%, color-mix(in srgb, var(--st) 55%, #fff) 0%, var(--st) 60%, var(--st-edge) 100%);
   box-shadow: 0 3px 0 0 var(--st-edge);
   overflow: hidden;
-}
-.me-stat--streak .me-stat__icon {
-  background: linear-gradient(160deg, var(--streak-2), var(--streak) 70%);
 }
 .me-stat__icon::after {
   content: '';
@@ -265,9 +264,9 @@
 .me-stat__value {
   font-family: var(--font-display);
   font-size: 26px;
-  font-weight: 900;
+  font-weight: 700;
   line-height: 1.1;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.015em;
   white-space: nowrap;
 }
 .me-stat__label {
@@ -284,7 +283,7 @@
   color: var(--ink-3);
 }
 .me-stat__note.is-warn {
-  color: var(--streak);
+  color: var(--retry-ink);
 }
 .me-stat__note.is-good {
   color: var(--good-ink);
@@ -307,7 +306,7 @@
 }
 .me-heat__months span {
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 700;
   color: var(--ink-3);
   white-space: nowrap;
   overflow: visible;
@@ -319,7 +318,7 @@
 .me-heat__dow {
   align-self: center;
   font-size: 11px;
-  font-weight: 800;
+  font-weight: 700;
   color: var(--ink-3);
   line-height: 1;
 }
@@ -339,16 +338,16 @@
   opacity: 0.6;
 }
 .me-heat__cell.lv1 {
-  background: color-mix(in srgb, var(--xp) 26%, var(--surface-3));
+  background: color-mix(in srgb, var(--good) 26%, var(--surface-3));
 }
 .me-heat__cell.lv2 {
-  background: color-mix(in srgb, var(--xp) 50%, var(--surface-3));
+  background: color-mix(in srgb, var(--good) 50%, var(--surface-3));
 }
 .me-heat__cell.lv3 {
-  background: color-mix(in srgb, var(--xp) 75%, var(--surface-3));
+  background: color-mix(in srgb, var(--good) 75%, var(--surface-3));
 }
 .me-heat__cell.lv4 {
-  background: var(--xp);
+  background: var(--good);
 }
 .me-heat__cell.is-today {
   box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--ink);
@@ -356,12 +355,11 @@
 .me-heat__cell.is-picked:not(.is-today) {
   box-shadow: 0 0 0 2px var(--surface), 0 0 0 3.5px var(--ink-3);
 }
-.me-heat__flame {
-  color: var(--streak);
-  fill: var(--streak-2);
-  filter: drop-shadow(0 1px 0 rgba(0, 0, 0, 0.2));
+.me-heat__bolt {
+  color: color-mix(in srgb, var(--streak-2) 30%, #000);
+  fill: var(--streak);
 }
-.me-heat__freeze {
+.me-heat__charge {
   color: var(--freeze);
 }
 .me-heat__detail {
@@ -380,7 +378,7 @@
 }
 .me-heat__detail b {
   color: var(--ink);
-  font-weight: 900;
+  font-weight: 700;
 }
 .me-heat__legend {
   display: flex;
@@ -411,10 +409,6 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
-}
-.me-heat__key-flame {
-  color: var(--streak);
-  fill: var(--streak-2);
 }
 
 /* --------------------------------------------------------- achievements */
@@ -479,30 +473,16 @@
 .me-area__head:active {
   background: var(--surface-2);
 }
-.me-area__icon {
-  position: relative;
+.me-area__art {
   flex: none;
   display: grid;
   place-items: center;
-  width: 38px;
-  height: 38px;
-  margin-bottom: 3px;
-  border-radius: 12px;
-  color: #fff;
-  background: linear-gradient(160deg, color-mix(in srgb, var(--c) 70%, #fff), var(--c) 55%, var(--c-edge));
-  box-shadow: 0 3px 0 0 var(--c-edge);
-  overflow: hidden;
+  width: 48px;
+  height: 48px;
+  margin: -4px -2px -4px -4px;
 }
-.me-area__icon::after {
-  content: '';
-  position: absolute;
-  inset: 2px 5px 55% 5px;
-  border-radius: 10px 10px 16px 16px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.42), rgba(255, 255, 255, 0));
-}
-.me-area__icon svg {
-  position: relative;
-  z-index: 1;
+.me-area__art .ca {
+  margin: -4px;
 }
 .me-area__text {
   flex: 1;
@@ -512,18 +492,18 @@
 }
 .me-area__title {
   font-size: var(--fs-md);
-  font-weight: 800;
+  font-weight: 700;
   line-height: 1.25;
 }
 .me-area__sub {
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--ink-3);
 }
 .me-area__pct {
   flex: none;
   font-size: var(--fs-md);
-  font-weight: 900;
+  font-weight: 700;
 }
 .me-area__chev {
   flex: none;
@@ -554,7 +534,7 @@
   flex: 1;
   min-width: 0;
   font-size: var(--fs-sm);
-  font-weight: 800;
+  font-weight: 700;
 }
 .me-skill__due {
   flex: none;
@@ -562,7 +542,7 @@
 .me-skill__pct {
   flex: none;
   font-size: 13px;
-  font-weight: 800;
+  font-weight: 700;
   color: var(--ink-2);
 }
 .me-skill__pct.is-none {

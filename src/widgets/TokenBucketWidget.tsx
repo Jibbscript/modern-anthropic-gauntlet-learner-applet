@@ -12,7 +12,6 @@ import {
   makeBucket,
   makeWindow,
   newBurst,
-  nextTokenIn,
   tokensAt,
   trackBurst,
   windowAt,
@@ -42,11 +41,11 @@ function useReduced(): boolean {
 }
 
 function fmt(n: number, digits = 1): string {
-  return Number.isInteger(n) ? String(n) : n.toFixed(digits)
+  return String(Number(n.toFixed(digits)))
 }
 
 /* ------------------------------------------------------------------ jar */
-const COIN = 22
+const COIN = 25
 const GAP = 4
 const PAD = 7
 
@@ -60,7 +59,10 @@ function jarGeometry(capacity: number) {
   const slot = (i: number) => {
     const row = Math.floor(i / cols)
     const col = i % cols
-    return { cx: 4 + PAD + col * (COIN + GAP) + COIN / 2, cy: 8 + innerH - PAD - row * (COIN + GAP) - COIN / 2 }
+    // centre a partly filled top row
+    const inRow = Math.min(cols, capacity - row * cols)
+    const shift = ((cols - inRow) * (COIN + GAP)) / 2
+    return { cx: 4 + PAD + shift + col * (COIN + GAP) + COIN / 2, cy: 8 + innerH - PAD - row * (COIN + GAP) - COIN / 2 }
   }
   return { cols, rows, W, H, slot }
 }
@@ -105,11 +107,10 @@ function Jar({ capacity, level, mode, uid, reduce, flash }: { capacity: number; 
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={reduce ? { opacity: 0, transition: { duration: 0.1 } } : { y: -(p.cy + 18), scale: 0.7, opacity: 0, transition: { duration: 0.34, ease: [0.3, 0.6, 0.4, 1] } }}
               transition={reduce ? { duration: 0.1 } : { ...SPRING, delay: mode === 'window' ? i * 0.025 : 0 }}
-              style={{ originX: `${p.cx}px`, originY: `${p.cy}px` }}
             >
               <circle cx={p.cx} cy={p.cy} r={r} fill={`url(#${uid}-gold)`} className="tb-coin" />
               <circle cx={p.cx} cy={p.cy} r={r - 4.5} className="tb-coin__inner" />
-              <ellipse cx={p.cx - 3} cy={p.cy - 5} rx={4.5} ry={2.4} className="tb-coin__shine" />
+              <ellipse cx={p.cx - 3.5} cy={p.cy - 5.5} rx={5} ry={2.6} className="tb-coin__shine" />
             </motion.g>
           )
         })}
@@ -150,7 +151,7 @@ export default function TokenBucketWidget({ config, onComplete }: WidgetProps<To
   const bucketBound = Math.floor(capacity + rate * peakSpan + 1e-9)
 
   const reduce = useReduced()
-  const uid = useId().replace(/:/g, '')
+  const uid = useId().replace(/[^a-zA-Z0-9_-]/g, '')
   const [mode, setModeState] = useState<Mode>('bucket')
   const modeRef = useRef<Mode>('bucket')
   const simRef = useRef(0)
@@ -184,7 +185,11 @@ export default function TokenBucketWidget({ config, onComplete }: WidgetProps<To
     bucketRef.current = makeBucket(capacity, rate, t)
     winRef.current = makeWindow(capacity, windowLen, t)
     eventsRef.current = []
-    samplesRef.current = [{ t, v: capacity }]
+    // the limiter has been idle (and full) before now
+    samplesRef.current = [
+      { t: t - SPAN - 1, v: capacity },
+      { t, v: capacity },
+    ]
     burstRef.current = newBurst()
     holdRef.current = null
     rejectStreak.current = 0
@@ -305,6 +310,8 @@ export default function TokenBucketWidget({ config, onComplete }: WidgetProps<To
   }, [])
 
   function startHold(e: RPointerEvent<HTMLButtonElement>) {
+    // motion re-dispatches untrusted pointer events for keyboard presses; those are handled by onClick
+    if (!e.nativeEvent.isTrusted) return
     if (e.pointerType === 'mouse' && e.button !== 0) return
     sendRef.current()
     holdRef.current = { next: simRef.current + HOLD_DELAY }
@@ -327,7 +334,6 @@ export default function TokenBucketWidget({ config, onComplete }: WidgetProps<To
   const lvl = level(now)
   const win = windowAt(winRef.current, now)
   const resetIn = win.start + win.window - now
-  const tokenWait = nextTokenIn(bucketRef.current, now)
   const accepted = eventsRef.current.filter((e) => e.ok)
   const peak = densest(
     accepted.map((e) => e.t),
@@ -355,7 +361,7 @@ export default function TokenBucketWidget({ config, onComplete }: WidgetProps<To
   samples.forEach((s, i) => {
     line += `${i ? 'L' : 'M'}${tx(s.t).toFixed(1)},${ly(s.v).toFixed(1)}`
   })
-  line += `L${width},${ly(lvl).toFixed(1)}`
+  if (line) line += `L${width},${ly(lvl).toFixed(1)}`
   const area = samples.length ? `${line}L${width},${plotTop + plotH}L${tx(samples[0].t).toFixed(1)},${plotTop + plotH}Z` : ''
   const edges: number[] = []
   if (mode === 'window') {
@@ -364,7 +370,7 @@ export default function TokenBucketWidget({ config, onComplete }: WidgetProps<To
   const secTicks: number[] = []
   for (let k = Math.ceil(now - SPAN); k <= now; k++) secTicks.push(k)
 
-  const goalText = 'Goal: send a burst until the limiter starts saying 429'
+  const goalText = 'Goal: send a burst until you get a 429'
   const holdLabel = holding ? `Bursting · ${holdRate}/s` : 'Send request'
 
   return (
@@ -374,7 +380,7 @@ export default function TokenBucketWidget({ config, onComplete }: WidgetProps<To
           {reached ? (
             <motion.div key="done" className="w-goal tb-goal" initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: 'spring', stiffness: 520, damping: 18 }}>
               <CircleCheck size={18} strokeWidth={2.6} />
-              Goal reached: the burst was absorbed, then throttled
+              Goal reached: burst absorbed, then throttled
             </motion.div>
           ) : (
             <motion.div key="todo" className="w-goal tb-goal tb-goal--todo" exit={{ opacity: 0, scale: 0.96 }} transition={{ duration: 0.12 }}>
@@ -401,7 +407,7 @@ export default function TokenBucketWidget({ config, onComplete }: WidgetProps<To
         <div className="tb-wire" style={{ top: wireY, left: clientX + 18, right: 22 + 18 }} />
         <div className="tb-node tb-node--client" style={{ top: wireY - 20, left: clientX - 20 }}>
           <Smartphone size={20} strokeWidth={2.4} />
-          <span>client</span>
+          <span>Client</span>
         </div>
         <div className="tb-node tb-node--server" style={{ top: wireY - 20, left: serverX - 20 }}>
           <Server size={20} strokeWidth={2.4} />
@@ -459,12 +465,11 @@ export default function TokenBucketWidget({ config, onComplete }: WidgetProps<To
       <div className="tb-caption">
         {mode === 'bucket' ? (
           <>
-            Refills {fmt(rate, 2)} token{rate === 1 ? '' : 's'}/s · holds {capacity}
-            {lvl < capacity && <span className="tb-caption__eta"> · next in {fmt(Math.max(0, tokenWait), 1)}s</span>}
+            Refills {fmt(rate, 2)}/s · holds {capacity}
           </>
         ) : (
           <>
-            {capacity} per {fmt(windowLen, 1)}s window · resets in {resetIn.toFixed(1)}s
+            {capacity} per {fmt(windowLen, 1)}s · resets in <span className="tabular">{resetIn.toFixed(1)}s</span>
           </>
         )}
       </div>
@@ -498,9 +503,11 @@ export default function TokenBucketWidget({ config, onComplete }: WidgetProps<To
       <div className="tb-tl">
         <div className="tb-tl__head">
           <span className="w-label">Last {SPAN}s</span>
-          <span className={['tb-peak', boundaryBurst ? 'is-warn' : ''].join(' ')}>
-            Peak: {peak.count} in {fmt(peakSpan, 1)}s
-          </span>
+          {compare && (
+            <span className={['tb-peak', boundaryBurst ? 'is-warn' : ''].join(' ')}>
+              Peak: {peak.count} in {fmt(peakSpan, 1)}s
+            </span>
+          )}
         </div>
         <svg className="tb-tl__svg" width={width} height={TL_H} viewBox={`0 0 ${width} ${TL_H}`} role="img" aria-label={`Timeline: ${accepted.length} accepted and ${eventsRef.current.length - accepted.length} rejected in the last ${SPAN} seconds`}>
           {secTicks.map((k) => (
@@ -571,7 +578,7 @@ export default function TokenBucketWidget({ config, onComplete }: WidgetProps<To
         >
           {holdLabel}
         </Button>
-        <Button size="sm" variant="ghost" icon={<RotateCcw size={14} strokeWidth={2.6} />} onClick={resetSim}>
+        <Button size="sm" variant="ghost" className="tb-reset" aria-label="Reset" icon={<RotateCcw size={14} strokeWidth={2.6} />} onClick={resetSim}>
           Reset
         </Button>
       </div>

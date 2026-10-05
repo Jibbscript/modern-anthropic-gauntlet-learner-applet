@@ -34,10 +34,14 @@ export function changedLines(a: string[], b: string[]): Set<number> {
   return out
 }
 
+/** remembered selection, so "Try again" keeps the lines that were right */
+const memory = new Map<string, number[]>()
+
 const list = (ns: number[]) => (ns.length === 1 ? String(ns[0]) : `${ns.slice(0, -1).join(', ')} and ${ns[ns.length - 1]}`)
 
-export default function SpotBugStep({ step, phase, attempt, setController, onHint }: StepProps<T>) {
-  const [sel, setSel] = useState<number[]>([])
+export default function SpotBugStep({ step, phase, attempt, setController, onHint, lessonId, mode }: StepProps<T>) {
+  const memKey = `${lessonId ?? mode}:${step.id}`
+  const [sel, setSel] = useState<number[]>(() => (attempt > 0 ? (memory.get(memKey) ?? []).filter((n) => step.bugLines.includes(n)) : []))
   const locked = phase !== 'answer'
   const lines = useMemo(() => step.code.replace(/\s+$/, '').split('\n'), [step.code])
   const bugs = useMemo(() => new Set(step.bugLines), [step.bugLines])
@@ -46,6 +50,10 @@ export default function SpotBugStep({ step, phase, attempt, setController, onHin
   // blank lines can't hold a bug, so they aren't targets (unless the author marked one)
   const blankTargets = useMemo(() => step.bugLines.some((n) => !lines[n - 1]?.trim()), [step.bugLines, lines])
   const tappable = (n: number) => blankTargets || !!lines[n - 1]?.trim()
+
+  useEffect(() => {
+    memory.set(memKey, sel)
+  }, [memKey, sel])
 
   useEffect(() => {
     setController({

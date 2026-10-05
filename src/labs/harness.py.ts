@@ -168,7 +168,8 @@ def _describe(e, test_file):
         return _clip('Assertion failed: ' + src if src else 'Assertion failed'), None
     text = _head(e)
     if isinstance(e, NotImplementedError) and user and not str(e):
-        text = 'NotImplementedError: %s is not implemented yet' % user[-1][2]
+        # an untouched stub: the name says it all, the line comes back separately
+        return 'NotImplementedError: %s is not implemented yet' % user[-1][2], line
     if isinstance(e, RuntimeError) and "can't start new thread" in str(e):
         text += ' (threads cannot start in the browser runtime; locks work, and asyncio is available)'
     if user:

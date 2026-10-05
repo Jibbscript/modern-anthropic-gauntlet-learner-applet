@@ -64,7 +64,13 @@ export function parseCloze(code: string, lang: Lang, nBlanks: number): Seg[][] {
 
 type SlotState = 'empty' | 'active' | 'filled' | 'correct' | 'incorrect' | 'reveal'
 
-export default function ClozeStep({ step, phase, attempt, setController, onHint }: StepProps<T>) {
+/**
+ * The runner remounts a step on "Try again"; remember the last fill so a retry
+ * keeps the blanks that were right and only reopens the wrong ones.
+ */
+const memory = new Map<string, (number | null)[]>()
+
+export default function ClozeStep({ step, phase, attempt, setController, onHint, lessonId, mode }: StepProps<T>) {
   const lang = step.lang ?? 'python'
   const lines = useMemo(() => parseCloze(step.code, lang, step.blanks.length), [step.code, lang, step.blanks.length])
   /** blank indices in the order they appear in the code (auto-advance follows this) */
@@ -77,11 +83,19 @@ export default function ClozeStep({ step, phase, attempt, setController, onHint 
   const optOrder = useMemo(() => step.blanks.map((b, i) => seededShuffle(b.options.map((_, k) => k), `${step.id}:${i}`)), [step])
   const width = useMemo(() => step.blanks.map((b) => Math.max(2, ...b.options.map((o) => [...o].length))), [step])
 
-  const [fill, setFill] = useState<(number | null)[]>(() => step.blanks.map(() => null))
-  const [active, setActive] = useState<number | null>(order[0] ?? null)
+  const memKey = `${lessonId ?? mode}:${step.id}`
+  const [fill, setFill] = useState<(number | null)[]>(() => {
+    const saved = attempt > 0 ? memory.get(memKey) : undefined
+    return step.blanks.map((b, i) => (saved?.[i] === b.answer ? b.answer : null))
+  })
+  const [active, setActive] = useState<number | null>(() => order.find((i) => fill[i] == null) ?? null)
   const locked = phase !== 'answer'
   const slotRefs = useRef(new Map<number, HTMLButtonElement>())
   const touched = useRef(false)
+
+  useEffect(() => {
+    memory.set(memKey, fill)
+  }, [memKey, fill])
 
   useEffect(() => {
     setController({

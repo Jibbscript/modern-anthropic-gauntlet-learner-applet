@@ -128,7 +128,8 @@ export function judge(x: number, answer: number, tolerance = 0.01): NumericVerdi
   if (err > 0 && answer !== 0 && x !== 0 && Math.sign(x) === Math.sign(answer)) {
     const r = Math.abs(x / answer)
     const big = r >= 1 ? r : 1 / r
-    far = big < 1.95 ? `about ${fmtPct(err * 100)}` : `about ${fmtRatio(big)}×`
+    const oom = Math.round(Math.log10(big))
+    far = big < 1.95 ? `about ${fmtPct(err * 100)}` : big < 10_000 ? `about ${fmtRatio(big)}×` : `about ${oom} orders of magnitude`
   }
   return { correct, err, dir, far }
 }
@@ -142,10 +143,30 @@ const MAGS = [
 ] as const
 const SUFFIX = /\s*([kmbt])$/i
 
-export default function NumericStep({ step, phase, attempt, setController, onHint }: StepProps<T>) {
-  const [raw, setRaw] = useState('')
+/** last entry per step, so "Try again" lets the learner nudge the number instead of retyping */
+const memory = new Map<string, string>()
+
+export default function NumericStep({ step, phase, attempt, setController, onHint, lessonId, mode }: StepProps<T>) {
+  const memKey = `${lessonId ?? mode}:${step.id}`
+  const [raw, setRaw] = useState(() => (attempt > 0 ? (memory.get(memKey) ?? '') : ''))
   const input = useRef<HTMLInputElement>(null)
   const locked = phase !== 'answer'
+
+  useEffect(() => {
+    memory.set(memKey, raw)
+  }, [memKey, raw])
+
+  // retry: focus the previous entry, selected, so typing replaces it
+  useEffect(() => {
+    if (attempt === 0) return
+    input.current?.focus({ preventScroll: true })
+    input.current?.select()
+  }, [attempt])
+
+  // drop the keyboard once graded so the feedback panel is visible
+  useEffect(() => {
+    if (locked) input.current?.blur()
+  }, [locked])
   const tol = step.tolerance ?? 0.01
   const unit = step.unit?.trim() || undefined
   const value = useMemo(() => parseNumber(raw, unit), [raw, unit])

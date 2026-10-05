@@ -137,7 +137,7 @@
 .dl-lock__label {
   font-family: var(--font-ui);
   font-size: 12px;
-  font-weight: 900;
+  font-weight: 700;
   fill: var(--ink-2);
 }
 .dl-lock.is-held .dl-lock__shackle {
@@ -167,7 +167,7 @@
 .dl-tnode__label {
   font-family: var(--font-display);
   font-size: 19px;
-  font-weight: 900;
+  font-weight: 700;
   fill: #fff;
 }
 .dl-tnode.is-waiting .dl-tnode__ring {
@@ -218,7 +218,7 @@
 }
 .dl-event .is-bad {
   color: var(--bad-ink);
-  font-weight: 800;
+  font-weight: 700;
 }
 .dl-event .is-good {
   color: var(--good-ink);
@@ -248,7 +248,7 @@
 .dl-banner__title {
   font-family: var(--font-display);
   font-size: var(--fs-md);
-  font-weight: 900;
+  font-weight: 700;
   line-height: 1.25;
 }
 .dl-banner__body {
@@ -306,7 +306,7 @@
   background: var(--th);
   color: #fff;
   font-size: var(--fs-sm);
-  font-weight: 900;
+  font-weight: 700;
   box-shadow: 0 2px 0 0 var(--th-edge);
 }
 .dl-col__chips {
@@ -323,7 +323,7 @@
   padding: 0 6px 0 4px;
   border-radius: var(--r-pill);
   font-size: 11px;
-  font-weight: 900;
+  font-weight: 700;
   white-space: nowrap;
 }
 .dl-chip--held {
@@ -448,7 +448,7 @@
 .dl-hint svg {
   flex: none;
   margin-top: 1px;
-  color: var(--streak);
+  color: var(--retry-edge);
 }
 .dl-foot {
   display: flex;

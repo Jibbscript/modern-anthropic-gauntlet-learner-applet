@@ -43,7 +43,7 @@
   height: calc(100% - var(--edge-h));
   padding: var(--s-2) var(--s-2) var(--s-2) var(--s-3);
   font-size: var(--fs-sm);
-  font-weight: 650;
+  font-weight: 600;
   line-height: 1.3;
 }
 .match-item--right.tile {
@@ -84,10 +84,9 @@
   --mp-edge: var(--c-teal-edge);
 }
 .match-pair--2 {
-  --mp: var(--c-amber);
-  --mp-soft: var(--c-amber-soft);
-  --mp-edge: var(--c-amber-edge);
-  --mp-on: #3d2700;
+  --mp: var(--c-orange);
+  --mp-soft: var(--c-orange-soft);
+  --mp-edge: var(--c-orange-edge);
 }
 .match-pair--3 {
   --mp: var(--mf);
@@ -95,14 +94,14 @@
   --mp-edge: var(--mf-edge);
 }
 .match-pair--4 {
-  --mp: var(--c-orange);
-  --mp-soft: var(--c-orange-soft);
-  --mp-edge: var(--c-orange-edge);
-}
-.match-pair--5 {
   --mp: var(--c-slate);
   --mp-soft: var(--c-slate-soft);
   --mp-edge: var(--c-slate-edge);
+}
+.match-pair--5 {
+  --mp: var(--c-rose);
+  --mp-soft: var(--c-rose-soft);
+  --mp-edge: var(--c-rose-edge);
 }
 .match-item.match-pair {
   --t-bg: var(--mp-soft);
@@ -138,7 +137,7 @@
   background: var(--mp, var(--t-line));
   color: var(--mp-on, #fff);
   font-size: 12px;
-  font-weight: 900;
+  font-weight: 700;
   box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.14);
 }
 .tile--correct .match-socket__dot {
@@ -146,7 +145,7 @@
   color: #fff;
 }
 .tile--incorrect .match-socket__dot {
-  background: var(--bad);
+  background: var(--retry-edge);
   color: #fff;
 }
 .tile--reveal .match-socket__dot {

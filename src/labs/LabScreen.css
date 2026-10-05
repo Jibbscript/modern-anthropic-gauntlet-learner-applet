@@ -24,7 +24,7 @@
 .lab__title {
   font-family: var(--font-display);
   font-size: var(--fs-md);
-  font-weight: 850;
+  font-weight: 700;
   letter-spacing: -0.01em;
   line-height: 1.2;
   white-space: nowrap;
@@ -44,7 +44,7 @@
   box-shadow: inset 0 0 0 1.5px var(--line);
   color: var(--ink-2);
   font-size: var(--fs-xs);
-  font-weight: 800;
+  font-weight: 700;
   white-space: nowrap;
 }
 
@@ -102,7 +102,7 @@
   padding: 0 7px;
   border-radius: var(--r-pill);
   font-size: 11px;
-  font-weight: 900;
+  font-weight: 700;
   letter-spacing: 0.02em;
   transition: background var(--dur-2), color var(--dur-2), box-shadow var(--dur-2);
   position: relative;
@@ -154,7 +154,7 @@
   min-height: 38px;
   border-radius: 11px;
   font-size: var(--fs-sm);
-  font-weight: 800;
+  font-weight: 700;
   color: var(--ink-2);
 }
 
@@ -185,7 +185,7 @@
   padding: 0 6px;
   border-radius: var(--r-pill);
   font-size: 11px;
-  font-weight: 900;
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
 
@@ -263,10 +263,10 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  height: 54px;
-  padding: 0 14px;
-  border-radius: var(--r-md);
-  font-weight: 900;
+  height: 50px;
+  padding: 0 16px;
+  border-radius: var(--r-pill);
+  font-weight: 700;
   font-size: var(--fs-md);
 }
 
@@ -322,7 +322,7 @@
   background: var(--select-soft);
   color: var(--ink);
   font-size: var(--fs-sm);
-  font-weight: 650;
+  font-weight: 500;
   text-align: left;
 }
 
@@ -331,7 +331,7 @@
   display: inline-flex;
   align-items: center;
   color: var(--select);
-  font-weight: 800;
+  font-weight: 700;
 }
 
 .lab-spec__meta {
@@ -343,7 +343,7 @@
 
 .lab-spec__title {
   font-size: var(--fs-2xl);
-  font-weight: 900;
+  font-weight: 700;
 }
 
 .lab-spec__intro {
@@ -396,7 +396,7 @@
   align-items: center;
   gap: var(--s-2);
   font-size: var(--fs-xs);
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--ink-3);
@@ -422,7 +422,7 @@
   gap: var(--s-3);
   padding: var(--s-3) var(--s-4);
   border-radius: var(--r-md);
-  background: var(--warn-soft);
+  background: var(--select-soft);
   font-size: var(--fs-sm);
 }
 
@@ -433,10 +433,10 @@
   width: 22px;
   height: 22px;
   border-radius: 50%;
-  background: var(--warn);
-  color: #1b1300;
+  background: var(--select);
+  color: #fff;
   font-size: 12px;
-  font-weight: 900;
+  font-weight: 700;
 }
 
 .lab-solution {
@@ -467,7 +467,7 @@
   box-shadow: inset 0 0 0 1.5px var(--line);
   color: var(--ink);
   font-size: var(--fs-sm);
-  font-weight: 800;
+  font-weight: 700;
 }
 
 /* --------------------------------------------------------------- tests */
@@ -481,7 +481,7 @@
 
 .lab-tests__intro h3 {
   font-size: var(--fs-lg);
-  font-weight: 850;
+  font-weight: 700;
   margin-bottom: 4px;
 }
 
@@ -530,7 +530,7 @@
 .lab-sum__big {
   font-family: var(--font-display);
   font-size: var(--fs-2xl);
-  font-weight: 900;
+  font-weight: 700;
   letter-spacing: -0.02em;
   line-height: 1;
 }
@@ -545,7 +545,7 @@
 
 .lab-sum__word {
   font-size: var(--fs-lg);
-  font-weight: 800;
+  font-weight: 700;
   color: var(--ink-2);
 }
 
@@ -576,7 +576,7 @@
 
 .lab-sum__hint {
   font-size: var(--fs-sm);
-  font-weight: 650;
+  font-weight: 500;
   color: var(--ink-2);
 }
 
@@ -631,7 +631,7 @@
   display: flex;
   align-items: center;
   gap: var(--s-2);
-  font-weight: 850;
+  font-weight: 700;
 }
 
 .lab-err__text,
@@ -676,7 +676,7 @@
 .lab-group__level {
   flex: none;
   font-size: var(--fs-xs);
-  font-weight: 900;
+  font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--c-ink);
@@ -689,14 +689,14 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   font-size: var(--fs-sm);
-  font-weight: 750;
+  font-weight: 700;
   color: var(--ink-2);
 }
 
 .lab-group__count {
   flex: none;
   font-size: var(--fs-sm);
-  font-weight: 900;
+  font-weight: 700;
 }
 
 .lab-group__count.is-good {
@@ -753,7 +753,7 @@
 }
 
 .lab-row--fail {
-  background: color-mix(in srgb, var(--bad-soft) 55%, transparent);
+  background: color-mix(in srgb, var(--bad-soft) 35%, transparent);
 }
 
 .lab-row__body {
@@ -797,6 +797,12 @@
   color: var(--bad-ink);
 }
 
+.lab-row__same {
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  color: var(--ink-3);
+}
+
 .lab-row--skip .lab-row__err {
   color: var(--ink-3);
 }
@@ -823,7 +829,7 @@
   gap: 5px;
   min-height: 32px;
   font-size: var(--fs-sm);
-  font-weight: 800;
+  font-weight: 700;
   color: var(--select);
 }
 
@@ -843,7 +849,7 @@
   min-height: 44px;
   padding: 0 var(--s-3);
   font-size: var(--fs-sm);
-  font-weight: 800;
+  font-weight: 700;
   color: var(--ink-2);
 }
 
@@ -877,7 +883,7 @@
   flex-direction: column;
   gap: var(--s-4);
   padding: var(--s-5) var(--s-4) var(--s-4);
-  border-radius: var(--r-xl);
+  border-radius: var(--r-lg);
   background: radial-gradient(120% 90% at 0% 0%, var(--c-soft) 0%, var(--surface) 70%);
   box-shadow: inset 0 0 0 2px var(--c), 0 var(--edge-h) 0 0 var(--c-edge);
   margin-bottom: var(--edge-h);
@@ -902,13 +908,20 @@
   height: 64px;
   border-radius: 20px;
   color: #fff;
-  background: linear-gradient(160deg, color-mix(in srgb, var(--good) 70%, #fff), var(--good) 55%, var(--good-edge));
-  box-shadow: 0 5px 0 0 var(--good-edge), 0 12px 24px color-mix(in srgb, var(--good) 35%, transparent);
+  background: var(--good);
+  box-shadow: 0 var(--edge-h) 0 0 var(--good-edge), var(--shadow-md);
 }
 
 .lab-done__badge {
-  background: linear-gradient(160deg, var(--streak-2), var(--streak));
-  box-shadow: 0 5px 0 0 color-mix(in srgb, var(--streak) 70%, #000), 0 12px 24px color-mix(in srgb, var(--streak) 35%, transparent);
+  background: var(--c-amber);
+  color: var(--c-amber-ink);
+  box-shadow: 0 var(--edge-h) 0 0 var(--c-amber-edge), var(--shadow-md);
+}
+
+.lab-done h3 {
+  font-family: var(--font-serif);
+  font-weight: 700;
+  letter-spacing: -0.01em;
 }
 
 .lab-win__text {
@@ -919,7 +932,7 @@
 .lab-win h3,
 .lab-done h3 {
   font-size: var(--fs-xl);
-  font-weight: 900;
+  font-weight: 700;
   margin: 2px 0;
 }
 
@@ -927,12 +940,15 @@
 .lab-done p {
   font-size: var(--fs-sm);
   color: var(--ink-2);
-  font-weight: 650;
+  font-weight: 500;
 }
 
-.lab-win__xp {
-  color: var(--xp);
-  font-weight: 900;
+.lab-win__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 8px;
+  margin-top: 4px;
 }
 
 .lab-done__head {
@@ -972,7 +988,7 @@
   align-items: center;
   gap: var(--s-2);
   font-size: var(--fs-xs);
-  font-weight: 900;
+  font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--c-ink);
@@ -989,7 +1005,7 @@
 
 .lab-done__list li::marker {
   color: var(--c-ink);
-  font-weight: 900;
+  font-weight: 700;
 }
 
 /* --------------------------------------------------------- self-check */
@@ -1044,7 +1060,7 @@
 .lab-check__label {
   flex: none;
   font-size: var(--fs-xs);
-  font-weight: 800;
+  font-weight: 700;
   color: var(--ink-3);
   text-transform: uppercase;
   letter-spacing: 0.06em;
@@ -1060,7 +1076,7 @@
   align-items: center;
   padding: 0 var(--s-2);
   font-size: var(--fs-sm);
-  font-weight: 800;
+  font-weight: 700;
   color: var(--ink-2);
   cursor: pointer;
 }
@@ -1079,7 +1095,7 @@
   padding: var(--s-2) var(--s-3);
   border-bottom: 1px solid var(--code-line);
   font-size: var(--fs-xs);
-  font-weight: 800;
+  font-weight: 700;
 }
 
 .lab-diff__key--del {
@@ -1116,7 +1132,7 @@
 .lab-diff__sign {
   width: 1%;
   padding: 0 var(--s-2) 0 var(--s-3);
-  font-weight: 800;
+  font-weight: 700;
   user-select: none;
   -webkit-user-select: none;
 }
@@ -1173,7 +1189,7 @@
 .lab-empty h2 {
   color: var(--ink);
   font-size: var(--fs-xl);
-  font-weight: 900;
+  font-weight: 700;
 }
 
 .lab-empty p {
@@ -1190,7 +1206,7 @@
 
 .lab-confirm h3 {
   font-size: var(--fs-xl);
-  font-weight: 900;
+  font-weight: 700;
 }
 
 .lab-confirm p {

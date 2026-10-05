@@ -3,7 +3,7 @@
  * near-black ink for its face; dark theme sinks it below the canvas.
  */
 .predict__term {
-  --term-bg: var(--ink);
+  --term-bg: color-mix(in srgb, var(--ink) 88%, var(--bg));
   --term-ink: var(--ink-inverse);
   --term-dim: color-mix(in srgb, var(--ink-inverse) 52%, var(--ink));
   --term-line: transparent;
@@ -124,6 +124,9 @@
   overflow: hidden;
   outline: none;
   caret-color: var(--term-caret);
+}
+.predict__input:focus-visible {
+  outline: none;
 }
 .predict__input::placeholder {
   color: var(--term-dim);

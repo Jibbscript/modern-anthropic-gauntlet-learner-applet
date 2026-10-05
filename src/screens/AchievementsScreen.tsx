@@ -1,6 +1,6 @@
 import { motion } from 'motion/react'
 import { useMemo, useState, type CSSProperties } from 'react'
-import { BookOpen, Brain, Check, ChevronLeft, Clock, Code2, Flame, Layers, Lock, PenLine, Shield, Star, Target, Trophy, Zap, type LucideIcon } from 'lucide-react'
+import { BookOpen, Brain, Check, ChevronLeft, Clock, Code2, Layers, Lock, PenLine, Shield, Sparkles, Star, Target, Trophy, Zap, type LucideIcon } from 'lucide-react'
 import { ACHIEVEMENTS, type Achievement } from '../core/achievements'
 import { useStore, type GauntletState } from '../core/store'
 import type { Catalog } from '../core/adaptive'
@@ -14,9 +14,14 @@ import './AchievementsScreen.css'
 
 type AchIcon = Achievement['icon']
 
+/**
+ * Icon names in core/achievements.ts mapped to lucide glyphs. The lightning
+ * bolt always means streak (as in the streak counter), so streak badges
+ * ('flame') get the bolt and XP / combo badges ('zap') get the XP sparkle.
+ */
 export const ACH_ICONS: Record<AchIcon, LucideIcon> = {
-  flame: Flame,
-  zap: Zap,
+  flame: Zap,
+  zap: Sparkles,
   target: Target,
   brain: Brain,
   book: BookOpen,
@@ -29,27 +34,31 @@ export const ACH_ICONS: Record<AchIcon, LucideIcon> = {
   layers: Layers,
 }
 
-/** medal hue per icon: [face, pressed edge] */
-const HUE: Record<AchIcon, [string, string]> = {
-  flame: ['var(--streak)', 'color-mix(in srgb, var(--streak) 72%, #000)'],
-  zap: ['var(--xp)', 'color-mix(in srgb, var(--xp) 70%, #000)'],
-  target: ['var(--c-rose)', 'var(--c-rose-edge)'],
-  brain: ['var(--c-indigo)', 'var(--c-indigo-edge)'],
-  book: ['var(--c-blue)', 'var(--c-blue-edge)'],
-  trophy: ['var(--c-amber)', 'var(--c-amber-edge)'],
-  star: ['var(--c-amber)', 'var(--c-amber-edge)'],
-  pen: ['var(--c-teal)', 'var(--c-teal-edge)'],
-  code: ['var(--c-green)', 'var(--c-green-edge)'],
-  shield: ['var(--c-violet)', 'var(--c-violet-edge)'],
-  clock: ['var(--c-orange)', 'var(--c-orange-edge)'],
-  layers: ['var(--c-blue)', 'var(--c-blue-edge)'],
+/** glyphs drawn solid rather than outlined */
+const FILLED = new Set<AchIcon>(['flame', 'star'])
+
+/** medal hue per icon: [face, pressed edge, glyph ink] */
+const DARK_INK = 'color-mix(in srgb, var(--m-edge) 35%, #000)'
+const HUE: Record<AchIcon, [string, string, string]> = {
+  flame: ['var(--streak)', 'var(--streak-2)', DARK_INK],
+  zap: ['var(--good)', 'var(--good-edge)', '#fff'],
+  target: ['var(--c-rose)', 'var(--c-rose-edge)', '#fff'],
+  brain: ['var(--c-violet)', 'var(--c-violet-edge)', '#fff'],
+  book: ['var(--c-blue)', 'var(--c-blue-edge)', '#fff'],
+  trophy: ['var(--c-amber)', 'var(--c-amber-edge)', DARK_INK],
+  star: ['var(--c-amber)', 'var(--c-amber-edge)', DARK_INK],
+  pen: ['var(--c-teal)', 'var(--c-teal-edge)', '#fff'],
+  code: ['var(--c-green)', 'var(--c-green-edge)', '#fff'],
+  shield: ['var(--c-indigo)', 'var(--c-indigo-edge)', '#fff'],
+  clock: ['var(--c-orange)', 'var(--c-orange-edge)', '#fff'],
+  layers: ['var(--c-blue)', 'var(--c-blue-edge)', '#fff'],
 }
 
 /** Glossy medallion for an achievement; grey with a lock while locked. */
 export function Medal({ a, unlocked, size, className }: { a: Achievement; unlocked: boolean; size?: number; className?: string }) {
   const Icon = ACH_ICONS[a.icon] ?? Trophy
-  const [m, edge] = HUE[a.icon] ?? HUE.trophy
-  const style: CSSProperties = { ['--m' as string]: m, ['--m-edge' as string]: edge }
+  const [m, edge, ink] = HUE[a.icon] ?? HUE.trophy
+  const style: CSSProperties = { ['--m' as string]: m, ['--m-edge' as string]: edge, ['--m-ink' as string]: ink }
   if (size) {
     style.width = size
     style.height = size
@@ -57,7 +66,7 @@ export function Medal({ a, unlocked, size, className }: { a: Achievement; unlock
   return (
     <span className={['ach-medal', unlocked ? 'is-on' : 'is-locked', className].filter(Boolean).join(' ')} style={style} aria-hidden>
       <span className="ach-medal__disc" />
-      <Icon className="ach-medal__icon" size="44%" strokeWidth={2.5} />
+      <Icon className="ach-medal__icon" size="44%" strokeWidth={2.4} fill={FILLED.has(a.icon) && unlocked ? 'currentColor' : 'none'} />
       {!unlocked && (
         <span className="ach-medal__lock">
           <Lock size="58%" strokeWidth={3} />
@@ -196,7 +205,7 @@ export default function AchievementsScreen() {
               <div className="ach-summary__count">
                 <b className="tabular">{unlocked.length}</b> of {total} unlocked
               </div>
-              <ProgressBar value={unlocked.length / total} tone="streak" height={12} label="Achievements unlocked" />
+              <ProgressBar value={unlocked.length / total} tone="good" height={10} label="Achievements unlocked" />
               {nextUp && (
                 <div className="ach-summary__next">
                   Next up: <b>{nextUp.a.title}</b>
@@ -244,7 +253,7 @@ export default function AchievementsScreen() {
             ) : (
               openProg && (
                 <div className="ach-sheet__prog">
-                  <ProgressBar value={openProg.cur / openProg.goal} tone="xp" height={12} label="Progress" />
+                  <ProgressBar value={openProg.cur / openProg.goal} tone="good" height={10} label="Progress" />
                   <span className="tabular">
                     {Math.min(openProg.cur, openProg.goal).toLocaleString('en-US')} / {openProg.goal.toLocaleString('en-US')} {openProg.unit}
                   </span>

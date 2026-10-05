@@ -435,7 +435,7 @@ function DesignArt() {
           <Box x={-26} y={-36} z={z} w={14} d={12} h={6} tone="c" />
         </g>
         <g className="ca-pop2">
-          <Box x={0} y={-36} z={z} w={14} d={12} h={6} tone="gold" />
+          <Box x={0} y={-36} z={z} w={14} d={12} h={6} tone="c2" />
         </g>
         <g className="ca-pop3">
           <Box x={-13} y={-13} z={z} w={16} d={12} h={8} tone="deep" />

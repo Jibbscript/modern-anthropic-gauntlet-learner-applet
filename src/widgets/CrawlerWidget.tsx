@@ -1,4 +1,4 @@
-import { AnimatePresence, LayoutGroup, motion, useReducedMotionConfig } from 'motion/react'
+import { AnimatePresence, LayoutGroup, motion, useReducedMotion, useReducedMotionConfig } from 'motion/react'
 import { CheckCircle2, Lock, Pause, Play, RotateCcw, StepForward, Target } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import { Button } from '../ui/Button'
@@ -32,7 +32,10 @@ export default function CrawlerWidget({ config, onComplete }: WidgetProps<Crawle
   const graph: SiteGraph = GRAPHS[config.graph ?? 'small'] ?? GRAPHS.small
   const locked = useMemo(() => new Set(config.lockControls ?? []), [config.lockControls])
   const goal = config.goal === 'no-dupes' ? 'no-dupes' : 'finish'
-  const reduce = useReducedMotionConfig() ?? false
+  // app setting (via MotionConfig) or the OS preference
+  const reduceConfig = useReducedMotionConfig()
+  const reduceOs = useReducedMotion()
+  const reduce = Boolean(reduceConfig || reduceOs)
 
   const [opts, setOpts] = useState<CrawlOptions>(() => ({
     workers: Math.max(1, Math.min(4, Math.round(config.workers ?? 2))),

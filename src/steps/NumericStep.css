@@ -107,6 +107,10 @@
   text-align: center;
   caret-color: var(--select);
 }
+/* the field itself shows focus (blue ring), so the global focus outline would double up */
+.numeric__input:focus-visible {
+  outline: none;
+}
 .numeric__input::placeholder {
   color: var(--ink-3);
   opacity: 0.4;

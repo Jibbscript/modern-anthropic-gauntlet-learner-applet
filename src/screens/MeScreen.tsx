@@ -1,6 +1,6 @@
 import { AnimatePresence, motion } from 'motion/react'
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
-import { BookOpen, Brain, CalendarDays, ChevronDown, ChevronRight, Flame, Settings, Snowflake, Target, Trophy, User, Zap, type LucideIcon } from 'lucide-react'
+import { BatteryCharging, BookOpen, Brain, CalendarDays, ChevronDown, ChevronRight, Settings, Sparkles, Target, Trophy, User, Zap, type LucideIcon } from 'lucide-react'
 import { useStore, liveStreak, type Profile } from '../core/store'
 import type { Course } from '../core/types'
 import { CATALOG } from '../content'
@@ -12,7 +12,7 @@ import { nav } from '../app/nav'
 import { IconButton } from '../ui/Button'
 import { ProgressBar } from '../ui/ProgressBar'
 import { Ticker } from '../ui/Ticker'
-import { CourseIcon } from '../ui/Icon'
+import { CourseArt } from '../ui/CourseArt'
 import { courseStyle } from '../ui/course'
 import { Medal } from './AchievementsScreen'
 import './MeScreen.css'
@@ -74,7 +74,7 @@ export default function MeScreen() {
   return (
     <div className="me">
       <div className="me-scroll scroll">
-        <header className="me-head safe-top">
+        <header className="me-head safe-top" style={courseStyle(avatarHue(s.profile.name))}>
           <div className="me-head__bar">
             <span className="me-head__label">Profile</span>
             <IconButton label="Settings" className="me-head__gear" onClick={nav.openSettings}>
@@ -98,17 +98,24 @@ export default function MeScreen() {
           <motion.div className="me-stats" {...rise(i++)}>
             <Stat
               tone="streak"
-              icon={Flame}
+              icon={Zap}
+              filled
               value={live.count}
-              label={live.count === 1 ? 'Day streak' : 'Day streak'}
+              label="Day streak"
               note={live.doneToday ? 'Done today' : live.atRisk ? 'Practice today to keep it' : live.count === 0 ? 'Start one today' : undefined}
               noteTone={live.atRisk ? 'warn' : live.doneToday ? 'good' : undefined}
             />
-            <Stat tone="amber" icon={Trophy} value={s.streak.best} label="Best streak" note={s.streak.freezes ? `${s.streak.freezes} freeze${s.streak.freezes > 1 ? 's' : ''} banked` : undefined} />
-            <Stat tone="xp" icon={Zap} value={s.xp} label="Total XP" />
+            <Stat
+              tone="amber"
+              icon={Trophy}
+              value={s.streak.best}
+              label="Best streak"
+              note={s.streak.freezes ? `${s.streak.freezes} streak charge${s.streak.freezes > 1 ? 's' : ''} saved` : undefined}
+            />
+            <Stat tone="xp" icon={Sparkles} value={s.xp} label="Total XP" />
             <Stat tone="blue" icon={BookOpen} value={stats.lessons} label="Lessons done" note={stats.totalLessons ? `of ${stats.totalLessons}` : undefined} />
-            <Stat tone="teal" icon={Brain} value={stats.reviews} label="Reviews done" />
-            <Stat tone="good" icon={Target} value={stats.accuracy == null ? null : Math.round(stats.accuracy * 100)} suffix="%" label="First-try accuracy" />
+            <Stat tone="violet" icon={Brain} value={stats.reviews} label="Reviews done" />
+            <Stat tone="teal" icon={Target} value={stats.accuracy == null ? null : Math.round(stats.accuracy * 100)} suffix="%" label="First-try accuracy" />
           </motion.div>
 
           <motion.section className="me-sec" {...rise(i++)}>
@@ -161,11 +168,15 @@ export default function MeScreen() {
 
 const AVATAR_HUES = ['violet', 'blue', 'teal', 'green', 'orange', 'rose', 'indigo'] as const
 
+function avatarHue(name: string) {
+  const n = name.trim()
+  return n ? AVATAR_HUES[[...n].reduce((a, ch) => a + ch.charCodeAt(0), 0) % AVATAR_HUES.length] : 'slate'
+}
+
 function Avatar({ name }: { name: string }) {
   const n = name.trim()
-  const hue = AVATAR_HUES[[...n].reduce((a, ch) => a + ch.charCodeAt(0), 0) % AVATAR_HUES.length]
   return (
-    <span className="me-avatar" style={courseStyle(n ? hue : 'slate')} aria-hidden>
+    <span className="me-avatar" style={courseStyle(avatarHue(name))} aria-hidden>
       {n ? <span className="me-avatar__initial">{[...n][0].toUpperCase()}</span> : <User size={34} strokeWidth={2.4} />}
     </span>
   )
@@ -196,14 +207,17 @@ function InterviewChip({ date, today }: { date: string; today: string }) {
 function Stat({
   tone,
   icon: Icon,
+  filled,
   value,
   suffix = '',
   label,
   note,
   noteTone,
 }: {
-  tone: 'streak' | 'amber' | 'xp' | 'blue' | 'teal' | 'good'
+  tone: 'streak' | 'amber' | 'xp' | 'blue' | 'violet' | 'teal'
   icon: LucideIcon
+  /** solid glyph (the streak bolt and XP sparkle are drawn filled) */
+  filled?: boolean
   value: number | null
   suffix?: string
   label: string
@@ -213,7 +227,7 @@ function Stat({
   return (
     <div className={`me-stat me-stat--${tone}`}>
       <span className="me-stat__icon" aria-hidden>
-        <Icon size={20} strokeWidth={2.6} />
+        <Icon size={20} strokeWidth={2.4} fill={filled ? 'currentColor' : 'none'} />
       </span>
       <div className="me-stat__text">
         <div className="me-stat__value">{value == null ? '–' : <Ticker from={0} value={value} format={(n) => fmtInt(n) + suffix} />}</div>
@@ -326,10 +340,10 @@ function Heatmap({ now }: { now: number }) {
                   className={`me-heat__cell lv${lv} ${k === today ? 'is-today' : ''} ${k === picked ? 'is-picked' : ''}`}
                   style={{ gridColumn: c + 2, gridRow: r + 1 }}
                   onClick={() => setPicked(k)}
-                  aria-label={`${k}: ${log?.xp ?? 0} XP${isLit ? ', streak day' : ''}${isFrozen ? ', streak freeze' : ''}`}
+                  aria-label={`${k}: ${log?.xp ?? 0} XP${isLit ? ', streak day' : ''}${isFrozen ? ', streak charge used' : ''}`}
                 >
-                  {isLit && <Flame className="me-heat__flame" size="68%" strokeWidth={2.4} />}
-                  {isFrozen && !isLit && <Snowflake className="me-heat__freeze" size="64%" strokeWidth={2.6} />}
+                  {isLit && <Zap className="me-heat__bolt" size="66%" strokeWidth={2.2} />}
+                  {isFrozen && !isLit && <BatteryCharging className="me-heat__charge" size="70%" strokeWidth={2.4} />}
                 </button>
               )
             }),
@@ -344,7 +358,7 @@ function Heatmap({ now }: { now: number }) {
               {pick.reviews > 0 && ` · ${pick.reviews} review${pick.reviews > 1 ? 's' : ''}`}
             </span>
           ) : grid.frozen.has(picked) ? (
-            <span>Streak freeze used</span>
+            <span>Streak charge used</span>
           ) : (
             <span>No activity{picked === today ? ' yet' : ''}</span>
           )}
@@ -358,8 +372,8 @@ function Heatmap({ now }: { now: number }) {
             More
           </span>
           <span className="me-heat__key">
-            <Flame size={15} strokeWidth={2.6} className="me-heat__key-flame" />
-            Streak
+            <Zap size={15} strokeWidth={2.2} className="me-heat__bolt" />
+            Streak day
           </span>
         </div>
       </div>
@@ -388,8 +402,8 @@ function AreaGroup({ course, area, skills }: { course: Course; area?: Mastery; s
   return (
     <div className={`me-area ${open ? 'is-open' : ''}`} style={courseStyle(course.color)}>
       <button type="button" className="me-area__head" onClick={() => setOpen((o) => !o)} aria-expanded={open}>
-        <span className="me-area__icon">
-          <CourseIcon name={course.icon} size={20} />
+        <span className="me-area__art" aria-hidden>
+          <CourseArt course={course} size={56} />
         </span>
         <span className="me-area__text">
           <span className="me-area__title">{course.title}</span>

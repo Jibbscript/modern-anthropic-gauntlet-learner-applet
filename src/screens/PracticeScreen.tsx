@@ -15,6 +15,7 @@ import { ProgressBar } from '../ui/ProgressBar'
 import { Ring } from '../ui/Ring'
 import { Ticker } from '../ui/Ticker'
 import { CourseIcon } from '../ui/Icon'
+import { CourseArt } from '../ui/CourseArt'
 import { courseStyle } from '../ui/course'
 import { renderInline } from '../ui/Rich'
 import './PracticeScreen.css'
@@ -212,8 +213,8 @@ export default function PracticeScreen() {
                   <div className="prac-card">
                     {d.courses.map(({ course, m }) => (
                       <button key={course.id} type="button" className="prac-row prac-row--tap" style={courseStyle(course.color)} onClick={() => nav.openCourse(course.id)}>
-                        <span className="prac-row__icon">
-                          <CourseIcon name={course.icon} size={20} />
+                        <span className="prac-row__art" aria-hidden>
+                          <CourseArt course={course} size={60} />
                         </span>
                         <span className="prac-row__main">
                           <span className="prac-row__line">
@@ -326,7 +327,7 @@ function Hero(p: {
           )}
         </div>
         <div className="prac-hero__ring">
-          <Ring value={p.strength ?? 0} size={92} stroke={10} color="var(--xp)" track="var(--prac-ring-track)" label="Memory strength">
+          <Ring value={p.strength ?? 0} size={92} stroke={10} color="var(--mem)" track="var(--prac-ring-track)" label="Memory strength">
             <span className="prac-hero__ring-in">
               <b className="tabular">{p.strength == null ? '–' : pct(p.strength)}</b>
               <span>memory</span>

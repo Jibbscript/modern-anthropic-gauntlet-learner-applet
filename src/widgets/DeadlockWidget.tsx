@@ -178,7 +178,7 @@ export default function DeadlockWidget({ config, onComplete }: WidgetProps<Deadl
   const tryToBreak = scenario === 'ordered' && goal === 'deadlock'
   const progs = useMemo(() => programs(scenario), [scenario])
   const reduce = useReduced()
-  const uid = useId()
+  const uid = useId().replace(/[^a-zA-Z0-9_-]/g, '')
 
   const [s, setS] = useState<DState>(initDeadlock)
   const sRef = useRef(s)

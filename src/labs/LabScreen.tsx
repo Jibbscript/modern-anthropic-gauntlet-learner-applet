@@ -17,6 +17,7 @@ import {
   Play,
   RotateCcw,
   ScrollText,
+  Sparkles,
   TerminalSquare,
   Trophy,
   TriangleAlert,
@@ -1026,9 +1027,11 @@ function TestsPanel({
               )}
             </div>
             <ul className="lab-rows">
-              {rows.map((t, i) => (
-                <ResultRow key={`${last?.wallMs ?? 'p'}-${t.name}`} t={t} index={i} onGoto={onGoto} />
-              ))}
+              {rows.map((t, i) => {
+                const prev = i > 0 ? (rows[i - 1] as TestResult) : null
+                const same = !!prev && !('pending' in t) && !(t as TestResult).ok && prev.error != null && prev.error === (t as TestResult).error
+                return <ResultRow key={`${last?.wallMs ?? 'p'}-${t.name}`} t={t} index={i} onGoto={onGoto} same={same} />
+              })}
             </ul>
           </section>
         )
@@ -1050,7 +1053,18 @@ function BrokeEarlier({ results, current }: { results: TestResult[]; current: nu
   )
 }
 
-function ResultRow({ t, index, onGoto }: { t: TestResult | { name: string; level: number; pending: true }; index: number; onGoto: (line: number) => void }) {
+function ResultRow({
+  t,
+  index,
+  onGoto,
+  same,
+}: {
+  t: TestResult | { name: string; level: number; pending: true }
+  index: number
+  onGoto: (line: number) => void
+  /** same error as the row above: show a short note instead of repeating it */
+  same?: boolean
+}) {
   const pending = 'pending' in t
   const res = pending ? null : (t as TestResult)
   const state = pending ? 'pending' : res!.ok ? 'ok' : res!.skipped ? 'skip' : 'fail'
@@ -1070,8 +1084,8 @@ function ResultRow({ t, index, onGoto }: { t: TestResult | { name: string; level
           <span className="visually-hidden">{state === 'ok' ? 'passed' : state === 'fail' ? 'failed' : state === 'skip' ? 'not run' : 'not run yet'}</span>
           {res && !res.skipped && <span className="lab-row__ms tabular">{res.ms < 1 ? '<1' : Math.round(res.ms)} ms</span>}
         </div>
-        {res && !res.ok && res.error && <pre className="lab-row__err">{res.error}</pre>}
-        {res && !res.ok && (res.line != null || res.trace) && (
+        {res && !res.ok && res.error && (same ? <span className="lab-row__same">Same error as above</span> : <pre className="lab-row__err">{res.error}</pre>)}
+        {res && !res.ok && !same && (res.line != null || res.trace) && (
           <div className="lab-row__actions">
             {res.line != null && (
               <button type="button" className="lab-link" onClick={() => onGoto(res.line!)}>
@@ -1134,9 +1148,12 @@ function LevelCleared({ lab, level, ms, onNext }: { lab: Lab; level: number; ms:
       <div className="lab-win__text">
         <div className="eyebrow">Level {level + 1} cleared</div>
         <h3>All tests passing</h3>
-        <p className="tabular">
-          {formatClock(ms)} elapsed · <b className="lab-win__xp">+{XP.labLevel} XP</b>
-        </p>
+        <div className="lab-win__meta">
+          <span className="chip chip--good">
+            <Sparkles size={12} strokeWidth={2.8} /> +{XP.labLevel} XP
+          </span>
+          <span className="lab-win__time tabular">{formatClock(ms)} elapsed</span>
+        </div>
       </div>
       <Button block variant="course" onClick={onNext} iconRight={<ChevronRight size={18} strokeWidth={2.8} />}>
         Level {level + 2}: {next?.title}

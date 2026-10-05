@@ -1,0 +1,145 @@
+/* Compare step: interviewer question as a chat bubble, two tall answer cards. */
+
+.compare {
+  gap: var(--s-4);
+}
+
+/* ------------------------------------------------------------------ chat */
+
+.compare-chat {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s-3);
+}
+.compare-chat__avatar {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--r-pill);
+  color: #fff;
+  background: linear-gradient(160deg, color-mix(in srgb, var(--c, var(--select)) 70%, #fff), var(--c, var(--select)) 60%);
+  box-shadow: 0 3px 0 0 var(--c-edge, var(--select-edge));
+}
+.compare-chat__col {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.compare-chat__name {
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--c-ink, var(--ink-3));
+}
+.compare-chat__bubble {
+  align-self: flex-start;
+  max-width: 100%;
+  padding: var(--s-3) var(--s-4);
+  border-radius: 4px var(--r-lg) var(--r-lg) var(--r-lg);
+  background: var(--surface-2);
+  box-shadow: inset 0 0 0 1.5px var(--line);
+  font-size: var(--fs-lg);
+  font-weight: 600;
+  line-height: 1.38;
+  letter-spacing: -0.005em;
+  transform-origin: 0 0;
+  overflow-wrap: break-word;
+}
+
+.compare__how {
+  margin-top: var(--s-1);
+}
+
+/* ---------------------------------------------------------------- cards */
+
+.compare__answers {
+  gap: var(--s-3);
+}
+.compare-card.tile {
+  align-items: stretch;
+  min-height: 112px;
+  padding: var(--s-3) var(--s-4) var(--s-4);
+}
+.compare-card .tile__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+}
+.compare-card__head {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  min-height: 26px;
+}
+.compare-card__label {
+  flex: 1;
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.tile--selected .compare-card__label {
+  color: var(--select);
+}
+.tile--correct .compare-card__label {
+  color: var(--good-ink);
+}
+.tile--incorrect .compare-card__label {
+  color: var(--retry-ink);
+}
+.tile--reveal .compare-card__label {
+  color: var(--good-ink);
+}
+.compare-card__stronger {
+  padding: 3px 9px;
+}
+.compare-card__text {
+  font-size: var(--fs-md);
+  font-weight: 500;
+  line-height: 1.5;
+  overflow-wrap: break-word;
+  gap: 0.55em;
+}
+.tile--dimmed .compare-card__text {
+  color: var(--ink-2);
+}
+
+/* the round indicator in the corner */
+.compare-radio {
+  flex: none;
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: var(--r-pill);
+  box-shadow: inset 0 0 0 2px var(--line-strong);
+  color: #fff;
+  transition: background var(--dur-2), box-shadow var(--dur-2);
+}
+.compare-radio__icon {
+  display: grid;
+  place-items: center;
+}
+.compare-radio--selected {
+  background: var(--select);
+  box-shadow: none;
+}
+.compare-radio--correct,
+.compare-radio--reveal {
+  background: var(--good);
+  box-shadow: none;
+}
+.compare-radio--incorrect {
+  background: var(--retry-edge);
+  box-shadow: none;
+}
+.compare-radio--dimmed {
+  opacity: 0.6;
+}

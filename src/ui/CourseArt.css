@@ -42,9 +42,9 @@
   --r: color-mix(in oklab, var(--c) 22%, #d4d6e2);
 }
 .ca-gold {
-  --t: color-mix(in oklab, var(--streak-2) 42%, #fff);
-  --l: var(--streak-2);
-  --r: color-mix(in oklab, var(--streak) 78%, var(--streak-2));
+  --t: color-mix(in oklab, var(--c-amber) 40%, #fff);
+  --l: var(--c-amber);
+  --r: color-mix(in oklab, var(--c-amber) 45%, var(--c-amber-edge));
 }
 
 /* ------------------------------------------------------------ faces */
@@ -90,7 +90,7 @@
   fill: color-mix(in oklab, var(--c) 55%, #fff);
 }
 .ca-spark--gold {
-  fill: var(--streak-2);
+  fill: var(--c-amber);
 }
 
 /* ------------------------------------------------------- per course */
@@ -117,7 +117,7 @@
   stroke-dasharray: 2.5 5;
 }
 .ca-flag {
-  fill: color-mix(in oklab, var(--streak) 55%, var(--streak-2));
+  fill: color-mix(in oklab, var(--c-orange) 55%, var(--c-amber));
 }
 .ca-pin-face {
   fill: var(--c-edge);
@@ -126,7 +126,7 @@
   fill: color-mix(in oklab, var(--c-edge) 62%, #000);
 }
 .ca-pin-hole {
-  fill: var(--streak-2);
+  fill: var(--c-amber);
 }
 .ca-pin-shadow {
   fill: color-mix(in oklab, var(--c-edge) 60%, #000);
@@ -194,7 +194,7 @@
 }
 .ca-num {
   font-family: var(--font-display);
-  font-weight: 900;
+  font-weight: 700;
   font-size: 14px;
   fill: #fff;
   opacity: 0.92;
@@ -213,7 +213,7 @@
   fill: color-mix(in oklab, var(--c) 22%, #cfd1dc);
 }
 .ca-tip {
-  fill: color-mix(in oklab, var(--streak-2) 28%, #fff);
+  fill: color-mix(in oklab, var(--c-amber) 28%, #fff);
 }
 
 /* agents */
@@ -225,7 +225,7 @@
   opacity: 0.16;
 }
 .ca-eye {
-  fill: color-mix(in oklab, var(--freeze) 45%, #fff);
+  fill: color-mix(in oklab, var(--c-teal) 35%, #fff);
 }
 .ca-ear {
   fill: var(--t);
@@ -263,7 +263,7 @@
 }
 .ca-ring {
   fill: none;
-  stroke: var(--streak-2);
+  stroke: var(--c-amber);
   stroke-width: 5;
 }
 .ca-handle {
