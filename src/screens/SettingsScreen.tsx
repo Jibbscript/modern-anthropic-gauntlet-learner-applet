@@ -484,15 +484,18 @@ function ExportSheet({ text, onDone, onCopied }: { text: string; onDone: () => v
   return (
     <div className="set-sheet">
       <h3>Your progress</h3>
-      <p>Copying was blocked here, so select the text below and copy it, or save it as a file.</p>
+      <p>{__ARTIFACT__ ? 'Copying was blocked here, so select the text below and copy it.' : 'Copying was blocked here, so select the text below and copy it, or save it as a file.'}</p>
       <textarea ref={ref} className="set-textarea" readOnly value={text} rows={8} onFocus={(e) => e.currentTarget.select()} aria-label="Progress JSON" spellCheck={false} />
       <div className="set-sheet__row">
         <Button variant="secondary" size="md" icon={<Copy size={18} strokeWidth={2.4} />} onClick={copy}>
           {copied ? 'Copied' : 'Copy'}
         </Button>
-        <Button variant="secondary" size="md" icon={<Download size={18} strokeWidth={2.4} />} onClick={download}>
-          Save file
-        </Button>
+        {/* sandboxed artifact frames never allow downloads */}
+        {!__ARTIFACT__ && (
+          <Button variant="secondary" size="md" icon={<Download size={18} strokeWidth={2.4} />} onClick={download}>
+            Save file
+          </Button>
+        )}
       </div>
       <Button block size="lg" onClick={onDone}>
         Done
