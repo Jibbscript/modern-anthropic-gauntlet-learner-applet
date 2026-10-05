@@ -410,7 +410,10 @@ function ForecastChart({ data }: { data: { day: string; count: number }[] }) {
   const bottom = 28
   const plotH = H - top - bottom
   const max = Math.max(1, ...data.map((x) => x.count))
-  const band = width / Math.max(1, data.length)
+  const n = Math.max(1, data.length)
+  // keep the wider "Today" label clear of the left edge on narrow phones
+  const padX = Math.max(0, 22 - width / n / 2)
+  const band = (width - 2 * padX) / n
   const bw = Math.min(24, band * 0.58)
   const baseY = top + plotH
   return (
@@ -420,7 +423,7 @@ function ForecastChart({ data }: { data: { day: string; count: number }[] }) {
           <line className="prac-fc__base" x1={0} x2={width} y1={baseY + 0.5} y2={baseY + 0.5} />
           {data.map((x, i) => {
             const h = x.count ? Math.max(8, (x.count / max) * plotH) : 0
-            const cx = i * band + band / 2
+            const cx = padX + i * band + band / 2
             const bx = cx - bw / 2
             const r = Math.min(4, h / 2, bw / 2)
             const today = i === 0

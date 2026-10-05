@@ -1,0 +1,198 @@
+/* ------------------------------------------------------------- editor */
+.ed {
+  --ed-lh: 20px;
+  --ed-pad-y: 12px;
+  --ed-pad-x: 12px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+  border-radius: var(--r-md);
+  background: var(--code-bg);
+  box-shadow: inset 0 0 0 1px var(--code-line);
+  overflow: hidden;
+}
+
+.ed:focus-within {
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--select) 55%, transparent);
+}
+
+.ed__scroll {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+}
+
+.ed__inner {
+  display: flex;
+  align-items: stretch;
+  width: max-content;
+  min-width: 100%;
+  min-height: 100%;
+}
+
+.ed__gutter {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  flex: none;
+  padding: var(--ed-pad-y) 10px var(--ed-pad-y) 12px;
+  background: var(--code-bg);
+  box-shadow: 1px 0 0 var(--code-line);
+  font-family: var(--font-code);
+  font-size: 12px;
+  line-height: var(--ed-lh);
+  color: var(--ink-3);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.ed__no {
+  min-width: 2ch;
+  height: var(--ed-lh);
+  opacity: 0.7;
+}
+
+.ed__no--err {
+  color: var(--bad);
+  font-weight: 700;
+  opacity: 1;
+}
+
+.ed__code {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+}
+
+/* the textarea and the pre must share every metric */
+.ed__hl,
+.ed__ta {
+  margin: 0;
+  border: 0;
+  padding: var(--ed-pad-y) 28px var(--ed-pad-y) var(--ed-pad-x);
+  font-family: var(--font-code);
+  font-size: 13px;
+  font-weight: 400;
+  line-height: var(--ed-lh);
+  letter-spacing: 0;
+  tab-size: 4;
+  white-space: pre;
+  word-wrap: normal;
+  overflow-wrap: normal;
+  font-variant-ligatures: none;
+  font-feature-settings: 'liga' 0, 'calt' 0;
+  text-rendering: optimizeSpeed;
+}
+
+.ed__hl {
+  position: relative;
+  min-height: 100%;
+  color: var(--code-ink);
+  pointer-events: none;
+}
+
+.ed__ta {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  resize: none;
+  overflow: hidden;
+  outline: none;
+  background: transparent;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  caret-color: var(--ink);
+  border-radius: 0;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.ed__ta::selection {
+  background: color-mix(in srgb, var(--select) 30%, transparent);
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}
+
+.ed__ta:focus-visible {
+  outline: none;
+}
+
+.ed__errline {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: var(--ed-lh);
+  background: color-mix(in srgb, var(--bad) 14%, transparent);
+  box-shadow: inset 3px 0 0 var(--bad);
+  pointer-events: none;
+}
+
+.ed__probe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  visibility: hidden;
+  white-space: pre;
+  font-family: var(--font-code);
+  font-size: 13px;
+  font-variant-ligatures: none;
+  pointer-events: none;
+}
+
+/* ----------------------------------------------------- touch key bar */
+.ed-keys {
+  flex: none;
+  display: flex;
+  gap: 6px;
+  padding: 6px 8px;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+  border-top: 1px solid var(--code-line);
+  background: var(--surface-2);
+}
+
+.ed-keys::-webkit-scrollbar {
+  display: none;
+}
+
+.ed-keys__key {
+  flex: none;
+  display: grid;
+  place-items: center;
+  min-width: 36px;
+  height: 36px;
+  padding: 0 8px;
+  border-radius: 9px;
+  background: var(--surface);
+  box-shadow: inset 0 0 0 1.5px var(--line), 0 2px 0 0 var(--edge);
+  margin-bottom: 2px;
+  color: var(--ink);
+  font-family: var(--font-code);
+  font-size: 15px;
+  font-weight: 600;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+  transition: transform 80ms var(--ease-out), box-shadow 80ms var(--ease-out);
+}
+
+.ed-keys__key:active {
+  transform: translateY(2px);
+  box-shadow: inset 0 0 0 1.5px var(--line), 0 0 0 0 var(--edge);
+}
+
+.ed-keys__key--wide {
+  min-width: 44px;
+  color: var(--ink-2);
+}
