@@ -169,6 +169,8 @@ def _describe(e, test_file):
     text = _head(e)
     if isinstance(e, NotImplementedError) and user and not str(e):
         text = 'NotImplementedError: %s is not implemented yet' % user[-1][2]
+    if isinstance(e, RuntimeError) and "can't start new thread" in str(e):
+        text += ' (threads cannot start in the browser runtime; locks work, and asyncio is available)'
     if user:
         fn, ln, q = user[-1]
         src = _src_line(USER_FILE, ln)
