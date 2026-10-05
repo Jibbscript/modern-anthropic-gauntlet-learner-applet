@@ -1,36 +1,40 @@
 import { motion } from 'motion/react'
 import { useMemo, useState, type ReactNode } from 'react'
-import { CircleCheck, CircleX, BookOpen, ChevronDown } from 'lucide-react'
+import { PartyPopper, RotateCcw, BookOpen, ChevronDown } from 'lucide-react'
 import type { StepPhase } from '../steps/types'
 import { Rich } from '../ui/Rich'
 
-const PRAISE = ['Correct!', 'Nice!', 'Exactly.', 'Nailed it.', 'Spot on.', 'Yes!', 'Sharp.']
-const NUDGE = ['Not quite.', 'Close, but no.', 'Not this time.', 'Hmm, not quite.']
+const PRAISE = ['Correct!', 'Correct!', 'Nice!', 'Exactly.', 'Nailed it.', 'Spot on.']
+const NUDGE = ['Not quite.', 'Not quite.', 'Try again!', 'Close, but not quite.']
 
 /**
- * The panel that rises from the bottom after Check. Green for correct, red
- * for incorrect, neutral for a revealed answer. Long explanations collapse
- * behind "Why?".
+ * The banner that rises from the bottom after Check, following Brilliant:
+ * green "Correct!" with an XP chip and a "Why?" pill; yellow "Not quite."
+ * for a retryable miss; neutral grey (deliberately not red) once the answer
+ * is revealed. Long explanations collapse behind "Why?".
  */
 export function FeedbackPanel({
   phase,
   feedback,
   explanation,
   actions,
+  xp,
 }: {
   phase: StepPhase
   feedback?: string
   explanation?: string
   actions: ReactNode
+  /** XP earned, shown as a chip on correct */
+  xp?: number
 }) {
   const title = useMemo(() => {
     const list = phase === 'correct' ? PRAISE : phase === 'incorrect' ? NUDGE : ['Here’s the answer.']
     return list[Math.floor(Math.random() * list.length)]
   }, [phase])
-  const long = (explanation?.length ?? 0) > 220
-  const [open, setOpen] = useState(phase !== 'incorrect' && !long)
-  const tone = phase === 'correct' ? 'good' : phase === 'incorrect' ? 'bad' : 'neutral'
-  const Icon = phase === 'correct' ? CircleCheck : phase === 'incorrect' ? CircleX : BookOpen
+  const long = (explanation?.length ?? 0) > 160
+  const [open, setOpen] = useState(phase === 'revealed' || !long)
+  const tone = phase === 'correct' ? 'good' : phase === 'incorrect' ? 'retry' : 'neutral'
+  const Icon = phase === 'correct' ? PartyPopper : phase === 'incorrect' ? RotateCcw : BookOpen
   const showExplanation = phase !== 'incorrect' && !!explanation
 
   return (
@@ -53,6 +57,16 @@ export function FeedbackPanel({
           <Icon size={28} strokeWidth={2.6} />
         </motion.span>
         <div className="fb__title">{title}</div>
+        {phase === 'correct' && !!xp && (
+          <motion.span
+            className="fb__xp tabular"
+            initial={{ scale: 0.5, opacity: 0 }}
+            animate={{ scale: [0.5, 1.15, 1], opacity: 1 }}
+            transition={{ duration: 0.45, delay: 0.1 }}
+          >
+            +{xp} XP
+          </motion.span>
+        )}
         {showExplanation && long && (
           <button type="button" className="fb__why" onClick={() => setOpen((o) => !o)} aria-expanded={open}>
             Why? <ChevronDown size={16} strokeWidth={3} style={{ transform: open ? 'rotate(180deg)' : undefined }} />

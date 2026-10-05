@@ -5,7 +5,7 @@ import './ui.css'
 export function ProgressBar({
   value,
   tone = 'good',
-  height = 14,
+  height = 10,
   label,
 }: {
   /** 0..1 */

@@ -80,16 +80,33 @@ export interface ReqEvent {
  * seconds apart) at least `capacity` requests were accepted and a later one
  * in the same burst was rejected.
  */
-export function burstObserved(events: ReqEvent[], capacity: number, gap = 1.2): boolean {
-  let accepted = 0
-  let prev = -Infinity
+export function burstObserved(events: ReqEvent[], capacity: number, gap = BURST_GAP): boolean {
+  let st = newBurst()
   for (const e of events) {
-    if (e.t - prev > gap) accepted = 0
-    prev = e.t
-    if (e.ok) accepted++
-    else if (accepted >= capacity) return true
+    const r = trackBurst(st, e, capacity, gap)
+    if (r.hit) return true
+    st = r.state
   }
   return false
+}
+
+/** consecutive requests closer than this (seconds) count as one burst */
+export const BURST_GAP = 1.2
+
+export interface BurstState {
+  last: number
+  accepted: number
+}
+
+export function newBurst(): BurstState {
+  return { last: -Infinity, accepted: 0 }
+}
+
+/** incremental form of burstObserved, for a live stream of requests */
+export function trackBurst(st: BurstState, e: ReqEvent, capacity: number, gap = BURST_GAP): { state: BurstState; hit: boolean } {
+  const accepted = e.t - st.last > gap ? 0 : st.accepted
+  if (e.ok) return { state: { last: e.t, accepted: accepted + 1 }, hit: false }
+  return { state: { last: e.t, accepted }, hit: accepted >= capacity }
 }
 
 /**

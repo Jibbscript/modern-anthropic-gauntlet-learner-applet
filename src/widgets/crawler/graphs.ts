@@ -15,8 +15,8 @@ export interface SiteGraph {
   id: 'small' | 'cyclic' | 'wide'
   hosts: string[]
   pages: SitePage[]
-  /** directed links [from, to]; a self-link has from === to */
-  links: [number, number][]
+  /** directed links [from, to, bend?]; a self-link has from === to; bend scales/flips the curve (default 1) */
+  links: [number, number, number?][]
 }
 
 const p = (label: string, path: string, host: number, x: number, y: number): SitePage => ({ label, path, host, x, y })
@@ -64,7 +64,7 @@ const CYCLIC: SiteGraph = {
     p('F', '/topics/a', 0, 124, 146),
     p('G', '/topics/b', 0, 206, 146),
     p('H', '/faq?p=2', 0, 290, 146),
-    p('I', '/search', 0, 78, 204),
+    p('I', '/search', 0, 58, 204),
     p('J', '/tags', 0, 242, 204),
   ],
   links: [
@@ -85,7 +85,7 @@ const CYCLIC: SiteGraph = {
     [6, 2],
     [7, 7],
     [7, 9],
-    [8, 0],
+    [8, 0, -1],
     [9, 3],
   ],
 }
@@ -124,7 +124,6 @@ const WIDE: SiteGraph = {
     [2, 8],
     [3, 8],
     [3, 9],
-    [3, 14],
     [4, 10],
     [4, 11],
     [5, 11],
@@ -136,7 +135,6 @@ const WIDE: SiteGraph = {
     [10, 15],
     [11, 15],
     [12, 15],
-    [15, 9],
   ],
 }
 

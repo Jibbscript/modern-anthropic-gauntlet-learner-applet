@@ -31,6 +31,10 @@
   z-index: 2;
   display: flex;
   min-height: 150px;
+  transition: min-height var(--dur-3) var(--ease-out);
+}
+.sort-stage__well--compact {
+  min-height: 56px;
 }
 
 /* the deck: cards stacked in one grid cell, the next ones peeking out below */
@@ -106,7 +110,31 @@
   color: var(--ink-2);
 }
 .sort-status__icon {
+  flex: none;
   margin-bottom: 4px;
+}
+.sort-status__words {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.sort-status--compact {
+  flex-direction: row;
+  justify-content: flex-start;
+  gap: var(--s-3);
+  min-height: 56px;
+  padding: var(--s-3) var(--s-4);
+  border-radius: var(--r-md);
+  text-align: left;
+}
+.sort-status--compact .sort-status__icon {
+  margin: 0;
+}
+.sort-status--compact .sort-status__title {
+  font-size: var(--fs-md);
+}
+.sort-status--compact .sort-status__sub {
+  font-size: var(--fs-xs);
 }
 .sort-status__title {
   font-size: var(--fs-lg);
@@ -214,17 +242,19 @@
 }
 .sort-bucket__n {
   position: absolute;
-  top: 6px;
-  right: 6px;
-  z-index: 1;
-  min-width: 20px;
-  height: 20px;
-  padding: 0 5px;
+  top: -7px;
+  right: -5px;
+  z-index: 2;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
   display: grid;
   place-items: center;
   border-radius: var(--r-pill);
-  background: rgba(255, 255, 255, 0.26);
-  font-size: 11px;
+  background: var(--surface);
+  color: var(--c-ink, var(--select));
+  box-shadow: 0 0 0 2px var(--c, var(--select));
+  font-size: 12px;
   font-weight: 900;
 }
 /* once nothing is left to place (or the step is locked) the button reads as a header */
@@ -241,11 +271,9 @@
 .sort-bucket__btn:disabled .sort-bucket__face::after {
   display: none;
 }
-.sort-bucket__btn:disabled .sort-bucket__n {
-  background: color-mix(in srgb, currentColor 14%, transparent);
-}
 
 .sort-bucket__tray {
+  container-type: inline-size;
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -300,14 +328,24 @@
 .sort-chip__text {
   flex: 1;
   min-width: 0;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
+  hyphens: auto;
 }
 .sort-chip__text .rich-code {
   font-size: 0.85em;
 }
-.sort-chip__icon {
-  flex: none;
-  margin-top: 1px;
+.sort-chip__mark {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border-radius: var(--r-pill);
+  background: var(--ch-line);
+  color: #fff;
+  box-shadow: 0 0 0 2px var(--surface-2);
 }
 @media (hover: hover) and (pointer: fine) {
   .sort-chip--idle:hover {
@@ -331,9 +369,6 @@
   --ch-edge: var(--good-edge);
   background-image: repeating-linear-gradient(-45deg, transparent 0 7px, color-mix(in srgb, var(--good) 10%, transparent) 7px 14px);
 }
-.sort-chip--reveal .sort-chip__icon {
-  color: var(--good);
-}
 .sort-chip__why {
   overflow: hidden;
   padding: 0 9px;
@@ -348,15 +383,23 @@
   border-top: 1px dashed color-mix(in srgb, var(--good) 45%, transparent);
 }
 
+/* narrow trays (three buckets on a phone): tighter chips; the why text lives in the feedback panel */
+@container (max-width: 128px) {
+  .sort-chip__btn {
+    font-size: 13px;
+    padding: 7px 7px;
+    min-height: 36px;
+  }
+  .sort-chip__why {
+    display: none;
+  }
+}
+
 @media (max-width: 360px) {
   .sort-buckets {
     gap: 8px;
   }
   .sort-bucket__label {
     font-size: var(--fs-sm);
-  }
-  .sort-chip__btn {
-    font-size: 13px;
-    padding: 7px 7px;
   }
 }

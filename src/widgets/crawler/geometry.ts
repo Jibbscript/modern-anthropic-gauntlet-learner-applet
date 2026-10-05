@@ -20,7 +20,7 @@ const fmt = (n: number) => Math.round(n * 10) / 10
  * above the node. Endpoints stop at the node rim, the arrow tip just outside it.
  */
 export function edgeGeometry(g: SiteGraph): EdgeGeom[] {
-  return g.links.map(([a, b]) => {
+  return g.links.map(([a, b, k = 1]) => {
     const A = g.pages[a]
     const B = g.pages[b]
     if (a === b) {
@@ -34,7 +34,7 @@ export function edgeGeometry(g: SiteGraph): EdgeGeom[] {
     const dx = B.x - A.x
     const dy = B.y - A.y
     const len = Math.hypot(dx, dy)
-    const bend = Math.min(22, 0.14 * len)
+    const bend = Math.min(22, 0.14 * len) * k
     const c = { x: (A.x + B.x) / 2 - (dy / len) * bend, y: (A.y + B.y) / 2 + (dx / len) * bend }
     const s = toward(A, c, NODE_R)
     const e = toward(B, c, NODE_R + 1.5)

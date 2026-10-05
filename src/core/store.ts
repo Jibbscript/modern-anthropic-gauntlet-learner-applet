@@ -156,8 +156,8 @@ export function initialState(): GauntletState {
 }
 
 export const XP = {
-  firstTry: 10,
-  retry: 4,
+  firstTry: 15,
+  retry: 5,
   lessonComplete: 20,
   perfectBonus: 15,
   comboEvery: 5,
@@ -228,9 +228,9 @@ export function liveStreak(st: Streak, today: string): { count: number; doneToda
   return { count: 0, doneToday: false, atRisk: false }
 }
 
-/** a day counts for the streak after a lesson, a lab level, or 5 reviews */
-function qualifies(d: DayLog | undefined): boolean {
-  return !!d && (d.lessons > 0 || d.reviews >= 5)
+/** a day counts for the streak after a lesson, a lab level, or 3 reviews (Brilliant: 1 lesson or 3 problems) */
+export function qualifies(d: DayLog | undefined): boolean {
+  return !!d && (d.lessons > 0 || d.reviews >= 3)
 }
 
 /* --------------------------------------------------------------- storage */

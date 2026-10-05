@@ -200,7 +200,7 @@ export default function NumericStep({ step, phase, attempt, setController, onHin
     )
   } else if (phase === 'correct' && verdict) {
     status = (
-      <span className="chip chip--good numeric__verdict">
+      <span className="chip numeric__verdict numeric__verdict--good">
         <Check size={14} strokeWidth={3.2} />
         {verdict.err < 1e-9 ? 'Exact' : `Within ${fmtPct(verdict.err * 100)}`}
       </span>
@@ -208,7 +208,7 @@ export default function NumericStep({ step, phase, attempt, setController, onHin
   } else if (verdict) {
     const Up = verdict.dir === 'high' ? ArrowUp : ArrowDown
     status = (
-      <span className="chip chip--bad numeric__verdict">
+      <span className="chip numeric__verdict numeric__verdict--retry">
         <Up size={14} strokeWidth={3.2} />
         Too {verdict.dir === 'high' ? 'high' : 'low'}
         {verdict.far && <span className="numeric__far">{verdict.far}</span>}
@@ -250,6 +250,19 @@ export default function NumericStep({ step, phase, attempt, setController, onHin
             />
           </span>
           {unit && <span className="numeric__unit">{unit}</span>}
+          <AnimatePresence>
+            {phase === 'correct' && (
+              <motion.span
+                className="numeric__tick"
+                aria-hidden
+                initial={{ scale: 0, rotate: -30 }}
+                animate={{ scale: 1, rotate: 0 }}
+                transition={{ type: 'spring', stiffness: 600, damping: 16, delay: 0.05 }}
+              >
+                <Check size={16} strokeWidth={3.4} />
+              </motion.span>
+            )}
+          </AnimatePresence>
         </motion.div>
 
         <div id={`numeric-${step.id}-status`} className="numeric__status" aria-live="polite">

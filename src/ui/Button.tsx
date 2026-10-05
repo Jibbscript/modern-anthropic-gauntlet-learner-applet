@@ -3,7 +3,7 @@ import type { ReactNode } from 'react'
 import { haptic, sfx } from './fx'
 import './ui.css'
 
-export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'good' | 'bad' | 'course' | 'select'
+export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'good' | 'bad' | 'retry' | 'course' | 'select'
 
 interface ButtonProps extends Omit<HTMLMotionProps<'button'>, 'children'> {
   variant?: ButtonVariant

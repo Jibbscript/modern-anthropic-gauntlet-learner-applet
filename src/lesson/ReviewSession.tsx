@@ -1,6 +1,6 @@
 import { AnimatePresence, motion } from 'motion/react'
 import { useCallback, useMemo, useRef, useState } from 'react'
-import { X, Brain, Target, Zap, CalendarClock } from 'lucide-react'
+import { X, Brain, Target, Sparkles, CalendarClock } from 'lucide-react'
 import { CATALOG } from '../content'
 import { SKILL_BY_ID } from '../content/skills'
 import { useStore } from '../core/store'
@@ -111,7 +111,7 @@ export function ReviewSession({ cardIds, title = 'Review', onExit }: { cardIds: 
             <div className="complete__tiles">
               <div className="stat-tile stat-tile--xp">
                 <div className="stat-tile__label">
-                  <Zap size={18} strokeWidth={2.8} />
+                  <Sparkles size={18} strokeWidth={2.6} />
                   XP earned
                 </div>
                 <div className="stat-tile__value">

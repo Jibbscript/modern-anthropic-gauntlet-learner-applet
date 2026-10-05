@@ -78,10 +78,10 @@
   box-shadow: 0 2px 0 0 var(--good-edge);
 }
 .cloze__slot--incorrect {
-  --sl-bg: var(--bad-soft);
-  --sl-line: var(--bad);
-  --sl-ink: var(--bad-ink);
-  box-shadow: 0 2px 0 0 var(--bad-edge);
+  --sl-bg: var(--retry-soft, var(--bad-soft));
+  --sl-line: var(--retry, var(--bad));
+  --sl-ink: var(--retry-ink, var(--bad-ink));
+  box-shadow: 0 2px 0 0 var(--retry-edge, var(--bad-edge));
 }
 .cloze__slot--reveal {
   --sl-bg: var(--good-soft);

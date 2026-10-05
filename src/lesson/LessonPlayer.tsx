@@ -1,6 +1,6 @@
 import { AnimatePresence, motion } from 'motion/react'
 import { useCallback, useMemo, useRef, useState } from 'react'
-import { X, Flame } from 'lucide-react'
+import { X, Sparkles } from 'lucide-react'
 import { CATALOG } from '../content'
 import { useStore } from '../core/store'
 import { courseStyle } from '../ui/course'
@@ -92,7 +92,7 @@ export function LessonPlayer({ lessonId, onExit }: { lessonId: string; onExit: (
           <X size={24} strokeWidth={2.6} />
         </IconButton>
         <div className="lesson__progress">
-          <ProgressBar value={(index + (step ? 0 : 1)) / steps.length} tone="course" label="Lesson progress" />
+          <ProgressBar value={(index + (step ? 0 : 1)) / steps.length} tone="good" label="Lesson progress" />
         </div>
         <AnimatePresence>
           {comboFlash != null && (
@@ -105,7 +105,7 @@ export function LessonPlayer({ lessonId, onExit }: { lessonId: string; onExit: (
               transition={{ type: 'spring', stiffness: 600, damping: 18 }}
               aria-label={`${comboFlash} in a row`}
             >
-              <Flame size={16} strokeWidth={2.8} />
+              <Sparkles size={15} strokeWidth={2.6} />
               <span className="tabular">{comboFlash}</span>
             </motion.div>
           )}

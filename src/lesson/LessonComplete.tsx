@@ -1,6 +1,6 @@
 import { motion } from 'motion/react'
 import { useEffect } from 'react'
-import { Flame, Target, Timer, Zap, Layers } from 'lucide-react'
+import { Sparkles, Target, Timer, Zap, Layers } from 'lucide-react'
 import type { Course, Lesson } from '../core/types'
 import { courseStyle } from '../ui/course'
 import { CourseIcon } from '../ui/Icon'
@@ -35,7 +35,7 @@ export function LessonComplete({ lesson, course, summary, onDone }: { lesson: Le
   const perfect = summary.accuracy >= 0.999
 
   const tiles = [
-    { icon: <Zap size={18} strokeWidth={2.8} />, label: 'XP earned', value: <Ticker from={0} value={summary.xp} duration={1.1} />, tone: 'xp' },
+    { icon: <Sparkles size={18} strokeWidth={2.6} />, label: 'XP earned', value: <Ticker from={0} value={summary.xp} duration={1.1} />, tone: 'xp' },
     {
       icon: <Target size={18} strokeWidth={2.8} />,
       label: 'First-try accuracy',
@@ -94,10 +94,10 @@ export function LessonComplete({ lesson, course, summary, onDone }: { lesson: Le
           >
             <motion.span
               className="complete__flame"
-              animate={{ scale: [1, 1.35, 1], rotate: [0, -8, 8, 0] }}
+              animate={{ scale: [1, 1.2, 0.9, 1.05, 1] }}
               transition={{ delay: 1.3, duration: 0.7 }}
             >
-              <Flame size={30} strokeWidth={2.6} />
+              <Zap size={30} strokeWidth={2.2} fill="currentColor" />
             </motion.span>
             <div>
               <div className="complete__streak-n tabular">

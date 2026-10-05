@@ -7,6 +7,7 @@ import type { CheckResult, StepController, StepPhase } from '../steps/types'
 import { Button } from '../ui/Button'
 import { haptic, sfx } from '../ui/fx'
 import { FeedbackPanel } from './FeedbackPanel'
+import { XP } from '../core/store'
 import './lesson.css'
 
 export interface StepOutcome {
@@ -227,13 +228,14 @@ export function StepRunner({
               phase={phase}
               feedback={result?.feedback}
               explanation={explanation}
+              xp={mode === 'lesson' && !ungraded ? (attempt === 0 ? XP.firstTry : XP.retry) : undefined}
               actions={
                 phase === 'incorrect' ? (
                   <div className="fb__actions">
                     <Button variant="secondary" size="lg" onClick={reveal} icon={<Eye size={18} strokeWidth={2.6} />}>
                       Show answer
                     </Button>
-                    <Button variant="bad" size="lg" onClick={retry} icon={<RotateCcw size={18} strokeWidth={2.8} />} className="fb__grow">
+                    <Button variant="retry" size="lg" onClick={retry} icon={<RotateCcw size={18} strokeWidth={2.8} />} className="fb__grow">
                       Try again
                     </Button>
                   </div>

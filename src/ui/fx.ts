@@ -96,17 +96,31 @@ function reduced(): boolean {
   }
 }
 
-const PALETTE = ['#7c5cff', '#2f80ff', '#12b5b0', '#22b45f', '#ffad1f', '#ff6b2c', '#ff4f7b']
+/** green + pear sparkles, the end-of-lesson burst */
+const PALETTE = ['#29cc57', '#5ed981', '#d8e82e', '#b0d828', '#15b441', '#ffffff']
+
+let sparkle: confetti.Shape | null = null
+function sparkleShape(): confetti.Shape | undefined {
+  try {
+    // four-point star
+    sparkle ??= confetti.shapeFromPath({ path: 'M10 0 C11 7 13 9 20 10 C13 11 11 13 10 20 C9 13 7 11 0 10 C7 9 9 7 10 0 Z' })
+    return sparkle
+  } catch {
+    return undefined
+  }
+}
 
 export function celebrate(intensity: 'small' | 'big' = 'big', origin?: { x: number; y: number }) {
   if (reduced()) return
   try {
+    const s = sparkleShape()
+    const shapes: confetti.Shape[] = s ? [s, s, 'circle'] : ['circle', 'square']
     if (intensity === 'small') {
-      void confetti({ particleCount: 40, spread: 60, startVelocity: 32, scalar: 0.8, ticks: 120, origin: origin ?? { x: 0.5, y: 0.8 }, colors: PALETTE, disableForReducedMotion: true })
+      void confetti({ particleCount: 40, spread: 60, startVelocity: 32, scalar: 1, ticks: 120, origin: origin ?? { x: 0.5, y: 0.8 }, colors: PALETTE, shapes, disableForReducedMotion: true })
       return
     }
     const fire = (ratio: number, opts: confetti.Options) =>
-      void confetti({ origin: { y: 0.7 }, colors: PALETTE, disableForReducedMotion: true, particleCount: Math.floor(220 * ratio), ...opts })
+      void confetti({ origin: { y: 0.55 }, colors: PALETTE, shapes, disableForReducedMotion: true, particleCount: Math.floor(200 * ratio), ...opts })
     fire(0.25, { spread: 26, startVelocity: 55 })
     fire(0.2, { spread: 60 })
     fire(0.35, { spread: 100, decay: 0.91, scalar: 0.8 })

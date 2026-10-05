@@ -11,9 +11,9 @@ import { crawlable, initCrawl, stepCrawl, type CrawlOptions, type CrawlState, ty
 import './CrawlerWidget.css'
 
 const TICK_MS = 340
-const WORKER_COLORS = ['var(--select)', 'var(--streak)', 'var(--c-green)', 'var(--c-slate)']
+const WORKER_COLORS = ['var(--c-blue)', 'var(--c-orange)', 'var(--c-green)', 'var(--c-slate)']
 const HOST_COLORS = ['var(--c, var(--select))', 'var(--c-violet)', 'var(--c-amber)']
-const MAX_CHIPS = 8
+const CHIP_W = 26 // chip + gap
 
 const DEDUPE: { id: Dedupe; label: string; blurb: (cap: number) => string }[] = [
   { id: 'none', label: 'None', blurb: (cap) => `No visited set: every link is fetched, again and again. Capped at ${cap} fetches so it stops.` },
@@ -46,6 +46,17 @@ export default function CrawlerWidget({ config, onComplete }: WidgetProps<Crawle
   const dupHeardRef = useRef(false)
   const completeRef = useRef(onComplete)
   completeRef.current = onComplete
+
+  // how many frontier chips fit on one line
+  const chipsRef = useRef<HTMLDivElement>(null)
+  const [maxChips, setMaxChips] = useState(8)
+  useEffect(() => {
+    const el = chipsRef.current
+    if (!el || typeof ResizeObserver === 'undefined') return
+    const ro = new ResizeObserver(() => setMaxChips(Math.max(3, Math.floor((el.clientWidth - 30) / CHIP_W))))
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
 
   const edges = useMemo(() => edgeGeometry(graph), [graph])
   const reach = useMemo(() => crawlable(graph, opts.sameHost), [graph, opts.sameHost])
@@ -300,9 +311,9 @@ export default function CrawlerWidget({ config, onComplete }: WidgetProps<Crawle
 
         <div className="crawl-queue">
           <span className="w-label">Frontier</span>
-          <div className="crawl-queue__chips" aria-label={`Frontier: ${sim.queue.map((e) => graph.pages[e.page].label).join(', ') || 'empty'}`}>
+          <div ref={chipsRef} className="crawl-queue__chips" aria-label={`Frontier: ${sim.queue.map((e) => graph.pages[e.page].label).join(', ') || 'empty'}`}>
             <AnimatePresence initial={false} custom={dropped} mode="popLayout">
-              {sim.queue.slice(0, MAX_CHIPS).map((e) => (
+              {sim.queue.slice(0, maxChips).map((e) => (
                 <motion.span
                   key={e.id}
                   layout={!reduce}
@@ -320,7 +331,7 @@ export default function CrawlerWidget({ config, onComplete }: WidgetProps<Crawle
                 </motion.span>
               ))}
             </AnimatePresence>
-            {sim.queue.length > MAX_CHIPS && <span className="crawl-queue__more">+{sim.queue.length - MAX_CHIPS}</span>}
+            {sim.queue.length > maxChips && <span className="crawl-queue__more">+{sim.queue.length - maxChips}</span>}
             {sim.queue.length === 0 && <span className="crawl-queue__empty">empty</span>}
           </div>
         </div>
@@ -345,6 +356,7 @@ export default function CrawlerWidget({ config, onComplete }: WidgetProps<Crawle
         <Button
           size="sm"
           variant="secondary"
+          className="crawl-reset"
           icon={<RotateCcw size={16} strokeWidth={2.6} />}
           onClick={() => {
             setPlaying(false)

@@ -49,6 +49,7 @@ export function Logo({ size = 28, wordmark = true, className }: { size?: number;
       {wordmark && (
         <span
           aria-hidden="true"
+          className="logo__word"
           style={{
             fontFamily: 'var(--font-display)',
             fontWeight: 900,

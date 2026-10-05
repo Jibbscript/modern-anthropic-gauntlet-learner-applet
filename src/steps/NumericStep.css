@@ -27,7 +27,7 @@
     0 var(--edge-h) 0 0 var(--nf-edge);
   color: var(--nf-ink);
   font-family: var(--font-display);
-  font-weight: 900;
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.02em;
   line-height: 1.1;
@@ -70,10 +70,10 @@
   cursor: default;
 }
 .numeric__field--incorrect {
-  --nf-bg: var(--bad-soft);
-  --nf-line: var(--bad);
-  --nf-edge: var(--bad-edge);
-  --nf-ink: var(--bad-ink);
+  --nf-bg: var(--retry-soft, var(--bad-soft));
+  --nf-line: var(--retry, var(--bad));
+  --nf-edge: var(--retry-edge, var(--bad-edge));
+  --nf-ink: var(--retry-ink, var(--bad-ink));
   cursor: default;
 }
 
@@ -124,7 +124,7 @@
   color: var(--ink-2);
   font-family: var(--font-ui);
   font-size: 15px;
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: 0;
   line-height: 1.2;
   white-space: nowrap;
@@ -140,9 +140,9 @@
   color: var(--good-ink);
 }
 .numeric__field--incorrect .numeric__unit {
-  background: color-mix(in srgb, var(--bad) 14%, transparent);
+  background: color-mix(in srgb, var(--retry, var(--bad)) 14%, transparent);
   box-shadow: none;
-  color: var(--bad-ink);
+  color: var(--retry-ink, var(--bad-ink));
 }
 
 /* ------------------------------------------------------------ status */
@@ -160,7 +160,7 @@
 }
 .numeric__help {
   font-size: var(--fs-sm);
-  font-weight: 650;
+  font-weight: 500;
   color: var(--ink-3);
 }
 .numeric__help b {
@@ -189,12 +189,35 @@
   border-radius: var(--r-pill);
   background: var(--select-soft);
   color: var(--select);
-  font-weight: 800;
+  font-weight: 700;
 }
 .numeric__verdict {
   gap: 6px;
   padding: 6px 12px;
   font-size: var(--fs-sm);
+}
+.numeric__verdict--good {
+  background: var(--good-soft);
+  color: var(--good-ink);
+}
+.numeric__verdict--retry {
+  background: var(--retry-soft, var(--bad-soft));
+  color: var(--retry-ink, var(--bad-ink));
+}
+
+/* green check pinned to the corner of a correct answer */
+.numeric__tick {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: var(--r-pill);
+  background: var(--good);
+  box-shadow: 0 2px 0 0 var(--good-edge);
+  color: #fff;
 }
 .numeric__far {
   font-weight: 700;
@@ -236,7 +259,7 @@
 }
 .numeric__mag b {
   font-size: 17px;
-  font-weight: 900;
+  font-weight: 700;
   line-height: 1.1;
 }
 .numeric__mag span {
@@ -293,24 +316,24 @@
   max-width: 100%;
   font-family: var(--font-display);
   font-size: clamp(28px, 9vw, 44px);
-  font-weight: 900;
+  font-weight: 700;
   letter-spacing: -0.02em;
   line-height: 1.1;
   overflow-wrap: anywhere;
 }
 .numeric__answer-sub {
   font-size: var(--fs-sm);
-  font-weight: 650;
+  font-weight: 500;
   opacity: 0.9;
 }
 .numeric__answer-sub b {
-  font-weight: 850;
+  font-weight: 700;
 }
 
 .numeric__exact {
   margin-top: calc(var(--s-2) * -1);
   text-align: center;
   font-size: var(--fs-sm);
-  font-weight: 650;
+  font-weight: 500;
   color: var(--ink-2);
 }

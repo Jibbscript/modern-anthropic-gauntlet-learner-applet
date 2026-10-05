@@ -6,10 +6,10 @@
   --face-edge: var(--action-edge);
   position: relative;
   display: inline-flex;
-  border-radius: var(--r-md);
+  border-radius: var(--r-pill);
   padding-bottom: var(--edge-h);
   background: var(--face-edge);
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: 0.01em;
   user-select: none;
   -webkit-user-select: none;
@@ -23,12 +23,12 @@
   align-items: center;
   justify-content: center;
   gap: var(--s-2);
-  border-radius: var(--r-md);
+  border-radius: var(--r-pill);
   background: var(--face);
   color: var(--face-ink);
   overflow: hidden;
   transform: translateY(0);
-  transition: transform 90ms var(--ease-out), background var(--dur-2), color var(--dur-2);
+  transition: transform 100ms ease-out, background var(--dur-2), color var(--dur-2);
 }
 
 .btn__face::after {
@@ -36,7 +36,7 @@
   position: absolute;
   inset: 0 0 50% 0;
   background: var(--gloss);
-  opacity: 0.6;
+  opacity: 0.35;
   pointer-events: none;
 }
 
@@ -55,7 +55,7 @@
   font-size: var(--fs-md);
 }
 .btn--lg .btn__face {
-  min-height: 54px;
+  min-height: 50px;
   padding: 0 var(--s-5);
   font-size: var(--fs-lg);
 }
@@ -91,6 +91,11 @@
   --face: var(--bad);
   --face-ink: #ffffff;
   --face-edge: var(--bad-edge);
+}
+.btn--retry {
+  --face: var(--retry);
+  --face-ink: #3d2e00;
+  --face-edge: var(--retry-edge);
 }
 .btn--select {
   --face: var(--select);
@@ -173,10 +178,11 @@
   --t-ink: var(--good-ink);
 }
 .tile--incorrect {
-  --t-bg: var(--bad-soft);
-  --t-line: var(--bad);
-  --t-edge: var(--bad-edge);
-  --t-ink: var(--bad-ink);
+  /* Brilliant marks a wrong pick in yellow with a shake, never harsh red */
+  --t-bg: var(--retry-soft);
+  --t-line: var(--retry);
+  --t-edge: var(--retry-edge);
+  --t-ink: var(--retry-ink);
 }
 .tile--reveal {
   box-shadow: inset 0 0 0 2px var(--good), 0 var(--edge-h) 0 0 var(--good-edge);
@@ -196,12 +202,12 @@
   min-width: 30px;
   height: 30px;
   padding: 0 6px;
-  border-radius: 9px;
+  border-radius: var(--r-sm);
   background: var(--surface-2);
   box-shadow: inset 0 0 0 2px var(--t-line);
   color: var(--ink-2);
   font-size: var(--fs-sm);
-  font-weight: 800;
+  font-weight: 700;
 }
 .tile--selected .tile__badge {
   background: var(--select);
@@ -214,7 +220,7 @@
   box-shadow: none;
 }
 .tile--incorrect .tile__badge {
-  background: var(--bad);
+  background: var(--retry-edge);
   color: #fff;
   box-shadow: none;
 }
@@ -323,7 +329,7 @@
   font-style: italic;
 }
 .rich strong {
-  font-weight: 800;
+  font-weight: 700;
 }
 .rich-code {
   font-family: var(--font-code);
@@ -445,7 +451,7 @@
   background: var(--surface-2);
   color: var(--ink-2);
   font-size: var(--fs-xs);
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: 0.02em;
   white-space: nowrap;
 }
@@ -460,6 +466,10 @@
 .chip--bad {
   background: var(--bad-soft);
   color: var(--bad-ink);
+}
+.chip--retry {
+  background: var(--retry-soft);
+  color: var(--retry-ink);
 }
 .chip--warn {
   background: var(--warn-soft);

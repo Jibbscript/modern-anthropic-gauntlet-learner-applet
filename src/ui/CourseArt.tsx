@@ -14,7 +14,7 @@ import './CourseArt.css'
 /* ------------------------------------------------------------ iso maths */
 
 type Pt = [number, number]
-type Tone = 'c' | 'c2' | 'deep' | 'soft' | 'paper' | 'gold' | 'screen'
+type Tone = 'c' | 'c2' | 'c3' | 'deep' | 'soft' | 'paper' | 'gold'
 
 const OX = 80
 const OY = 104
@@ -167,15 +167,15 @@ function Defs() {
 
 /* -------------------------------------------------------- compositions */
 
-/** map: a winding route with checkpoints across a floating tile */
+/** map: a winding route with checkpoints across a floating tile, a pin at the end */
 function MapArt() {
   const route: [number, number][] = [
-    [-26, 24],
-    [4, 24],
-    [12, 6],
-    [-10, -2],
-    [-14, -20],
-    [14, -24],
+    [-28, 24],
+    [2, 26],
+    [14, 8],
+    [-8, -2],
+    [-12, -20],
+    [16, -26],
   ]
   const z = 10
   // Catmull-Rom through the route (in plan), projected: affine maps keep Béziers exact
@@ -190,29 +190,30 @@ function MapArt() {
     const c2: Pt = [p2[0] - (p3[0] - p1[0]) / 6, p2[1] - (p3[1] - p1[1]) / 6]
     d += ` C${r1(c1[0])},${r1(c1[1])} ${r1(c2[0])},${r1(c2[1])} ${r1(p2[0])},${r1(p2[1])}`
   }
-  const [fx, fy] = P(14, -24, z)
+  const [fx, fy] = P(16, -26, z)
+  const pin = `M${fx},${fy} C${fx - 3},${fy - 7} ${fx - 11},${fy - 13} ${fx - 11},${fy - 22} A11,11 0 1 1 ${fx + 11},${fy - 22} C${fx + 11},${fy - 13} ${fx + 3},${fy - 7} ${fx},${fy} Z`
   return (
     <>
       <Shadow cx={80} cy={142} rx={66} ry={14} />
       <g className="ca-float">
         <Box x={-36} y={-36} z={0} w={72} h={z} d={72} tone="soft" />
-        {/* little blocks scattered on the tile */}
-        <Box x={18} y={14} z={z} w={9} d={9} h={9} tone="c2" />
-        <Box x={-30} y={-30} z={z} w={8} d={8} h={6} tone="c2" />
-        <Box x={24} y={-6} z={z} w={6} d={6} h={13} tone="c" />
-        <path d={d} className="ca-road-edge" transform="translate(0 1.6)" />
+        <Box x={-31} y={-31} z={z} w={9} d={9} h={15} tone="c2" />
+        <Box x={24} y={-34} z={z} w={7} d={7} h={9} tone="c3" />
+        <path d={d} className="ca-road-edge" transform="translate(0 1.8)" />
         <path d={d} className="ca-road" />
         <path d={d} className="ca-road-dash" />
-        {/* start disc */}
-        <Cyl x={-26} y={24} z={z} r={4.6} h={2.5} tone="gold" />
-        {/* checkpoints */}
-        <Cyl x={12} y={6} z={z} r={4} h={7} tone="c" />
-        <Cyl x={-14} y={-20} z={z} r={4} h={7} tone="c" />
-        {/* finish flag */}
-        <Box x={13.2} y={-24.8} z={z} w={1.8} d={1.8} h={30} tone="paper" gloss={false} rim={false} />
-        <path className="ca-flag" d={`M${fx + 1},${fy - 30} L${fx + 20},${fy - 25.5} L${fx + 1},${fy - 19} Z`} />
+        <Cyl x={-28} y={24} z={z} r={4.4} h={2.4} tone="c" />
+        <Cyl x={14} y={8} z={z} r={4.4} h={2.4} tone="gold" />
+        <Cyl x={-8} y={-2} z={z} r={4.4} h={2.4} tone="gold" />
+        <ellipse cx={fx} cy={fy} rx={6} ry={3} className="ca-pin-shadow" />
+        <g className="ca-pin">
+          <path d={pin} className="ca-pin-side" transform="translate(1.6 -0.6)" />
+          <path d={pin} className="ca-pin-face" />
+          <ellipse cx={fx - 3.5} cy={fy - 27} rx={4} ry={2.6} className="ca-spec" />
+          <circle cx={fx} cy={fy - 22} r={4.4} className="ca-pin-hole" />
+        </g>
       </g>
-      <Spark x={130} y={40} s={6} delay={0.4} />
+      <Spark x={130} y={34} s={6} delay={0.4} />
       <Spark x={24} y={58} s={4.5} tone="gold" delay={1.3} />
     </>
   )
@@ -363,11 +364,11 @@ function ConcurrencyArt() {
           <Box key={l.y} x={-24} y={l.y} z={8} w={58} d={10} h={1.6} tone="paper" gloss={false} rim={false} />
         ))}
         {/* the fork: where work fans out */}
-        <Box x={-34} y={-30} z={8} w={9} d={54} h={14} tone="deep" />
+        <Box x={-34} y={-30} z={8} w={8} d={54} h={9} tone="deep" />
         {lanes.map((l) => (
           // static spread via inline transform; the run animation overrides it
           <g key={l.cls} className={`ca-token ${l.cls}`} style={{ transform: `translate(${l.at + 4}px, ${(l.at + 4) / 2}px)` }}>
-            <Box x={-4} y={l.y + 1} z={9.6} w={8} d={8} h={8} tone={l.tone} />
+            <Box x={-5} y={l.y + 0.5} z={9.6} w={9} d={9} h={9} tone={l.tone} />
           </g>
         ))}
       </g>
@@ -379,10 +380,11 @@ function ConcurrencyArt() {
 
 /** builds: blocks rising level by level, a flag on the top level */
 function BuildsArt() {
+  // drawn back to front (smaller x + y is further away)
   const cols = [
-    { y: 8, h: 18, tone: 'c2' as Tone, n: '1' },
-    { y: -14, h: 34, tone: 'c' as Tone, n: '2' },
     { y: -36, h: 52, tone: 'deep' as Tone, n: '3' },
+    { y: -14, h: 34, tone: 'c' as Tone, n: '2' },
+    { y: 8, h: 18, tone: 'c2' as Tone, n: '1' },
   ]
   const [fx, fy] = P(0, -25, 52)
   return (
@@ -411,39 +413,32 @@ function BuildsArt() {
 
 /** design: a document with a boxes-and-arrows diagram on it */
 function DesignArt() {
-  const id = useGid()
   const z = 6
   return (
     <>
       <Shadow cx={80} cy={140} rx={60} ry={13} />
       <g className="ca-float">
-        <Box x={-26} y={-36} z={0} w={58} d={74} h={3} tone="c2" gloss={false} />
+        <Box x={-24} y={-34} z={0} w={58} d={74} h={3} tone="c2" gloss={false} />
         <Box x={-30} y={-40} z={3} w={58} d={74} h={3} tone="paper" />
         <g transform={onTop(-30, -40, z)}>
-          {/* arrows */}
-          <path className="ca-arrow" d="M18,22 C18,32 24,36 29,42" />
-          <path className="ca-arrow" d="M42,22 C42,32 37,36 33,42" />
-          <path className="ca-arrowhead" d="M26,38 L30,44 L32,37" />
-          {/* prose lines */}
           <g className="ca-prose">
-            <rect x={8} y={58} width={42} height={3.4} rx={1.7} />
-            <rect x={8} y={64} width={30} height={3.4} rx={1.7} />
+            <rect x={6} y={48} width={44} height={3.6} rx={1.8} />
+            <rect x={6} y={55} width={34} height={3.6} rx={1.8} />
+            <rect x={6} y={62} width={40} height={3.6} rx={1.8} />
           </g>
-          <rect x={6} y={4} width={46} height={0.01} fill={`url(#${id}-gloss)`} />
+          <path className="ca-arrow" d="M11,17 C11,22 14,25 19,27" />
+          <path className="ca-arrow" d="M37,17 C37,22 34,25 30,27" />
+          <path className="ca-arrowhead" d="M15.6,27.6 L20,27.4 L17.6,23.6" />
+          <path className="ca-arrowhead" d="M33.4,27.6 L29,27.4 L31.4,23.6" />
         </g>
         <g className="ca-pop1">
           <Box x={-26} y={-36} z={z} w={14} d={12} h={6} tone="c" />
         </g>
         <g className="ca-pop2">
-          <Box x={-2} y={-36} z={z} w={14} d={12} h={6} tone="gold" />
+          <Box x={0} y={-36} z={z} w={14} d={12} h={6} tone="gold" />
         </g>
         <g className="ca-pop3">
-          <Box x={-12} y={-12} z={z} w={16} d={14} h={8} tone="deep" />
-        </g>
-        {/* pencil */}
-        <g transform="translate(0 0)">
-          <Box x={36} y={-30} z={0} w={6} d={46} h={6} tone="gold" />
-          <path className="ca-tip" d={`M${P(36, 16, 6).join(',')} L${P(42, 16, 6).join(',')} L${P(42, 16, 0).join(',')} L${P(39, 25, 1.5).join(',')} Z`} />
+          <Box x={-13} y={-13} z={z} w={16} d={12} h={8} tone="deep" />
         </g>
       </g>
       <Spark x={30} y={40} s={6} delay={0.2} />
@@ -496,7 +491,7 @@ function Strata() {
       <Box x={-32} y={-32} z={0} w={60} d={62} h={9} tone="deep" />
       <Box x={-32} y={-32} z={9} w={60} d={46} h={9} tone="c" />
       <Box x={-32} y={-32} z={18} w={60} d={30} h={9} tone="c2" />
-      <Box x={-32} y={-32} z={27} w={60} d={14} h={8} tone="soft" />
+      <Box x={-32} y={-32} z={27} w={60} d={14} h={8} tone="c3" />
     </>
   )
 }

@@ -28,7 +28,7 @@ function useReduced(): boolean {
 }
 
 /* ------------------------------------------------------------ geometry */
-const VB = { w: 300, h: 172 }
+const VB = { x: 14, y: 6, w: 272, h: 160 }
 const T_POS = [
   { x: 48, y: 86 },
   { x: 252, y: 86 },
@@ -296,7 +296,7 @@ export default function DeadlockWidget({ config, onComplete }: WidgetProps<Deadl
             </span>
           </span>
         </div>
-        <svg className="dl-svg" viewBox={`0 0 ${VB.w} ${VB.h}`} role="img" aria-label={deadlocked ? 'Deadlock: A waits for B, B waits for A' : 'Lock ownership and waits'}>
+        <svg className="dl-svg" viewBox={`${VB.x} ${VB.y} ${VB.w} ${VB.h}`} role="img" aria-label={deadlocked ? 'Deadlock: A waits for B, B waits for A' : 'Lock ownership and waits'}>
           <defs>
             <radialGradient id={`${uid}-halo`}>
               <stop offset="0" className="dl-halo__stop0" />
@@ -425,7 +425,7 @@ export default function DeadlockWidget({ config, onComplete }: WidgetProps<Deadl
       </AnimatePresence>
 
       <div className="dl-foot">
-        <span className="dl-foot__note">{scenario === 'opposite' ? 'A locks L1 → L2, B locks L2 → L1' : 'Both lock L1 → L2'}</span>
+        <span className="dl-foot__note">{scenario === 'opposite' ? 'A: L1 → L2 · B: L2 → L1' : 'Both: L1 → L2'}</span>
         <Button size="sm" variant="ghost" icon={<RotateCcw size={14} strokeWidth={2.6} />} onClick={reset} disabled={s.steps === 0}>
           Reset
         </Button>

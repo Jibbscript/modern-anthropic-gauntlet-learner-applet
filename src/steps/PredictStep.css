@@ -51,7 +51,7 @@
 }
 .predict__term--incorrect,
 .predict__term--incorrect:focus-within {
-  --term-ring: var(--bad);
+  --term-ring: var(--retry, var(--bad));
   --term-line: transparent;
   cursor: default;
 }
@@ -65,7 +65,7 @@
 }
 .predict__label {
   font-size: var(--fs-xs);
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   cursor: inherit;
@@ -99,7 +99,7 @@
   background: var(--good);
 }
 .predict__badge--incorrect {
-  background: var(--bad);
+  background: var(--retry-edge, var(--bad));
 }
 
 .predict__input,

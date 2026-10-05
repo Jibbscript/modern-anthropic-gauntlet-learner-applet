@@ -83,8 +83,8 @@
   --ln-bar: var(--good);
 }
 .spotbug__line--incorrect {
-  --ln-tint: color-mix(in srgb, var(--bad) 15%, transparent);
-  --ln-bar: var(--bad);
+  --ln-tint: color-mix(in srgb, var(--retry, var(--bad)) 15%, transparent);
+  --ln-bar: var(--retry, var(--bad));
 }
 .spotbug__line--reveal {
   --ln-tint: color-mix(in srgb, var(--good) 16%, transparent);
@@ -97,7 +97,7 @@
 .spotbug__line--incorrect > .code__no,
 .spotbug__line--reveal > .code__no {
   opacity: 1;
-  font-weight: 800;
+  font-weight: 700;
 }
 .spotbug__line--selected > .code__no {
   color: var(--select);
@@ -107,7 +107,7 @@
   color: var(--good-ink);
 }
 .spotbug__line--incorrect > .code__no {
-  color: var(--bad-ink);
+  color: var(--retry-ink, var(--bad-ink));
 }
 .spotbug__line--dim > .code__src {
   opacity: 0.55;
@@ -148,5 +148,15 @@
   box-shadow: inset 4px 0 0 0 var(--good);
   color: var(--good-ink);
   opacity: 1;
-  font-weight: 800;
+  font-weight: 700;
+}
+
+/* the selection tint needs a little more strength on the dark code background */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) .spotbug__line--selected {
+    --ln-tint: color-mix(in srgb, var(--select) 24%, transparent);
+  }
+}
+:root[data-theme='dark'] .spotbug__line--selected {
+  --ln-tint: color-mix(in srgb, var(--select) 24%, transparent);
 }

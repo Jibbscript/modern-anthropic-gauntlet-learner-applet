@@ -21,6 +21,11 @@
   --l: color-mix(in oklab, var(--c) 64%, #fff);
   --r: color-mix(in oklab, var(--c) 78%, var(--c-edge));
 }
+.ca-c3 {
+  --t: color-mix(in oklab, var(--c) 12%, #fff);
+  --l: color-mix(in oklab, var(--c) 34%, #fff);
+  --r: color-mix(in oklab, var(--c) 52%, #fff);
+}
 .ca-deep {
   --t: color-mix(in oklab, var(--c) 78%, #fff);
   --l: var(--c-edge);
@@ -114,6 +119,19 @@
 .ca-flag {
   fill: color-mix(in oklab, var(--streak) 55%, var(--streak-2));
 }
+.ca-pin-face {
+  fill: var(--c-edge);
+}
+.ca-pin-side {
+  fill: color-mix(in oklab, var(--c-edge) 62%, #000);
+}
+.ca-pin-hole {
+  fill: var(--streak-2);
+}
+.ca-pin-shadow {
+  fill: color-mix(in oklab, var(--c-edge) 60%, #000);
+  opacity: 0.25;
+}
 .ca-pole {
   fill: color-mix(in oklab, var(--c) 10%, #fff);
 }
@@ -187,7 +205,7 @@
 .ca-arrowhead {
   fill: none;
   stroke: var(--c-edge);
-  stroke-width: 2.2;
+  stroke-width: 2.6;
   stroke-linecap: round;
   stroke-linejoin: round;
 }
