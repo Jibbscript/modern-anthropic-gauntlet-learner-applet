@@ -123,20 +123,20 @@ const lesson: Lesson = {
       prompt: 'A payments service guards all accounts with one global lock. It is correct, but under load p99 latency climbs while most threads sit waiting on that lock. Best next move?',
       choices: [
         {
-          text: 'Confirm with a profile, then move to per-account locks acquired in a global id order',
+          text: 'Profile to confirm, then use per-account locks taken in id order',
           correct: true,
           feedback: 'Finer locks let unrelated transfers proceed, and the ordering rule keeps them deadlock-free.',
         },
         {
-          text: 'Swap the global `Lock` for an `RLock`',
-          feedback: 'An `RLock` lets one thread re-enter. It still has one holder at a time, so the queue is just as long.',
+          text: 'Swap the global `Lock` for an `RLock`, which handles contention better',
+          feedback: 'An `RLock` only lets one thread re-enter. It still has one holder at a time, so the queue is just as long.',
         },
         {
-          text: 'Drop the lock for transfers between different accounts',
+          text: 'Keep the lock for same-account transfers, drop it for all others',
           feedback: 'Two "different" transfers can share an account, such as A to B and B to C. Without a lock, B\'s balance races.',
         },
         {
-          text: 'Add more worker threads to drain the queue faster',
+          text: 'Add more worker threads so the lock queue drains faster',
           feedback: 'More threads waiting on the same lock make the queue longer, not shorter.',
         },
       ],
@@ -168,42 +168,44 @@ print(rlock.acquire(timeout=0.1))`,
       id: 'outside',
       title: 'Do the slow and the unknown outside',
       body:
-        'Every millisecond you hold a lock, other threads queue behind it. So do not hold one across I/O: a network call, a disk write, a `sleep`.\n\n' +
-        'Callbacks are worse. Code you do not control, run while you hold a lock, might take *your* lock (a self-deadlock with a plain `Lock`) or someone else\'s (a lock order you never checked). Copy what you need under the lock, release it, then call out.',
+        'Every millisecond you hold a lock, other threads queue behind it. So never hold one across I/O: a network call, a disk write, a `sleep`.\n\n' +
+        'Callbacks are worse. Code you do not control, run under your lock, might take *your* lock (self-deadlock with a plain `Lock`) or someone else\'s (a lock order you never checked). Copy what you need under the lock, release it, then call out.',
     },
     {
       kind: 'spotbug',
       id: 'callback',
       eyebrow: 'Find the hang',
-      prompt: 'A listener that reads `config.get("timeout")` hangs the whole service the first time anyone calls `set`. Tap the lines responsible.',
-      code: `class Config:
+      prompt: 'A listener that reads `config.get("timeout")` hangs the whole service the first time anyone calls `set`. Tap the two lines responsible.',
+      code: `import threading
+
+class Config:
     def __init__(self, listeners):
         self._lock = threading.Lock()
-        self._values = {}
-        self._listeners = list(listeners)
+        self._data = {}
+        self._fns = list(listeners)
 
     def get(self, key):
         with self._lock:
-            return self._values.get(key)
+            return self._data.get(key)
 
     def set(self, key, value):
         with self._lock:
-            self._values[key] = value
-            for fn in self._listeners:
+            self._data[key] = value
+            for fn in self._fns:
                 fn(key, value)`,
-      bugLines: [14, 15],
+      bugLines: [16, 17],
       explanation:
-        'The listeners run inside `with self._lock`. The listener calls `get`, which tries to take the same non-reentrant lock its own thread already holds, and waits forever. Even without re-entry, a slow listener would stall every reader.',
+        'The listener loop runs inside `with self._lock`. The listener calls `get`, which tries to take the same non-reentrant lock its own thread already holds, and waits forever. Even without re-entry, a slow listener would stall every reader.',
       fix: {
         code: `    def set(self, key, value):
         with self._lock:
-            self._values[key] = value
-            listeners = list(self._listeners)   # snapshot under the lock
-        for fn in listeners:                    # call out with no lock held
+            self._data[key] = value
+            fns = list(self._fns)  # snapshot
+        for fn in fns:  # no lock held now
             fn(key, value)`,
         caption: 'An `RLock` would stop this particular hang, but the listener would still run under your lock, free to block everyone or take other locks.',
       },
-      hint: 'Two lines run foreign code. Which lock is held while they run?',
+      hint: 'Find where code you did not write gets called. What is held at that moment?',
     },
     {
       kind: 'interview',
@@ -216,19 +218,19 @@ print(rlock.acquire(timeout=0.1))`,
           interviewer: 'Now several threads share the cache. What do you change?',
           options: [
             {
-              text: 'Wrap `put` in a lock. `get` only reads, so it can stay lock-free.',
+              text: 'Wrap `put` in a lock, since it inserts and evicts. `get` only looks things up, so it can stay lock-free and fast.',
               quality: 'okay',
               feedback: 'Half right. `get` calls `move_to_end`, which mutates the order. In an LRU, every read is a write.',
             },
             {
-              text: 'Nothing. `OrderedDict` operations are atomic under the GIL.',
+              text: 'Nothing. `OrderedDict` is implemented in C and its operations are atomic under the GIL, so the cache is already safe.',
               quality: 'weak',
               feedback: 'Single calls may be, but `get` is a lookup plus a reorder and `put` is an insert plus an eviction. Those sequences race.',
             },
             {
-              text: 'One lock around both `get` and `put`, because `get` reorders too. Simple and clearly correct. I would only get cleverer if profiling showed contention.',
+              text: 'One lock around both `get` and `put`, since `get` reorders too. Coarse but clearly correct; finer only if profiling shows contention.',
               quality: 'strong',
-              feedback: 'You named the non-obvious write and chose the coarse, correct lock first. Exactly the order interviewers like.',
+              feedback: 'You named the non-obvious write and chose the coarse, correct lock first: correct now, faster later with evidence.',
             },
           ],
         },
@@ -236,17 +238,17 @@ print(rlock.acquire(timeout=0.1))`,
           interviewer: 'On a miss, `get` calls a loader that takes 200 ms. Threads pile up behind the lock.',
           options: [
             {
-              text: 'Do not hold the lock during the load. Check under the lock, release, load, re-take it to insert. If duplicate loads matter, a per-key lock lets one thread load while the others wait.',
+              text: 'Stop holding the lock during the load: check under it, release, load, re-take it to insert. Per-key locks if duplicate loads matter.',
               quality: 'strong',
               feedback: 'Shortest critical section, plus the check-then-act follow-up handled before they ask.',
             },
             {
-              text: 'Shard into 16 caches by key hash, each with its own lock.',
+              text: 'Shard into 16 caches by key hash, each with its own lock, so threads only queue behind misses in their own shard.',
               quality: 'okay',
               feedback: 'It cuts contention, but each shard still blocks for 200 ms per miss, and LRU order becomes per-shard. Fix the hold time first.',
             },
             {
-              text: 'Switch to an `RLock`; it handles contention better.',
+              text: 'Switch to an `RLock`. It is built for locks taken over and over, so threads waiting on it get through faster.',
               quality: 'weak',
               feedback: 'An `RLock` allows re-entry by the same thread. It does not shorten the queue and it is not faster.',
             },
@@ -256,17 +258,17 @@ print(rlock.acquire(timeout=0.1))`,
           interviewer: 'You added an `on_evict` callback. Some callbacks call `cache.get()`, and the service hangs.',
           options: [
             {
-              text: 'Use `acquire(timeout=1)` and skip the operation when it times out.',
+              text: 'Use `acquire(timeout=1)` in `get`, and skip the operation when it times out, so nothing can hang for long.',
               quality: 'weak',
               feedback: 'That turns a hang into silently dropped cache operations. The cause is still there.',
             },
             {
-              text: 'The callback runs under our lock and re-enters `get`, which takes the same plain `Lock`. I will collect evicted items under the lock and call `on_evict` after releasing it.',
+              text: 'The callback runs under our lock and re-enters `get` on the same plain `Lock`. Collect evictions under the lock; call `on_evict` after release.',
               quality: 'strong',
               feedback: 'Precise diagnosis and the structural fix: no foreign code under your lock.',
             },
             {
-              text: 'Use an `RLock` so the callback can re-enter.',
+              text: 'Use an `RLock` instead, so a callback running on the same thread can re-enter `get` without blocking.',
               quality: 'okay',
               feedback: 'It stops this self-deadlock, but slow callbacks still block every thread, and a callback that takes another lock can still form a cycle.',
             },
@@ -280,8 +282,8 @@ print(rlock.acquire(timeout=0.1))`,
       id: 'recap',
       title: 'What to remember',
       body:
-        '1. Deadlock needs all four conditions. Break circular wait with ==one global lock order==, or hold-and-wait with `acquire(timeout=...)` and a random back-off.\n' +
-        '2. Granularity is a trade: one lock is simple and serial; per-key locks are parallel and need the ordering rule.\n' +
+        '1. Deadlock needs all four conditions. Break circular wait with ==one global lock order==. Cannot rank the locks? `acquire(timeout=...)`, release all on failure, back off randomly.\n' +
+        '2. Granularity is a trade: one lock is simple and serial; per-key locks run in parallel but need ordering.\n' +
         '3. Keep critical sections short: no I/O, no callbacks. A plain `Lock` is not reentrant; `RLock` is, but needing it is often a design smell.',
     },
   ],
@@ -299,7 +301,7 @@ print(rlock.acquire(timeout=0.1))`,
       kind: 'mcq',
       prompt: 'A transfer must lock accounts 7 and 3, and transfers run in both directions. Which rule prevents deadlock while keeping the transfer atomic?',
       choices: [
-        { text: 'Always lock the lower account id first, whatever the direction', correct: true, feedback: 'One global order means no cycle can form.' },
+        { text: 'Lock the lower account id first, in both directions', correct: true, feedback: 'One global order means no cycle can form.' },
         { text: 'Always lock the sender first, then the receiver', feedback: 'That is the bug: 7-to-3 and 3-to-7 take the locks in opposite orders.' },
         { text: 'Give each account an `RLock` instead of a `Lock`', feedback: 'Reentrancy helps one thread re-acquire its own lock. Two threads can still wait on each other in a cycle.' },
         { text: 'Release the first lock before acquiring the second', feedback: 'No deadlock, but the transfer is no longer atomic: another thread can see money that has left one account and not arrived in the other.' },
@@ -312,6 +314,8 @@ print(rlock.acquire(timeout=0.1))`,
       kind: 'cloze',
       prompt: 'Complete the deadlock-free transfer.',
       code: `def transfer(src: Account, dst: Account, amount: int) -> None:
+    if src is dst:
+        raise ValueError("same account")
     first, second = {{0}}((src, dst), key=lambda acc: acc.{{1}})
     with first.lock, second.lock:
         src.balance -= amount
@@ -341,7 +345,7 @@ print(lock.locked())`,
       id: 'conc-locks.leak',
       skill: 'conc.locks',
       kind: 'spotbug',
-      prompt: 'After one malformed job, every later call to `handle` hangs. Tap the line that raises while the lock is held.',
+      prompt: 'After one malformed job, every later call to `handle` hangs forever. Which line starts the hang?',
       code: `import threading
 
 lock = threading.Lock()

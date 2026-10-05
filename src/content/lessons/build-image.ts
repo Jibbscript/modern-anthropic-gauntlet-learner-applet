@@ -13,7 +13,7 @@ const lesson: Lesson = {
       eyebrow: 'Commonly reported',
       title: 'Eight threads, same 40 minutes',
       body:
-        'You blur 10,000 photos with a pure-Python loop. It takes 40 minutes. You add a `ThreadPoolExecutor` with 8 threads. It still takes about 40 minutes.\n\n' +
+        'You blur 10,000 thumbnails with a pure-Python loop. It takes 40 minutes. You add a `ThreadPoolExecutor` with 8 threads. It still takes about 40 minutes.\n\n' +
         'Nothing is broken. On standard CPython only one thread runs Python bytecode at a time. This lesson builds the pipeline, then asks where parallelism actually comes from.',
       callout: {
         tone: 'insight',
@@ -43,13 +43,17 @@ def apply(spec: list[dict], im: Image.Image) -> Image.Image:
     return im`,
         caption: '`spec` is the parsed JSON, e.g. `[{"op": "grayscale"}, {"op": "rotate", "deg": 90}]`. Pillow rotates counterclockwise.',
       },
+      callout: {
+        tone: 'tip',
+        text: 'Candidates report that looking up docs is generally fine in live rounds. AI help is not: Anthropic\'s [candidate AI guidance](https://www.anthropic.com/candidate-ai-guidance) (updated Jul 2025) says no AI assistance in live interviews unless they say otherwise. Docs only save you if you already know roughly which call you want.',
+      },
     },
     {
       kind: 'spotbug',
       id: 'rotate',
       eyebrow: 'Find the bug',
-      prompt: 'Asked to implement rotate by hand, you treat an image as a list of rows, `img[y][x]`. The square test passes, but a tall image (3 rows, 2 columns) comes out scrambled and a wide one raises `IndexError`. Tap the bug.',
-      code: `def rotate_cw(img: Image) -> Image:
+      prompt: 'Asked to implement rotate by hand, you treat an image as a `Grid`, a list of rows read as `img[y][x]`. The square test passes, but a tall image (3 rows, 2 columns) comes out scrambled and a wide one raises `IndexError`. Tap the bug.',
+      code: `def rotate_cw(img: Grid) -> Grid:
     h, w = len(img), len(img[0])
     out = [[0] * h for _ in range(w)]
     for y, row in enumerate(img):
@@ -203,9 +207,9 @@ thumb = pipeline(gray, blur, rotate)`,
           interviewer: 'We need to process 50,000 product photos overnight. How do you parallelize this?',
           options: [
             {
-              text: 'A `ThreadPoolExecutor` with 32 threads. More threads, more throughput.',
+              text: 'A `ThreadPoolExecutor` with 32 threads. Threads share memory, so there is no pickling, and results can go straight into one shared list.',
               quality: 'weak',
-              feedback: 'The transforms are pure-Python CPU work, so the threads take turns on the GIL. You would see about one core busy.',
+              feedback: 'No pickling, true, but the transforms are pure-Python CPU work, so the threads take turns on the GIL. You would see about one core busy.',
             },
             {
               text: 'Per image it is embarrassingly parallel, and the work is pure-Python CPU, so `ProcessPoolExecutor` with about one worker per core. Workers get file paths, load and save themselves, and return a status, so pixels never get pickled.',
@@ -248,9 +252,9 @@ thumb = pipeline(gray, blur, rotate)`,
               feedback: 'The right instinct, but plain strips get the blur wrong along every seam: edge pixels need neighbors from the next strip.',
             },
             {
-              text: 'Load it as a list of lists and add more processes.',
+              text: 'Load it as a list of lists so the existing pure transforms work unchanged, then give each process the whole image and a band of rows to blur.',
               quality: 'weak',
-              feedback: '1.6 billion pixels as a list of lists is gigabytes of pointers alone, and each worker would need its own copy.',
+              feedback: 'Seams would be right, but 1.6 billion pixels as a list of lists is about 13 GB of pointers per channel, and every process gets its own pickled copy.',
             },
             {
               text: 'Tiles with a 2-pixel halo for the 5×5 blur, cropped after. Each worker reads its own window and writes its own output tile, so no process ever holds the whole image.',
@@ -329,8 +333,8 @@ print(up(3), down(3))`,
       id: 'build-image.shallow-copy',
       skill: 'build.image',
       kind: 'spotbug',
-      prompt: 'After `bright = brighten(photo, 40)`, the original `photo` is brighter too. Which line causes it?',
-      code: `def brighten(img: Image, amount: int) -> Image:
+      prompt: 'Images are lists of pixel rows. After `bright = brighten(photo, 40)`, the original `photo` is brighter too. Which line causes it?',
+      code: `def brighten(img: list[list[int]], amount: int):
     out = img.copy()
     for row in out:
         for x in range(len(row)):

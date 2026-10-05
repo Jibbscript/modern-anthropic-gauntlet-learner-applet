@@ -24,10 +24,12 @@ import { Button } from '../ui/Button'
 import { Ticker } from '../ui/Ticker'
 import { haptic, sfx } from '../ui/fx'
 import type { DedupConfig, WidgetProps } from './specs'
-import { formatBytes, kindOf, naiveBytes, normalizeFiles, reclaimable, runFunnel, type DFile, type Group, type Kind, type Stage } from './dedup/model'
+import { HEAD_BYTES, formatBytes, kindOf, naiveBytes, normalizeFiles, reclaimable, runFunnel, type DFile, type Group, type Kind, type Stage } from './dedup/model'
 import './DedupWidget.css'
 
 const SPRING = { type: 'spring', stiffness: 420, damping: 34 } as const
+/** file cards travel between bins and into the pile slowly enough to follow */
+const TRAVEL = { type: 'spring', stiffness: 150, damping: 22 } as const
 const POP = { type: 'spring', stiffness: 560, damping: 18 } as const
 
 const KIND: Record<Kind, { icon: LucideIcon; hue: string }> = {
@@ -138,8 +140,12 @@ export default function DedupWidget({ config, onComplete }: WidgetProps<DedupCon
       ? `Sizes come from stat(), so this read 0 bytes. ${list(outNames)} ${outNames.length === 1 ? 'has a unique size and' : 'have unique sizes and'} can't have a twin.`
       : 'Sizes come from stat(), so this read 0 bytes. Every file shares its size with another.'
   else if (stage === 2)
-    note = `Read 4 KB from each of ${r.filesRead} file${r.filesRead === 1 ? '' : 's'} (${formatBytes(r.bytesThisStage)}). ${
+    note = `Read ${r.bytesThisStage < r.filesRead * HEAD_BYTES ? 'up to ' : ''}4 KB from each of ${r.filesRead} file${r.filesRead === 1 ? '' : 's'} (${formatBytes(r.bytesThisStage)}). ${
       outNames.length ? `${list(outNames)} started differently, so ${outNames.length === 1 ? "it's" : "they're"} out.` : 'Every start matched, so nothing is ruled out yet.'
+    }`
+  else if (r.filesRead === 0)
+    note = `No extra reads: every remaining file fits inside its first 4 KB, so stage 2 already hashed all of it. ${
+      outNames.length ? `${list(outNames)} turned out different.` : 'Equal hashes, equal files.'
     }`
   else
     note = `Read ${r.filesRead} file${r.filesRead === 1 ? '' : 's'} in full (${formatBytes(r.bytesThisStage)}). ${
@@ -314,7 +320,7 @@ export default function DedupWidget({ config, onComplete }: WidgetProps<DedupCon
                 className={['dd-bin', stage === 0 ? 'dd-bin--folder' : ''].join(' ')}
                 initial={reduce ? false : { opacity: 0, scale: 0.96 }}
                 animate={{ opacity: 1, scale: 1 }}
-                transition={{ ...SPRING, delay: reduce ? 0 : 0.05 * gi }}
+                transition={reduce ? { duration: 0 } : { ...TRAVEL, opacity: { duration: 0.25, delay: 0.05 * gi }, scale: { ...SPRING, delay: 0.05 * gi } }}
               >
                 {body}
               </motion.div>
@@ -342,7 +348,7 @@ export default function DedupWidget({ config, onComplete }: WidgetProps<DedupCon
                   layoutId={`${uid}-f${i}`}
                   className={['dd-chip', s === stage ? 'is-new' : ''].join(' ')}
                   style={kindVars(files[i].name)}
-                  transition={reduce ? { duration: 0 } : SPRING}
+                  transition={reduce ? { duration: 0 } : TRAVEL}
                   title={files[i].name}
                 >
                   <span className={`dd-tag dd-tag--${s}`} />
@@ -370,7 +376,7 @@ export default function DedupWidget({ config, onComplete }: WidgetProps<DedupCon
 function FileCard({ f, layoutId, reduce }: { f: DFile; layoutId: string; reduce: boolean }) {
   const Icon = KIND[kindOf(f.name)].icon
   return (
-    <motion.span layoutId={layoutId} className="dd-file" style={kindVars(f.name)} transition={reduce ? { duration: 0 } : SPRING} title={f.name}>
+    <motion.span layoutId={layoutId} className="dd-file" style={kindVars(f.name)} transition={reduce ? { duration: 0 } : TRAVEL} title={f.name}>
       <span className="dd-file__icon">
         <Icon size={16} strokeWidth={2.4} />
       </span>

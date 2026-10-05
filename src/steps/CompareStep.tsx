@@ -27,10 +27,11 @@ export default function CompareStep({ step, phase, attempt, setController }: Ste
     const dir = e.key === 'ArrowDown' || e.key === 'ArrowRight' ? 1 : e.key === 'ArrowUp' || e.key === 'ArrowLeft' ? -1 : 0
     if (!dir) return
     e.preventDefault()
-    const cur = picked === 'b' ? 1 : picked === 'a' ? 0 : dir > 0 ? -1 : 2
-    const next = (((cur + dir) % 2) + 2) % 2
+    const radios = Array.from(groupRef.current?.querySelectorAll<HTMLElement>('[role="radio"]') ?? [])
+    const at = radios.indexOf(document.activeElement as HTMLElement)
+    const next = ((at >= 0 ? at : picked === 'b' ? 1 : 0) + dir + 2) % 2
     setPicked(next === 0 ? 'a' : 'b')
-    groupRef.current?.querySelectorAll<HTMLElement>('[role="radio"]')[next]?.focus()
+    radios[next]?.focus()
   }
 
   useEffect(() => {

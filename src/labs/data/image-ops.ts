@@ -880,7 +880,7 @@ def test_l4_keeps_the_pool_busy():
     process_batch(_l4_images(20), [], workers=3, executor=ex)
     assert ex.peak_pending == 6, (
         f"the default window is 2 * workers = 6 tasks in flight; the peak was {ex.peak_pending}. "
-        "Waiting for each task before submitting the next leaves the workers idle"
+        "Fill the whole window before you collect a result: collecting early leaves workers idle"
     )
 
 
@@ -1086,15 +1086,15 @@ Write \`process_batch(images, ops, workers=4, executor=None, max_in_flight=None)
 - Submit **one task per image**, with \`executor.submit(fn, img)\`, and collect it with \`future.result()\`. Use only \`submit\` and \`result\`: the doubles don't support \`map\` or \`as_completed\`.
 - With \`executor=None\`, create a new \`SequentialExecutor(max_workers=workers)\` and shut it down when you're done, even if a task raises. Never shut down an executor the caller passed in: they own it.
 - **Backpressure**: never have more than \`max_in_flight\` tasks submitted but not yet collected. The default is \`2 * workers\`. \`images\` may be a lazy generator over a huge folder, so pull the next image only when there's room for it.
-- Keep the pool busy, though: don't wait for each task before submitting the next.
+- Keep the pool busy, though: fill the window. Submit until \`max_in_flight\` tasks are in flight (or the images run out) before you wait on a result, rather than waiting for each task before submitting the next.
 - If a task raises, \`process_batch\` raises that exception.
 - \`workers\` or \`max_in_flight\` below 1 raises \`ValueError\`.
 
 Example: \`process_batch([img1, img2], [grayscale, partial(box_blur, radius=1)])\` returns \`[out1, out2]\`, where each \`out\` equals \`apply_pipeline(img, ops)\`.`,
   tests: L4_TESTS,
   hints: [
-    'Keep submitted futures in a `collections.deque`. Before submitting the next image, if the deque already holds `max_in_flight` futures, pop the oldest and collect its `result()`.',
-    "Collecting the **oldest** future first is what keeps the output in input order. After the loop, drain what's left the same way.",
+    'Picture a sliding window over the input: the futures you have submitted but not collected yet, in submission order. When the window is full, the result you need next is always the **oldest** one, and collecting oldest first is also what keeps the output in input order.',
+    "A `collections.deque` holds the window. Before submitting the next image, if it already holds `max_in_flight` futures, `popleft()` the oldest and collect its `result()`. After the loop, drain what's left the same way.",
     'Wrap the loop in `try`/`finally` so an executor you created gets shut down even when a task raises. Create it inside the function: a default argument value is built only once and shared by every call.',
   ],
   solution: L4_SOLUTION,

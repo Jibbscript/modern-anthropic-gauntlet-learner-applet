@@ -64,7 +64,7 @@ const lesson: Lesson = {
       body:
         'A plausible answer to *Tell me about something that went badly and was your fault*:\n\n' +
         '> I once ran a migration that caused a latency spike. I rolled it back quickly, wrote a postmortem, and we added load testing to our process. It taught me to never skip testing.\n\n' +
-        "All true, and all rung 1 plus a moral. The moral invites the obvious probe: *so why did you skip it?*",
+        "All true: events, then a moral. The moral invites the obvious probe: *so why did you skip it?*",
     },
     {
       kind: 'mcq',
@@ -104,17 +104,17 @@ const lesson: Lesson = {
       a:
         "Last spring I owned a search migration, a week behind. I skipped the load test. Honestly, I'd run dozens of these and was tired of being the bottleneck. It rebuilt an index online; p99 hit two seconds for six hours, and on-call lost a Saturday. The skip wasn't a slip: I'd been treating *I've done this before* as evidence. Now any migration touching an index gets a load test and a second reviewer, mine included.",
       b:
-        'Last spring I owned a schema migration for our search service, running on Postgres 14 with about 40 million rows across six tables. We were moving a text column to a new tokenizer, which meant rebuilding a GIN index. I skipped the staging load test because of time pressure, and the online rebuild pushed p99 latency from 200 milliseconds to two seconds for six hours, until we rolled back.',
+        'Last spring I owned a schema migration for our search service, running on Postgres 14 with about 40 million rows across six tables. We were moving a text column to a new tokenizer, which meant rebuilding a GIN index. I skipped the staging load test because of time pressure, and the online rebuild pushed p99 latency from 200 milliseconds to two seconds for six hours, until we rolled back. Afterwards we wrote a postmortem and added the load test to our migration checklist.',
       better: 'a',
       explanation:
-        'B is long on facts and short on depth: it spends its words on rung 1 and stops at the rollback. A covers all six rungs in about the same length: the real motive, a cost to a person, an honest verdict about a pattern, and a specific change. Depth is which rungs you reach, not how many words you use.',
+        'B is longer and shallower. It spends its words on rung 1, then jumps to a process fix, and never says what the candidate thought, what it cost anyone or how they judge it now. A reaches all six rungs in fewer words: the real motive, a cost to a person, an honest verdict about a pattern, and a specific change. Depth is which rungs you reach, not how many words you use.',
     },
     {
       kind: 'concept',
       id: 'two-minutes',
       title: 'Depth is not length',
       body:
-        'Aim for about two minutes on the first pass, then let them pull. People talk at very roughly 150 words a minute, so that is about 300 words for six rungs.\n\n' +
+        'A good default, not a rule: about two minutes on the first pass, then let them pull. People talk at very roughly 150 words a minute, so that is about 300 words for six rungs.\n\n' +
         'Rambling answers usually spend most of those words on rung 1: the stack, the org chart, the timeline. Give the situation two sentences. Spend the rest on rungs 2 to 6.',
       callout: {
         tone: 'tip',
@@ -139,7 +139,7 @@ const lesson: Lesson = {
       id: 'whose-thought',
       title: 'When they ask what you thought',
       body:
-        'When an interviewer cuts in with *But what did you think?*, leaning on the *you*, they have noticed you hiding. Usually in *we* ("we decided"), in the outcome ("it worked out") or in process ("we aligned").\n\n' +
+        'When an interviewer cuts in with *But what did you think?*, leaning on the *you*, they have probably noticed you hiding. Usually in *we* ("we decided"), in the outcome ("it worked out") or in process ("we aligned").\n\n' +
         "Don't retreat to the team's view. Give your own, from the time, even if it was wrong or a bit petty. Then put a rough number on how sure you were.",
     },
     {
@@ -178,7 +178,7 @@ const lesson: Lesson = {
               feedback: "Real, but it's all *we*. Whose mind changed, from what to what? Expect the next question to ask exactly that.",
             },
             {
-              text: "I try to keep a really open mind, so I change my views all the time when I hear good arguments. I don't hold opinions too strongly.",
+              text: "I try to keep a really open mind, so honestly I change my views all the time whenever I hear a good argument. I don't really hold my opinions all that strongly.",
               quality: 'weak',
               feedback: 'A dodge dressed as a virtue. The question asked for a time you felt strongly; this says you never do.',
             },
@@ -198,7 +198,7 @@ const lesson: Lesson = {
               feedback: 'Your hypothesis, your confidence, and an unflattering motive. That last detail is what makes the update believable.',
             },
             {
-              text: "I thought the scheduler was just too slow for our load and needed a serious overhaul, which is why I'd proposed the rewrite in the first place.",
+              text: "I thought the scheduler was just too slow for the load we had and needed a serious overhaul, which is exactly why I'd proposed the rewrite in the first place.",
               quality: 'okay',
               feedback: "That's your conclusion, not your diagnosis. What did you think was causing it, and how sure were you?",
             },
@@ -213,17 +213,17 @@ const lesson: Lesson = {
           interviewer: 'How do you see it now?',
           options: [
             {
-              text: "Honestly, I still think the rewrite would have been better for us long-term. I just went along with the team's decision to keep things moving.",
+              text: "Honestly, I still think the rewrite would have been better for us in the long term. I just went along with the team's decision so that we could keep things moving.",
               quality: 'weak',
               feedback: 'This contradicts your own story, since you said your mind changed. Coaches list a mismatch between what you say and what you did as a red flag.',
             },
             {
-              text: "Right that it was slow, wrong about why. I'd reached for the fun fix. Now I ask for a profile before arguing for any rewrite, mine first. Go is still a preference, not evidence.",
+              text: "Right that it was slow, wrong about why. I'd reached for the fun fix. Now I profile before arguing for any rewrite, mine first. Go is a preference, not evidence.",
               quality: 'strong',
               feedback: 'A split verdict, a named blind spot, a concrete habit change, and a clean line between preference and evidence.',
             },
             {
-              text: "It taught me how important it is to make decisions based on data rather than instinct, and I've tried to apply that on every project since.",
+              text: "It taught me how important it is to make decisions based on data rather than instinct or gut feel, and I've tried hard to apply that lesson on every project since.",
               quality: 'okay',
               feedback: 'True, but it fits any story. Which habit changed, and how would a teammate notice?',
             },
@@ -277,11 +277,11 @@ const lesson: Lesson = {
       explanation: 'Event, then your thinking, then action with reasons, then consequences, then a verdict, then the change. Each rung is a follow-up you answer before it is asked.',
     },
     {
-      id: 'values-depth.star-skips',
+      id: 'values-depth.rambling',
       skill: 'values.depth',
       kind: 'flash',
-      front: 'Which rungs of the depth ladder does a STAR answer usually skip?',
-      back: 'What you thought at the time, what it cost, and how you see it now. STAR runs situation, task, action, result, and stops.',
+      front: 'Your first-pass answer keeps running well past two minutes. Where are the extra words usually going, and what do you cut?',
+      back: 'Into rung 1: the stack, the org chart, the timeline. Cut the situation to two sentences and spend the rest on what you thought, what it cost, your verdict now and the change.',
     },
     {
       id: 'values-depth.ninety-seconds',
@@ -300,7 +300,7 @@ const lesson: Lesson = {
       prompt: '*I was maybe 60% sure, and part of me just didn\'t want the fight.* Which rung of the depth ladder is this?',
       choices: [
         { text: 'What you thought at the time', correct: true, feedback: 'Yes: a confidence level and a motive, from before the outcome.' },
-        { text: 'What it cost', feedback: 'Cost is about consequences for people. This describes your state of mind.' },
+        { text: 'What it cost, and to whom', feedback: 'Cost is about consequences for people. This describes your state of mind.' },
         { text: 'How you see it now', feedback: 'It could sound like hindsight, but it describes what you felt then, not your verdict today.' },
         { text: 'What you did, and why', feedback: 'Close, but no action is described. This is the thinking that came before the action.' },
       ],
@@ -330,7 +330,7 @@ const lesson: Lesson = {
       skill: 'values.depth',
       kind: 'compare',
       question: '*Tell me about a time you missed a commitment.*',
-      a: 'I committed to a Q3 API launch and we slipped three weeks. Some dependencies came in late and the scope grew. I kept stakeholders updated weekly, we re-planned, and we shipped early in Q4. It taught me to build buffer into my estimates.',
+      a: 'I committed to a Q3 API launch and we slipped three weeks. Some upstream dependencies came in late and the scope grew along the way. I kept stakeholders updated weekly, we re-planned together, and we shipped early in Q4. It taught me to always build buffer into my estimates.',
       b: "I committed to a Q3 API launch and slipped three weeks. My estimate assumed the auth team would deliver on time, and I didn't say so, because it felt like making excuses in advance. A partner team missed their launch because of us. Now I write assumptions into the estimate itself.",
       better: 'b',
       explanation: 'A blames dependencies, stops at the result and ends on a generic moral. B gives what the candidate thought and why they stayed quiet, the cost to another team, and a specific change.',

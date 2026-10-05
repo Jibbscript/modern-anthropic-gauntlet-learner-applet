@@ -33,7 +33,7 @@ const lesson: Lesson = {
       body: "Ask three questions of each piece of data: how big, does it change, how is it read?\n\n- **Postgres**: small rows you filter, join and update in transactions. Orgs, members, prompts, version metadata, run status.\n- **Object storage**: big immutable blobs, read whole. Prompt bodies, run outputs, dataset files. Key them by hash or run id.\n- **Cache**: hot reads you can rebuild from the other two if it vanishes.",
       callout: {
         tone: 'source',
-        text: 'Prep-site write-ups of the Prompt Playground round candidates report (2026) list metadata vs blob storage as a standard probe: [aceoffer](https://aceoffer.app/interviews/prompt_playground_system_design). Second-hand guides, not verbatim questions.',
+        text: 'Candidates report a Prompt Playground design round (2026). Prep-site write-ups of it list metadata vs blob storage as a standard probe: [aceoffer](https://aceoffer.app/interviews/prompt_playground_system_design). Second-hand guides, not verbatim questions.',
       },
     },
     {

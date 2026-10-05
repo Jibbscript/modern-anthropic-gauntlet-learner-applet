@@ -719,7 +719,7 @@ const level3: LabLevel = {
 \`afetch\` is an async fetch, like \`web.afetch\`: it awaits a simulated network delay, and the fake web records how many calls overlap (\`web.peak\`).
 
 - Same rules as level 2: normalized URLs, one host, every URL fetched at most once, \`FetchError\` pages skipped. No \`max_pages\` this time.
-- Run up to \`max_concurrency\` fetches **at the same time**, and never more. An \`asyncio.Semaphore\` is the usual tool.
+- Run up to \`max_concurrency\` fetches **at the same time**, and never more. When enough URLs are waiting, use every slot: \`max_concurrency\` fetches in flight together. An \`asyncio.Semaphore\` is the usual tool.
 - Return the visited URLs as a **sorted** list: with concurrency, completion order means nothing.
 - Return only when the crawl is truly done, and leave no tasks running behind you.
 - Use \`asyncio\`, not threads: threads can't start in the browser. Don't call \`asyncio.run\` either, because the tests already run inside an event loop.
@@ -732,9 +732,9 @@ Example: \`/\` links to 12 pages, and every fetch takes 10 ms.
 \`web.peak\` → \`4\``,
   tests: L3_TESTS,
   hints: [
-    'The simplest shape: `async def visit(url)` fetches inside `async with sem:`, then calls `visit` for each new link and awaits them all with `asyncio.gather`. When the first `visit` returns, the whole crawl is done.',
     'Add a link to `seen` in the same step where you check it, before any `await`. Every `await` lets other tasks run, so check, then await, then add lets two tasks claim the same URL.',
-    'Prefer workers and an `asyncio.Queue`? Call `task_done()` after each URL and `await queue.join()` to know every queued URL is finished, then cancel the workers so none are left running.',
+    'Hold the semaphore only around the `afetch` call. A page that keeps its slot while it waits for its child pages can use up every slot and stall a deep crawl.',
+    'Two shapes work. Recursive: `async def visit(url)` fetches, then awaits `asyncio.gather` over `visit(link)` for each new link, so the first `visit` returns when the whole crawl is done. Workers: an `asyncio.Queue`, `task_done()` after each URL and `await queue.join()`, then cancel the workers so none are left running.',
   ],
   solution: L3_SOLUTION,
 }
@@ -795,14 +795,18 @@ async def test_l4_hosts_crawled_in_parallel():
         "https://a.com/": _l4_links("/a1", "/a2"), "https://a.com/a1": "", "https://a.com/a2": "",
         "https://b.com/": _l4_links("/b1", "/b2"), "https://b.com/b1": "", "https://b.com/b2": "",
     }
-    visited, errors, web, clock = await _l4_crawl(pages, ["https://a.com/", "https://b.com/"], min_interval=1.0)
+    visited, errors, web, _ = await _l4_crawl(pages, ["https://a.com/", "https://b.com/"], min_interval=1.0)
     assert visited == sorted(pages), f"visited: {visited!r}"
     first = sorted(t for t, url in web.log if url.endswith(".com/"))
     assert first == [0.0, 0.0], f"the two hosts' first requests should both start at 0.0, got {first}"
-    assert clock.now() <= 3.0, (
-        f"two hosts with 3 pages each should finish by about t=2.1 when hosts don't wait for each other; "
-        f"the crawl ended at t={clock.now():.2f}. Rate-limit per host, not globally"
-    )
+    for host in ("https://a.com", "https://b.com"):
+        times = _l4_host_times(web, host)
+        late = [t for t, earliest in zip(times, (0.0, 1.0, 2.0)) if t > earliest + 0.05]
+        assert len(times) == 3 and not late, (
+            f"{host}'s requests started at {[round(t, 3) for t in times]}, but with min_interval=1.0 they can start "
+            "at 0.0, 1.0 and 2.0. Rate-limit per host: one host's schedule must never hold up another's, "
+            "and a request shouldn't wait longer than its own host's spacing"
+        )
 
 
 async def test_l4_only_seed_hosts():
@@ -1047,7 +1051,7 @@ const level4: LabLevel = {
   spec: `A real crawler has to be a good citizen and survive flaky servers. Write \`async def crawl_polite(seeds, afetch, clock, max_concurrency=4, min_interval=1.0, retries=2, backoff=0.5)\`, returning \`(visited, errors)\`.
 
 - \`seeds\` is a list of start URLs, possibly on different hosts. Crawl every host that appears in \`seeds\` and ignore links to any other host.
-- **Politeness**: two requests to the **same host** must start at least \`min_interval\` seconds apart. Different hosts don't wait for each other.
+- **Politeness**: two requests to the **same host** must start at least \`min_interval\` seconds apart. Different hosts don't wait for each other, and no request waits longer than its own host's spacing (and any backoff) requires, apart from waiting for a free concurrency slot.
 - **Retries**: a \`FetchError\` with \`status >= 500\` is temporary. Retry it up to \`retries\` more times, waiting \`backoff * 2 ** k\` seconds before retry \`k + 1\`: 0.5 s, then 1 s. A retry is a request too, so politeness still applies. Any other status, like 404, is final: never retry it.
 - Keep the level 3 rules: normalized URLs, at most \`max_concurrency\` fetches in flight, and no URL fetched twice except for retries.
 - \`visited\` is the sorted list of URLs fetched successfully. \`errors\` maps each URL that finally failed to its last status.
@@ -1062,9 +1066,9 @@ Example with \`min_interval=1.0\`, fetches taking 0.1 s, and \`/x\` failing once
 \`errors\` → \`{}\``,
   tests: L4_TESTS,
   hints: [
-    'Keep `next_start = {host: time}`. For each request: `start = max(now, next_start.get(host, now))`, set `next_start[host] = start + min_interval` **before** awaiting anything, then `await clock.sleep(start - now)` if needed. Reserving first means no two tasks get the same slot.',
-    'Wrap the polite fetch in `for attempt in range(retries + 1)`. Re-raise when `e.status < 500` or this was the last attempt; otherwise `await clock.sleep(backoff * 2 ** attempt)` and loop.',
-    'Order matters: take the semaphore, then reserve the host slot, then fetch. If you reserve first and then queue for the semaphore, the request can start later than its slot, too close to the next one.',
+    "Politeness is a schedule, not a fixed sleep. Keep, per host, the earliest time its next request may start, and claim that slot (move the host's time forward) **before** you await anything, so two tasks can't take the same slot.",
+    'Retries are a loop around the polite fetch: catch `FetchError`, re-raise it for a status below 500 or on the last attempt, otherwise sleep the backoff on the clock and go round again. Each attempt claims its own host slot, so politeness covers retries for free.',
+    'Order matters: take the semaphore, then claim the host slot, then sleep until it, then fetch. The slot is `start = max(now, next_start.get(host, now))`, then `next_start[host] = start + min_interval`. If you claim first and then queue for the semaphore, the request can start later than its slot, too close to the next one.',
   ],
   solution: L4_SOLUTION,
 }

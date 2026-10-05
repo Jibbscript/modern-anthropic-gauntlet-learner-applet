@@ -146,7 +146,8 @@ export default function MatchStep({ step, phase, attempt, setController, lessonI
       <Tile
         key={`${side}${i}`}
         layout="position"
-        transition={POS_SPRING}
+        // Tile's own shake/pop timing must survive: only the row slide uses the spring
+        transition={{ layout: POS_SPRING, x: { duration: 0.42 }, scale: { duration: 0.3 } }}
         compact
         state={state}
         disabled={locked}

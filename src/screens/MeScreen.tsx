@@ -5,7 +5,7 @@ import { useStore, liveStreak, type Profile } from '../core/store'
 import type { Course } from '../core/types'
 import { CATALOG } from '../content'
 import { SKILLS } from '../content/skills'
-import { areaMastery, skillMastery, type Mastery } from '../core/adaptive'
+import { skillMastery, type Mastery } from '../core/adaptive'
 import { ACHIEVEMENTS } from '../core/achievements'
 import { addDays, dayKey, daysBetween, parseDayKey, weekOf } from '../core/dates'
 import { nav } from '../app/nav'
@@ -14,7 +14,7 @@ import { ProgressBar } from '../ui/ProgressBar'
 import { Ticker } from '../ui/Ticker'
 import { CourseArt } from '../ui/CourseArt'
 import { courseStyle } from '../ui/course'
-import { Medal } from './AchievementsScreen'
+import { Medal, achievementProgress } from './AchievementsScreen'
 import './MeScreen.css'
 
 const WEEKS = 12
@@ -62,13 +62,21 @@ export default function MeScreen() {
     }
   }, [s.days, s.lessons])
 
-  const mastery = useMemo(() => ({ skill: skillMastery(s, CATALOG, now), area: areaMastery(s, CATALOG, now) }), [s, now])
+  const mastery = useMemo(() => ({ skill: skillMastery(s, CATALOG, now) }), [s, now])
 
   const medals = useMemo(() => {
     const on = ACHIEVEMENTS.filter((a) => s.achievements[a.id]).sort((x, y) => s.achievements[y.id] - s.achievements[x.id])
+    // locked ones closest to earning first, matching the Achievements page
+    const frac = (id: string) => {
+      const p = achievementProgress(id, s, CATALOG)
+      return p ? Math.min(1, p.cur / p.goal) : 0
+    }
     const off = ACHIEVEMENTS.filter((a) => !s.achievements[a.id])
+      .map((a, i) => ({ a, i, f: frac(a.id) }))
+      .sort((x, y) => y.f - x.f || x.i - y.i)
+      .map((x) => x.a)
     return { list: [...on, ...off].slice(0, 6), count: on.length }
-  }, [s.achievements])
+  }, [s])
 
   let i = 0
   return (
@@ -147,7 +155,7 @@ export default function MeScreen() {
             <SectionHead title="Skills" aside={<SkillsAside skill={mastery.skill} />} />
             <div className="me-areas">
               {CATALOG.courses.map((c) => (
-                <AreaGroup key={c.id} course={c} area={mastery.area[c.id]} skills={mastery.skill} />
+                <AreaGroup key={c.id} course={c} skills={mastery.skill} />
               ))}
             </div>
           </motion.section>
@@ -281,7 +289,7 @@ function Heatmap({ now }: { now: number }) {
           d = addDays(d, -1)
           continue
         }
-        lit.add(d)
+        if ((days[d]?.xp ?? 0) > 0 || (days[d]?.lessons ?? 0) > 0) lit.add(d)
         left--
         d = addDays(d, -1)
       }
@@ -320,7 +328,7 @@ function Heatmap({ now }: { now: number }) {
             <span key={c}>{m}</span>
           ))}
         </div>
-        <div className="me-heat__grid" role="grid" aria-label={`Activity over the last ${WEEKS} weeks`}>
+        <div className="me-heat__grid" role="group" aria-label={`Activity over the last ${WEEKS} weeks`}>
           {DOW.map((d, r) => (
             <span key={`d${r}`} className="me-heat__dow" style={{ gridColumn: 1, gridRow: r + 1 }} aria-hidden>
               {r === 0 || r === 2 || r === 4 ? d : ''}
@@ -340,7 +348,8 @@ function Heatmap({ now }: { now: number }) {
                   className={`me-heat__cell lv${lv} ${k === today ? 'is-today' : ''} ${k === picked ? 'is-picked' : ''}`}
                   style={{ gridColumn: c + 2, gridRow: r + 1 }}
                   onClick={() => setPicked(k)}
-                  aria-label={`${k}: ${log?.xp ?? 0} XP${isLit ? ', streak day' : ''}${isFrozen ? ', streak charge used' : ''}`}
+                  aria-label={`${longDate(k)}: ${log?.xp ?? 0} XP${isLit ? ', streak day' : ''}${isFrozen ? ', streak charge used' : ''}`}
+                  aria-pressed={k === picked}
                 >
                   {isLit && <Zap className="me-heat__bolt" size="66%" strokeWidth={2.2} />}
                   {isFrozen && !isLit && <BatteryCharging className="me-heat__charge" size="70%" strokeWidth={2.4} />}
@@ -381,6 +390,10 @@ function Heatmap({ now }: { now: number }) {
   )
 }
 
+function longDate(key: string) {
+  return new Date(parseDayKey(key)).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
+}
+
 /* -------------------------------------------------------------- skills */
 
 function SkillsAside({ skill }: { skill: Record<string, Mastery> }) {
@@ -392,13 +405,16 @@ function SkillsAside({ skill }: { skill: Record<string, Mastery> }) {
   )
 }
 
-function AreaGroup({ course, area, skills }: { course: Course; area?: Mastery; skills: Record<string, Mastery> }) {
+function AreaGroup({ course, skills }: { course: Course; skills: Record<string, Mastery> }) {
   const list = SKILLS.filter((k) => k.area === course.id)
   const [open, setOpen] = useState(false)
   if (!list.length) return null
   const started = list.filter((k) => (skills[k.id]?.unlocked ?? 0) > 0).length
   const due = list.reduce((a, k) => a + (skills[k.id]?.due ?? 0), 0)
-  const m = area && area.unlocked > 0 ? area.mastery : null
+  // the header figure summarises exactly the skills listed below it (card-weighted mastery)
+  const ms = list.map((k) => skills[k.id]).filter((x): x is Mastery => !!x && x.total > 0)
+  const cards = ms.reduce((a, x) => a + x.total, 0)
+  const m = started > 0 && cards > 0 ? ms.reduce((a, x) => a + x.mastery * x.total, 0) / cards : null
   return (
     <div className={`me-area ${open ? 'is-open' : ''}`} style={courseStyle(course.color)}>
       <button type="button" className="me-area__head" onClick={() => setOpen((o) => !o)} aria-expanded={open}>

@@ -17,7 +17,7 @@ const lesson: Lesson = {
         'That is stack-trace processing: parse text into frames, then turn frames into something a person can act on. This lesson does it twice, for crash reports and for profiler samples.',
       callout: {
         tone: 'insight',
-        text: 'The version candidates report most turns sampled stacks into start/end events, with follow-ups on recursion and debouncing. Parsing and grouping tracebacks is the neighboring skill, and a daily one in production work.',
+        text: 'In candidate reports, the most common version turns sampled stacks into start/end events, with follow-ups on recursion and debouncing. Parsing and grouping tracebacks is not the reported question; it is the neighboring skill, and a daily one in production work.',
       },
     },
     {
@@ -104,6 +104,10 @@ def parse(tb: str) -> tuple[str, list[tuple[str, int, str]]]:
             exc_type = line.split(":", 1)[0]
     return exc_type, frames`,
       },
+      callout: {
+        tone: 'warn',
+        text: 'Chained exceptions print several tracebacks joined by `During handling of the above exception…`. This parser keeps the last type but merges every chain\'s frames. Split on those lines first.',
+      },
     },
     {
       kind: 'sort',
@@ -178,13 +182,13 @@ t=10  main > render
             ['main', 'parse', 'lex'],
             ['main', 'render'],
             ['main', 'render', 'render'],
-            ['main'],
+            [],
           ],
           goal: 'events',
         },
       },
       explanation:
-        'Two edge cases hid in there. The repeated `lex` sample produces no events: the open frames simply continue. And `render > render` is recursion: the second `render` sits at a new depth, so it begins even though the name is already on the stack.',
+        'Three edge cases hid in there. The repeated `lex` sample produces no events: the open frames simply continue. `render > render` is recursion: the second `render` sits at a new depth, so it begins even though the name is already open. And an empty sample means the thread went idle, so everything ends, innermost first.',
     },
     {
       kind: 'cloze',
@@ -268,7 +272,7 @@ print(" ".join(out))`,
       id: 'edges',
       title: 'Edge cases interviewers poke',
       body:
-        '- **Identical samples**: no events; the open frames just get longer.\n' +
+        '- **Identical samples**: no events; the open frames just get longer. An **empty** sample ends everything.\n' +
         '- **Recursion**: compare by position, so `f > f` is two frames.\n' +
         '- **After the last sample**: the commonly reported version emits nothing more; some variants close open frames. Ask.\n' +
         '- **Debounce** (a reported follow-up): only begin a frame after N consecutive samples at the same position.\n' +
@@ -296,7 +300,7 @@ print(" ".join(out))`,
             {
               text: 'It matches the expected output, so I am fairly confident.',
               quality: 'weak',
-              feedback: 'One example hides exactly the bugs this problem is about: recursion and the final close.',
+              feedback: 'One example hides exactly the bugs this problem is about: recursion, repeated samples, and what happens after the last sample.',
             },
           ],
         },
@@ -314,9 +318,9 @@ print(" ".join(out))`,
               feedback: 'It works on a batch, but needs the whole event list and a second pass, and frames still open at the end need special handling.',
             },
             {
-              text: 'Count, per depth, how many consecutive samples have had the same frame there, and begin it when the count reaches N. I would ask whether its timestamp should be the first of those samples or the Nth.',
+              text: 'Per depth, count consecutive samples where that slot holds the same name with the same callers; begin the frame when the count hits N, and only end frames that began. I would ask whether the begin uses the first or the Nth timestamp.',
               quality: 'strong',
-              feedback: 'Streams, works per position, and surfaces the one ambiguous choice instead of guessing.',
+              feedback: 'Streams, works per position (so recursion still works), keeps begins and ends paired, and surfaces the ambiguous choice instead of guessing.',
             },
           ],
         },

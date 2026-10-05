@@ -57,7 +57,7 @@ const lesson: Lesson = {
       },
       callout: {
         tone: 'source',
-        text: 'Prep-site write-ups of the Prompt Playground round candidates report (2026) recommend immutable versions plus a compare-and-set head pointer: [The Forward Deployed](https://www.theforwarddeployed.io/interviews/anthropic/questions/prompt-playground). A guide, not an official rubric.',
+        text: 'Candidates report a Prompt Playground design round (2026). Prep-site write-ups of it recommend immutable versions plus a compare-and-set head pointer: [The Forward Deployed](https://www.theforwarddeployed.io/interviews/anthropic/questions/prompt-playground). A guide, not an official rubric.',
       },
     },
     {

@@ -281,19 +281,26 @@ export default function PracticeScreen() {
                       </button>
                     ))}
                     {d.notStarted.length > 0 && (
-                      <button type="button" className="prac-row prac-row--tap prac-row--more" onClick={() => setTab('learn')}>
+                      <button
+                        type="button"
+                        className="prac-row prac-row--tap prac-row--more"
+                        style={d.notStarted.length === 1 ? courseStyle(d.notStarted[0].color) : undefined}
+                        onClick={() => (d.notStarted.length === 1 ? nav.openCourse(d.notStarted[0].id) : setTab('learn'))}
+                      >
                         <span className="prac-more__arts" aria-hidden>
                           {d.notStarted.slice(0, 3).map((c) => (
                             <span key={c.id} className="prac-more__art">
-                              <CourseArt course={c} size={40} />
+                              <CourseArt course={c} size={44} />
                             </span>
                           ))}
                         </span>
                         <span className="prac-row__main">
                           <span className="prac-row__title">
-                            {d.notStarted.length} {d.notStarted.length === 1 ? 'course' : 'courses'} not started
+                            {d.notStarted.length === 1 ? d.notStarted[0].title : `${d.notStarted.length} courses not started`}
                           </span>
-                          <span className="prac-row__meta">Finish a lesson to add its cards</span>
+                          <span className="prac-row__meta prac-row__meta--wrap">
+                            {d.notStarted.length === 1 ? 'Not started. Finish a lesson to add its cards.' : 'Finish a lesson in one to add its cards'}
+                          </span>
                         </span>
                         <ChevronRight className="prac-row__chev" size={20} strokeWidth={2.6} />
                       </button>
@@ -480,7 +487,7 @@ function ForecastChart({ data }: { data: { day: string; count: number }[] }) {
   const max = Math.max(1, ...data.map((x) => x.count))
   const n = Math.max(1, data.length)
   // narrow phones: other days shrink to one letter so "Today" always fits its pill
-  const narrow = width / n < 46
+  const narrow = width / n < 42
   const pillW = narrow ? 44 : 50
   // keep the Today pill clear of the left edge
   const padX = Math.max(0, pillW / 2 + 1 - width / n / 2)

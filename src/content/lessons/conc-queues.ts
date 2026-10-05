@@ -12,7 +12,7 @@ const lesson: Lesson = {
       id: 'hook',
       title: 'The reader that ate the RAM',
       body:
-        'A reader thread decodes 500 images a second into a queue. The resizer drains 50. Nothing fails. The queue just grows by 450 decoded images every second, about 1.8 GB at 4 MB each, until the machine starts swapping.\n\n' +
+        'A reader thread decodes 500 images a second into a queue. The resizer drains 50. Nothing fails. The queue just grows by 450 decoded images, about 1.8 GB at 4 MB each, every second, until the machine starts swapping.\n\n' +
         'The fix is one argument: `queue.Queue(maxsize=100)`. When the queue is full, the reader ==waits==.',
       callout: {
         tone: 'insight',
@@ -29,15 +29,15 @@ const lesson: Lesson = {
       code: {
         code: `import queue
 
-q: queue.Queue[str] = queue.Queue(maxsize=100)
+q = queue.Queue(maxsize=100)
 
 def producer(paths):
     for p in paths:
-        q.put(p)          # waits while 100 are queued
+        q.put(p)   # waits if 100 queued
 
 def consumer():
     while True:
-        path = q.get()    # waits while empty
+        path = q.get()  # waits if empty
         thumbnail(path)`,
         highlight: [7, 11],
       },
@@ -55,20 +55,20 @@ print("queued")`,
       },
       choices: [
         {
-          text: 'It blocks until another thread calls `get()`; here none does, so the program hangs',
+          text: 'It blocks until some thread calls `get()`. None will, so it hangs',
           correct: true,
           feedback: 'Right. A blocking `put` on a full queue waits for room: backpressure when someone consumes, a hang when nobody does.',
         },
         {
           text: 'It raises `queue.Full` because the queue is at capacity',
-          feedback: '`Full` only comes from `put_nowait()` or `put(item, timeout=...)`. The default `put()` waits indefinitely.',
+          feedback: '`Full` comes only from non-blocking or timed puts: `put_nowait()`, `put(block=False)` or `put(timeout=...)`. Plain `put()` waits indefinitely.',
         },
         {
           text: 'It drops `"a"` to make room, like a `deque(maxlen=2)`',
           feedback: '`deque(maxlen=...)` silently evicts. A `Queue` never throws your data away; it makes the producer wait instead.',
         },
         {
-          text: 'It succeeds, because `maxsize` is a soft hint the queue can exceed',
+          text: 'It succeeds: `maxsize` is a soft hint the queue may exceed briefly',
           feedback: '`maxsize` is enforced. If it were a hint, it could not protect your memory.',
         },
       ],
@@ -132,7 +132,7 @@ for t in workers:
       kind: 'spotbug',
       id: 'one-pill',
       eyebrow: 'Find the bug',
-      prompt: 'Every item gets processed, then the program never exits. Tap the line responsible.',
+      prompt: 'Four workers process every item, then the program never exits. Tap the line responsible.',
       code: `STOP = object()
 q: queue.Queue = queue.Queue(maxsize=100)
 
@@ -191,15 +191,15 @@ for t in threads:
     {
       kind: 'cloze',
       id: 'safe-worker',
-      prompt: 'Make this worker survive bad inputs, and make sure a bad input can never leave `q.join()` waiting forever.',
+      prompt: 'Make this worker survive bad inputs, and make sure no `get()`, sentinel included, can leave `q.join()` waiting forever.',
       code: `STOP = object()
 
 def worker():
     while True:
         item = q.get()
-        if item is {{0}}:
-            return
         try:
+            if item is {{0}}:
+                return
             out.put(transform(item))
         except Exception as exc:
             errors.put((item, exc))
@@ -211,8 +211,8 @@ def worker():
         { options: ['task_done', 'join', 'get'], answer: 0 },
       ],
       explanation:
-        'Compare against the sentinel you defined, with `is`: a fresh `object()` is identical only to itself, so no real item can be mistaken for it. `finally` runs on success and failure alike, so a bad item still calls `task_done()` and `q.join()` cannot hang on it. Calling `q.join()` inside a worker would wait on itself.',
-      hint: 'Which clause runs whether `transform` raised or not?',
+        'Compare against the sentinel you defined, with `is`: a fresh `object()` is identical only to itself, so no real item can be mistaken for it. `finally` runs on success, on failure and even on `return`, so every `get()` is matched by one `task_done()`, and `q.join()` works whether the sentinels go in before or after it. With `else`, one bad item hangs `join` forever. Calling `q.join()` inside a worker would wait on itself.',
+      hint: 'Which clause runs whether the `try` body returned, raised or finished normally?',
     },
     {
       kind: 'interview',
@@ -224,19 +224,19 @@ def worker():
           interviewer: 'Your loader is ten times faster than your resizer. What happens over a 100,000-image run?',
           options: [
             {
-              text: 'It finishes faster overall, because the loader gets its share of the work done early and then just waits for the resizer.',
+              text: 'The queue between them grows without limit, so I would add a `maxsize` to it and keep everything else the same, since the pipeline itself is correct.',
+              quality: 'okay',
+              feedback: 'Right fix, but you did not say what it buys (bounded memory) or what it does not (any extra throughput).',
+            },
+            {
+              text: 'It finishes faster overall: the loader gets its share of the work done early, frees its threads, and then the resizer can catch up at its own pace.',
               quality: 'weak',
               feedback: 'Throughput is set by the resizer whatever the loader does. Finishing early just means tens of thousands of decoded images sitting in memory.',
             },
             {
-              text: 'Decoded images pile up in an unbounded queue until memory runs out. A bounded queue makes the loader wait, capping memory. Total time is the resizer\'s either way, so speed comes from more resizers.',
+              text: 'Decoded images pile up until memory runs out. A bounded queue makes the loader wait, capping memory. Total time is set by the resizer either way, so I add resizers.',
               quality: 'strong',
               feedback: 'Names the failure, the mechanism, the memory bound, and where real speed comes from.',
-            },
-            {
-              text: 'The queue between them grows without limit, so I would add a `maxsize` to it and keep everything else the same.',
-              quality: 'okay',
-              feedback: 'Right fix, but you did not say what it buys (bounded memory) or what it does not (any extra throughput).',
             },
           ],
         },
@@ -244,19 +244,19 @@ def worker():
           interviewer: 'How does the program end?',
           options: [
             {
-              text: 'When the loader finishes, I set a global `done` flag, and each worker checks the flag before taking its next item.',
-              quality: 'okay',
-              feedback: 'A worker blocked in `get()` never reaches the check. It only works with polling or timeouts, which add latency and edge cases.',
-            },
-            {
-              text: 'Stage by stage: after the last item, one sentinel per resize worker, then join them; then one per save worker, and join those. FIFO keeps every real item ahead of the sentinels.',
+              text: 'Stage by stage: after the last item, one sentinel per resize worker, then join them; then one per save worker, and join those. FIFO keeps real items first.',
               quality: 'strong',
               feedback: 'Correct count, correct order, and the reason it is safe.',
             },
             {
-              text: 'I make all the workers daemon threads, so they are cleaned up automatically when the main thread reaches the end.',
+              text: 'When the loader finishes, it sets a global `done` flag, and each worker checks that flag before it takes its next item from the queue.',
               quality: 'weak',
-              feedback: 'Daemon threads are killed mid-item at exit: half-written files and lost results. That abandons work rather than shutting down.',
+              feedback: 'It breaks both ways: a worker blocked in `get()` on an empty queue never reaches the check and hangs, and a worker that sees the flag exits while items are still queued.',
+            },
+            {
+              text: 'Workers are daemon threads. Main calls `join()` on each stage\'s queue in order, upstream first, then exits, and the idle daemons die with the process.',
+              quality: 'okay',
+              feedback: 'This works, and it is the pattern in the `queue` docs. But the workers never get to clean up, and a single missed `task_done()` turns the exit into a hang.',
             },
           ],
         },
@@ -264,19 +264,19 @@ def worker():
           interviewer: 'One image in 10,000 is corrupt, and `resize` raises on it. What happens?',
           options: [
             {
-              text: 'The exception propagates up to the main thread, which logs it, stops the pipeline cleanly and exits with an error.',
-              quality: 'weak',
-              feedback: 'Exceptions do not cross threads. The main thread never sees it; a traceback goes to stderr while the pipeline quietly loses a worker.',
+              text: 'Wrap the `resize` call in a try/except inside the worker, skip the bad image with a warning, and carry on with the rest of the batch.',
+              quality: 'okay',
+              feedback: 'Keeps the worker alive, but a warning scrolled past in a 100,000-image log means nobody learns which images are missing.',
             },
             {
-              text: 'That worker dies, and once enough have died, the loader blocks on a full queue forever. I catch per item, queue `(path, error)` for a final report, and test with a planted corrupt file.',
+              text: 'The worker dies, and once enough die, the loader blocks on a full queue. I catch per item, queue `(path, error)` for a report, and test with a planted bad file.',
               quality: 'strong',
               feedback: 'Traces the crash through to the hang, isolates failures per item, keeps them visible, and proves it.',
             },
             {
-              text: 'Wrap the `resize` call in a try/except inside the worker, skip the bad image, and carry on with the rest.',
-              quality: 'okay',
-              feedback: 'Keeps the worker alive, but a silent skip means nobody learns which images are missing or why.',
+              text: 'The exception propagates up to the main thread, which logs it with the traceback, stops the whole pipeline cleanly and exits with an error code.',
+              quality: 'weak',
+              feedback: 'Exceptions do not cross threads. The main thread never sees it; a traceback goes to stderr while the pipeline quietly loses a worker.',
             },
           ],
         },
@@ -327,8 +327,8 @@ print(q.qsize(), q.get())`,
       id: 'conc-queues.n-sentinels',
       skill: 'conc.queues',
       kind: 'flash',
-      front: 'Four worker threads share one queue. Why does putting a single sentinel leave the program hung?',
-      back: 'Each worker exits after taking one sentinel and does not put it back. The other three stay blocked in `get()`, so joining them waits forever. Put one sentinel per worker.',
+      front: 'N worker threads share one queue. Name two sentinel schemes that shut all of them down, and the hang both avoid.',
+      back: 'Put N sentinels, one per worker; or have each worker put the sentinel back before it exits, so one is enough. Both avoid the classic hang: one sentinel stops one worker, and the rest block in `get()` forever.',
     },
     {
       id: 'conc-queues.bigger-buffer',

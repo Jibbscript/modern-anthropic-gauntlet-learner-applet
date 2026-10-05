@@ -46,6 +46,8 @@ export interface RunResult {
   timedOut?: boolean
   /** wall time in Python, ms */
   ms?: number
+  /** the harness found tasks that ignore cancellation; the worker is recycled after this run */
+  restart?: boolean
 }
 
 export class RunnerUnavailableError extends Error {
@@ -208,7 +210,7 @@ class Runner {
           this.set('ready')
           resolve(w)
         } else if (m.type === 'failed') {
-          const blocked = /importScripts|NetworkError|Failed to fetch|load/i.test(m.message)
+          const blocked = /importScripts|NetworkError|Failed to fetch|failed to load|Load failed/i.test(m.message)
           fail(
             blocked
               ? 'The Python download was blocked: you may be offline, or this page does not allow it.'
@@ -275,6 +277,8 @@ class Runner {
       const onTimeout = () => {
         this.kill()
         this.set('idle')
+        // boot a fresh interpreter now so the next run doesn't wait for it
+        void this.warmup()
         const results = [...done]
         const seen = new Set(done.map((r) => `${r.level}:${r.name}`))
         if (current && !seen.has(`${current.level}:${current.name}`)) {
@@ -319,15 +323,24 @@ class Runner {
             if (stdout.length < 20000) stdout += p.s
           }
         } else if (m.type === 'result') {
+          let r: RunResult
           try {
-            finish(JSON.parse(m.data) as RunResult)
+            r = JSON.parse(m.data) as RunResult
           } catch {
-            finish({ results: done, stdout, error: 'The test harness returned an unreadable result.' })
+            r = { results: done, stdout, error: 'The test harness returned an unreadable result.' }
           }
+          if (r.restart) {
+            // leftover tasks would keep running in this interpreter: start a fresh one
+            this.kill()
+            this.set('idle')
+            void this.warmup()
+          }
+          finish(r)
         } else if (m.type === 'crash') {
           // Pyodide itself failed (e.g. a fatal stack overflow): start fresh next time
           this.kill()
           this.set('idle')
+          void this.warmup()
           finish({ results: done, stdout, error: `Python crashed while running your code:\n${lastLines(m.message, 6)}` })
         }
       })

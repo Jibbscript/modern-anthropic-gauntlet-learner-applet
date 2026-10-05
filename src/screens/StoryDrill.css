@@ -439,6 +439,12 @@
   .drl-grade__row {
     grid-template-columns: repeat(2, 1fr);
   }
+  .drl-gbtn__face {
+    flex-direction: row;
+    justify-content: space-between;
+    min-height: 46px;
+    padding: 0 var(--s-3);
+  }
 }
 .drl-gbtn {
   --g-face: var(--surface-2);

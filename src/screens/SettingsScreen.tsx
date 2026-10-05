@@ -19,7 +19,7 @@ import {
   Volume2,
   X,
 } from 'lucide-react'
-import { useStore, exportState, type GauntletState, type Profile, type ThemePref } from '../core/store'
+import { useStore, exportState, initialState, DEFAULT_SETTINGS, type GauntletState, type Profile, type ThemePref } from '../core/store'
 import { dayKey, daysBetween } from '../core/dates'
 import { nav, useNav } from '../app/nav'
 import { Button, IconButton } from '../ui/Button'
@@ -132,18 +132,25 @@ export default function SettingsScreen() {
                   <CalendarDays className="set-date__icon" size={18} strokeWidth={2.4} />
                   <input
                     id="set-date"
-                    className="set-input set-input--date"
+                    className={`set-input set-input--date ${profile.interviewDate ? '' : 'is-empty'}`}
                     type="date"
                     value={profile.interviewDate}
+                    min={today}
+                    aria-describedby="set-date-hint"
                     onChange={(e) => setProfile({ interviewDate: e.target.value })}
                   />
+                  {!profile.interviewDate && (
+                    <span className="set-date__ph" aria-hidden>
+                      Not set
+                    </span>
+                  )}
                   {profile.interviewDate && (
                     <IconButton label="Clear interview date" className="set-date__clear" onClick={() => setProfile({ interviewDate: '' })}>
                       <X size={18} strokeWidth={2.6} />
                     </IconButton>
                   )}
                 </div>
-                <p className="set-hint">
+                <p className="set-hint" id="set-date-hint">
                   {daysLeft == null
                     ? 'Add it and Gauntlet times your reviews so everything is fresh on the day.'
                     : daysLeft > 1
@@ -493,7 +500,13 @@ function ExportSheet({ text, onDone, onCopied }: { text: string; onDone: () => v
   )
 }
 
-/** Accepts an export, or the raw localStorage blob ({ state, version }). */
+const isObj = (v: unknown): v is Record<string, unknown> => !!v && typeof v === 'object' && !Array.isArray(v)
+
+/**
+ * Accepts an export, or the raw localStorage blob ({ state, version }).
+ * Fields an older or hand-edited export lacks fall back to defaults, and
+ * fields of the wrong shape are rejected, so a bad file cannot break the app.
+ */
 function parseImport(text: string): GauntletState {
   let data: unknown
   try {
@@ -501,14 +514,25 @@ function parseImport(text: string): GauntletState {
   } catch {
     throw new Error('That is not valid JSON. Paste the whole export, from the first { to the last }.')
   }
-  if (data && typeof data === 'object' && 'state' in data) {
-    const inner = (data as { state: unknown }).state
-    if (inner && typeof inner === 'object') data = inner
+  if (isObj(data) && isObj(data.state)) data = data.state
+  if (!isObj(data)) throw new Error('This does not look like a Gauntlet export.')
+  if (!('profile' in data) && !('lessons' in data) && !('cards' in data)) throw new Error('This does not look like a Gauntlet export: it has no profile, lessons or cards.')
+  const maps = ['profile', 'settings', 'lessons', 'cards', 'stories', 'reflections', 'days', 'streak', 'achievements', 'labs'] as const
+  const bad = maps.filter((k) => k in data && !isObj(data[k]))
+  if (bad.length) throw new Error(`This export is damaged: "${bad[0]}" has the wrong shape.`)
+  if ('version' in data && data.version !== 1) throw new Error('This export comes from a different version of Gauntlet and cannot be imported here.')
+  if ('xp' in data && typeof data.xp !== 'number') throw new Error('This export is damaged: "xp" is not a number.')
+  const base = initialState()
+  const d = data as Partial<GauntletState>
+  return {
+    ...base,
+    ...d,
+    version: 1,
+    profile: { ...base.profile, ...(d.profile ?? {}) },
+    settings: { ...DEFAULT_SETTINGS, ...(d.settings ?? {}) },
+    streak: { ...base.streak, ...(d.streak ?? {}) },
+    unseenAchievements: [],
   }
-  if (!data || typeof data !== 'object' || Array.isArray(data)) throw new Error('This does not look like a Gauntlet export.')
-  const d = data as Record<string, unknown>
-  if (!('profile' in d) && !('lessons' in d) && !('cards' in d)) throw new Error('This does not look like a Gauntlet export: it has no profile, lessons or cards.')
-  return d as unknown as GauntletState
 }
 
 function ImportSheet({ onCancel, onDone }: { onCancel: () => void; onDone: () => void }) {

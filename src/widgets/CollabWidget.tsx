@@ -188,13 +188,16 @@ export default function CollabWidget({ config, onComplete }: WidgetProps<CollabC
     if (strategy === 'lww' && result.lww?.loser === u) return { text: 'edit lost', tone: 'bad' }
     return { text: 'in sync', tone: 'good' }
   }
+  /** how this user's edit travels under the current strategy */
   const opLabel = (u: User) => {
     const e = u === 'A' ? a : b
+    if (strategy === 'lww') return 'whole doc'
+    if (strategy === 'crdt') return `after ${u === 'A' ? result.crdt?.anchorA : result.crdt?.anchorB}`
     return `ins @${e.at}`
   }
 
   const goalText = goal === 'preserve' ? 'Goal: sync with a strategy that keeps both edits' : 'Goal: sync with any strategy'
-  const reachedText = goal === 'preserve' ? 'Goal reached: both edits survived the merge' : 'Goal reached: you synced'
+  const reachedText = goal === 'preserve' ? 'Goal reached: both edits kept' : 'Goal reached: you synced'
 
   /** packets for the current strategy: [user, direction, label, delay] */
   const hub = strategy !== 'crdt'
@@ -349,25 +352,51 @@ export default function CollabWidget({ config, onComplete }: WidgetProps<CollabC
         </div>
       </div>
 
+      {/* LWW depends on arrival order; OT and CRDT do not */}
+      <AnimatePresence initial={false}>
+        {strategy === 'lww' && (
+          <motion.div
+            key="order"
+            className="collab-order"
+            initial={reduce ? false : { opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0, transition: { duration: 0.15 } }}
+            transition={{ duration: 0.2 }}
+          >
+            <span className="w-label" id="collab-order-label">
+              Syncs last
+            </span>
+            <div className="collab-order__opts" role="radiogroup" aria-labelledby="collab-order-label">
+              {(['A', 'B'] as User[]).map((u) => (
+                <motion.button
+                  key={u}
+                  type="button"
+                  role="radio"
+                  aria-checked={last === u}
+                  className={['collab-order__opt', last === u ? 'is-on' : ''].join(' ')}
+                  style={userVars(u)}
+                  whileTap={{ scale: 0.94 }}
+                  disabled={syncing}
+                  onClick={() => {
+                    if (last === u) return
+                    sfx('select')
+                    setLast(u)
+                    if (phase === 'merged') restart(false)
+                  }}
+                >
+                  <span className="collab-order__badge">{u}</span>
+                  {NAMES[u]}
+                </motion.button>
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <div className="collab-controls">
         <Button size="sm" variant="primary" icon={<ArrowLeftRight size={15} strokeWidth={2.6} />} onClick={sync} disabled={phase !== 'ready'} className="collab-sync">
           {syncing ? 'Syncing…' : merged ? 'Synced' : 'Sync'}
         </Button>
-        {strategy === 'lww' && (
-          <Button
-            size="sm"
-            variant="secondary"
-            icon={<ArrowUpDown size={14} strokeWidth={2.6} />}
-            onClick={() => {
-              setLast((l) => other(l))
-              if (phase === 'merged') restart(false)
-            }}
-            disabled={syncing}
-            aria-label={`${NAMES[last]} syncs last. Tap to swap the order`}
-          >
-            {NAMES[last]} syncs last
-          </Button>
-        )}
         <Button size="sm" variant="ghost" className="collab-reset" icon={<RotateCcw size={14} strokeWidth={2.6} />} onClick={() => restart(true)} disabled={phase === 'typing'}>
           Reset
         </Button>
@@ -403,31 +432,28 @@ export default function CollabWidget({ config, onComplete }: WidgetProps<CollabC
                   return (
                     <div key={t.user} className="collab-ot__row" style={userVars(t.user)}>
                       <span className="collab-ot__who">
-                        {NAMES[t.user]}’s op on {NAMES[them]}’s copy
+                        {NAMES[t.user]}’s insert, applied on {NAMES[them]}’s copy
                       </span>
                       <span className="collab-ot__math">
+                        <span className="collab-ot__pos">@{t.from}</span>
                         {t.shift > 0 ? (
                           <>
-                            <span className="collab-ot__pos">@{t.from}</span>
                             <span className="collab-ot__op"> + {t.shift}</span>
                             <span className="collab-ot__eq"> = </span>
                             <b className="collab-ot__pos is-new">@{t.to}</b>
                           </>
                         ) : (
-                          <>
-                            <span className="collab-ot__pos">@{t.from}</span>
-                            <span className="collab-ot__eq"> stays</span>
-                          </>
+                          <span className="collab-ot__eq"> → stays @{t.to}</span>
                         )}
                       </span>
                       <span className="collab-ot__why">
                         {t.reason === 'before'
-                          ? `${NAMES[them]} inserted ${t.shift} chars at ${theirs.at}, before ${t.from}`
+                          ? `${NAMES[them]} inserted ${t.shift} chars (${quote(theirs.insert)}) at ${theirs.at}, before ${t.from}, so it shifts right by ${t.shift}.`
                           : t.reason === 'tie'
                             ? t.shift > 0
-                              ? `same spot: ${NAMES[them]} wins the tie (lower id) and goes first`
-                              : `same spot: ${NAMES[t.user]} wins the tie (lower id)`
-                            : `${NAMES[them]}’s insert at ${theirs.at} is after ${t.from}`}
+                              ? `Same position. Ties go to the lower user id, so ${NAMES[them]}’s text goes first and this shifts by ${t.shift}.`
+                              : `Same position. ${NAMES[t.user]} has the lower user id, so this goes first and stays.`
+                            : `${NAMES[them]}’s insert at ${theirs.at} comes after ${t.from}, so nothing before it moved.`}
                       </span>
                     </div>
                   )

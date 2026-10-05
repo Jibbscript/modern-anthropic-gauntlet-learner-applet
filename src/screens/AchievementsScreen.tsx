@@ -143,14 +143,21 @@ export default function AchievementsScreen() {
 
   const { unlocked, locked, nextUp } = useMemo(() => {
     const unlocked = ACHIEVEMENTS.filter((a) => s.achievements[a.id]).sort((x, y) => s.achievements[y.id] - s.achievements[x.id])
+    // closest to earning first, so the next badge is always at the top
+    const frac = (a: Achievement) => {
+      const p = achievementProgress(a.id, s, CATALOG)
+      return p ? Math.min(1, p.cur / p.goal) : 0
+    }
     const locked = ACHIEVEMENTS.filter((a) => !s.achievements[a.id])
+      .map((a, i) => ({ a, i, f: frac(a) }))
+      .sort((x, y) => y.f - x.f || x.i - y.i)
+      .map((x) => x.a)
     let nextUp: { a: Achievement; frac: number } | null = null
     for (const a of locked) {
-      const p = achievementProgress(a.id, s, CATALOG)
-      if (!p) continue
-      const frac = Math.min(1, p.cur / p.goal)
-      if (frac < 1 && (!nextUp || frac > nextUp.frac)) nextUp = { a, frac }
+      const f = frac(a)
+      if (f > 0 && f < 1 && (!nextUp || f > nextUp.frac)) nextUp = { a, frac: f }
     }
+    if (!nextUp && locked[0]) nextUp = { a: locked[0], frac: 0 }
     return { unlocked, locked, nextUp }
   }, [s])
 
@@ -161,6 +168,8 @@ export default function AchievementsScreen() {
 
   const badge = (a: Achievement, i: number) => {
     const at = s.achievements[a.id]
+    const prog = at ? null : achievementProgress(a.id, s, CATALOG)
+    const frac = prog ? Math.min(1, prog.cur / prog.goal) : 0
     return (
       <motion.button
         key={a.id}
@@ -174,7 +183,7 @@ export default function AchievementsScreen() {
         animate={{ opacity: 1, scale: 1 }}
         transition={{ type: 'spring', stiffness: 460, damping: 26, delay: Math.min(i, 14) * 0.025 }}
         whileTap={{ scale: 0.94 }}
-        aria-label={`${a.title}${at ? ', unlocked' : ', locked'}. ${a.desc}`}
+        aria-label={`${a.title}${at ? `, unlocked ${shortDate(at)}` : ', locked'}. ${a.desc}${prog && frac > 0 ? `. ${Math.min(prog.cur, prog.goal)} of ${prog.goal} ${prog.unit}` : ''}`}
       >
         <span className="ach-badge__art">
           <Medal a={a} unlocked={!!at} />
@@ -182,6 +191,11 @@ export default function AchievementsScreen() {
         </span>
         <span className="ach-badge__title">{a.title}</span>
         <span className="ach-badge__sub">{at ? shortDate(at) : a.desc}</span>
+        {prog && frac > 0 && (
+          <span className="ach-badge__prog" aria-hidden>
+            <i style={{ width: `${Math.max(6, frac * 100)}%` }} />
+          </span>
+        )}
       </motion.button>
     )
   }

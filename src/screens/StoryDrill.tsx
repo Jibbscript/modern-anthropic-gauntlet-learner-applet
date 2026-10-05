@@ -113,6 +113,8 @@ export default function StoryDrill({ slots, onExit }: { slots?: StorySlotId[]; o
   const timer = useSpeakTimer()
   const stageRef = useRef<HTMLDivElement>(null)
   const overRef = useRef(false)
+  /** blocks a double tap on the last grade while the summary is on its way */
+  const finishing = useRef(false)
 
   const item = queue[pos]
   const entry = useStore((s) => (item ? s.stories[item.slot] : undefined))
@@ -156,6 +158,7 @@ export default function StoryDrill({ slots, onExit }: { slots?: StorySlotId[]; o
   }
 
   const grade = (g: Grade) => {
+    if (finishing.current) return
     const st = useStore.getState()
     st.rehearseStory(item.slot, g)
     const due = useStore.getState().stories[item.slot]?.rehearsal?.due ?? Date.now()
@@ -170,6 +173,7 @@ export default function StoryDrill({ slots, onExit }: { slots?: StorySlotId[]; o
       haptic('light')
     }
     if (pos + 1 >= queue.length) {
+      finishing.current = true
       setTimeout(() => {
         setDone(true)
         sfx('complete')

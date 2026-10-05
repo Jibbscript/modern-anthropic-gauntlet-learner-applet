@@ -36,7 +36,7 @@ const lesson: Lesson = {
       kind: 'concept',
       id: 'ot',
       title: 'Operational transform: repair the positions',
-      body: "OT sends each edit as an operation, such as *insert \" in 3 bullets\" at 20*. If another insert landed earlier in the text, that position is now stale, so it gets **transformed**: shifted right by the length of the other insert.\n\nPractical OT systems, including the Google Docs lineage, send every operation through a central server that puts them in one order. That keeps the transform rules manageable.",
+      body: "OT sends each edit as an operation: *insert \" in 3 bullets\" at 20*. If another insert landed earlier in the text, that position is stale, so it gets **transformed**: shifted right by the other insert's length.\n\nPractical OT systems, the Google Docs lineage included, route every operation through a central server that puts them in one order. That keeps the transform rules manageable.",
     },
     {
       kind: 'predict',
@@ -45,7 +45,7 @@ const lesson: Lesson = {
       code: 'def transform(op, other):\n    """Shift op past other."""\n    pos, s = op\n    if other[0] <= pos:\n        pos += len(other[1])\n    return (pos, s)\n\nbase = "Answer the question."\n# Alice: 10 chars at the start\na = (0, "Be brief. ")\n# Bob: just before the "."\nb = (19, " in French")\n\na2 = transform(a, b)\nb2 = transform(b, a)\nprint(a2[0], b2[0])',
       answers: ['0 29', '0, 29', '(0, 29)', '0,29'],
       explanation:
-        "Alice's insert at 0 comes before Bob's at 19, so hers stays at **0**. Bob's shifts right by the 10 characters of `\"Be brief. \"` to **29**. Whichever order the operations arrive in, both sites end with *Be brief. Answer the question in French.*",
+        "Alice's insert at 0 comes before Bob's at 19, so hers stays at **0**. Bob's shifts right by the 10 characters of `\"Be brief. \"` to **29**. Both sites end with *Be brief. Answer the question in French.* One gap: this transform has no tie-break, so two inserts at the *same* index would each shift past the other and the sites would disagree.",
       hint: 'An op moves only if the other insert landed at or before its position.',
     },
     {
@@ -62,7 +62,7 @@ const lesson: Lesson = {
       kind: 'concept',
       id: 'meaning',
       title: "Characters merge. Meaning doesn't.",
-      body: 'OT and CRDTs merge characters, not intent. If Alice adds *formal* and Bob adds *plain* at the same spot, both survive: *Reply in plain formal English.* For a prompt, a merge nobody wrote is behavior nobody tested.\n\nCoarser options often fit prompts better:\n\n- **Field-level locks**: one editor per field, with an expiring lease.\n- **Optimistic concurrency**: each save names its base version; stale saves are rejected and a person merges.',
+      body: 'OT and CRDTs merge characters, not intent. Alice adds *formal*, Bob adds *plain* at the same spot, and both survive: *Reply in plain formal English.* For a prompt, a merge nobody wrote is behavior nobody tested.\n\nCoarser options often fit prompts better:\n\n- **Field-level locks**: one editor per field, with an expiring lease.\n- **Optimistic concurrency**: each save names its base version; a stale save is rejected and a person merges.',
     },
     {
       kind: 'match',
@@ -82,13 +82,13 @@ const lesson: Lesson = {
       kind: 'cloze',
       id: 'compare-and-set',
       prompt: 'Optimistic concurrency in one statement. Fill the blanks so a stale save raises `Conflict` instead of overwriting.',
-      code: 'def save(db, prompt_id, base_version, body):\n    new = base_version + 1\n    cur = db.execute(\n        "UPDATE prompts SET head = ?, body = ?"\n        " WHERE id = ? AND {{0}}",\n        (new, body, prompt_id, base_version),\n    )\n    if {{1}}:\n        raise Conflict(prompt_id)\n    return new',
+      code: 'SQL = """UPDATE prompts\nSET head = ?, body = ?\nWHERE id = ? AND {{0}}"""\n\ndef save(db, pid, base, body):\n    new = base + 1\n    cur = db.execute(\n        SQL, (new, body, pid, base))\n    if {{1}}:\n        raise Conflict(pid)\n    return new',
       blanks: [
         { options: ['head = ?', 'head > ?', 'body = ?'], answer: 0 },
         { options: ['cur.rowcount == 0', 'cur.rowcount == 1', 'cur.fetchone() is None'], answer: 0 },
       ],
       explanation:
-        'The version check and the write are one atomic statement: the row changes only if its head is still the version this client started from. If another save got there first, zero rows match. `fetchone()` returns `None` after every UPDATE, so that check would reject every save.',
+        'The version check and the write are one atomic statement: the row changes only if its head is still `base`, the version this client started from. If another save got there first, zero rows match. `head > ?` rejects every fresh save, and `fetchone()` returns `None` after any UPDATE, so that check would also reject every save.',
       hint: 'The write should only happen if nobody has moved the head since this client loaded it.',
     },
     {
@@ -98,22 +98,22 @@ const lesson: Lesson = {
       prompt: 'Teams of 3-10 people. Prompts are a few KB and usually have one active editor at a time. Which collaboration design do you write into the doc for v1?',
       choices: [
         {
-          text: 'Versioned saves with compare-and-set, a merge view on conflict, and live presence showing who else is in the prompt',
+          text: 'Versioned saves with compare-and-set, a merge view on conflict, and live presence',
           correct: true,
           feedback:
             'Yes. Nothing is lost silently, conflicts reach a human who can judge meaning, and presence makes collisions rare. Say what would change your mind: a rising conflict rate.',
         },
         {
-          text: 'A CRDT for every field, so the system can never lose an edit and works offline from day one',
+          text: 'A CRDT for every field, so no edit is ever lost and offline works from day one',
           feedback:
             'Defensible if live co-editing were a requirement. Here it buys per-character metadata and a stateful sync service to solve collisions that rarely happen.',
         },
         {
-          text: 'Operational transform through a central server, the same family of approach Google Docs uses',
+          text: 'Operational transform through a central server, the approach behind Google Docs',
           feedback: "Keystroke-level merging means subtle transform code for a problem the requirements don't have, and it still merges characters, not meaning.",
         },
         {
-          text: 'Last-write-wins on the whole prompt, because simultaneous edits are rare enough to ignore',
+          text: 'Last-write-wins on the whole prompt, since simultaneous edits are rare enough to ignore',
           feedback: 'Rare is not never. When it happens, someone loses work with no error, and nobody finds out until a run misbehaves.',
         },
       ],
@@ -171,12 +171,12 @@ const lesson: Lesson = {
               feedback: 'Strong. A metric, a threshold and the next step. Your decision now has a built-in exit.',
             },
             {
-              text: '"User feedback. If people complain about conflicts, we\'ll revisit."',
+              text: '"User feedback. If people start complaining about conflicts or lost work, we\'ll revisit the design then."',
               quality: 'okay',
               feedback: 'Reasonable, but slow and noisy. People rarely report a merge dialog; they just get annoyed. Instrument it.',
             },
             {
-              text: '"Optimistic concurrency is provably correct, so it can\'t really be wrong."',
+              text: '"Optimistic concurrency is provably correct and never loses data, so the choice itself can\'t really be wrong."',
               quality: 'weak',
               feedback: 'Correct is not the same as right for users. A design can never lose data and still be the wrong product.',
             },
@@ -186,17 +186,17 @@ const lesson: Lesson = {
           interviewer: 'Product now says users want to see each other type, like Google Docs.',
           options: [
             {
-              text: '"I\'d push back. Real-time co-editing is overkill for prompts."',
+              text: '"I\'d push back hard. Real-time co-editing is overkill for short prompts, so I\'d keep the design as it is."',
               quality: 'weak',
               feedback: 'The requirement just changed. Pushback is fine with evidence; ask what is driving the request, then design for it.',
             },
             {
-              text: '"Then the prompt body needs a real-time merge. I\'d make it a CRDT document, say Yjs, synced through our WebSocket tier and snapshotted into an immutable version on save. Model params can stay per-field last-writer-wins. Cost: per-character metadata and a stateful sync service."',
+              text: '"Then the prompt body needs a real-time merge: a CRDT document, say Yjs, synced over our WebSocket tier and snapshotted into a version on save. Params stay last-writer-wins per field. Cost: per-character metadata and a stateful sync service."',
               quality: 'strong',
               feedback: 'Strong. You change the design because the requirement changed, scope the expensive part to the one field that needs it, and name what it costs.',
             },
             {
-              text: '"I\'d add field-level locks and show who holds each one."',
+              text: '"I\'d add field-level locks and show who holds each one, so people can see who is editing which field."',
               quality: 'okay',
               feedback: "Simple and safe, but it doesn't meet the new requirement: people would see who is editing, not what they type.",
             },
@@ -206,17 +206,17 @@ const lesson: Lesson = {
           interviewer: 'A user edits offline on a flight for two hours, then reconnects.',
           options: [
             {
-              text: '"The CRDT merges everything automatically, so there\'s nothing to handle."',
+              text: '"The CRDT merges everything automatically when they reconnect, so there\'s nothing special to handle here."',
               quality: 'okay',
               feedback: 'Mechanically true: it will converge. But two hours of divergent edits can merge into a prompt nobody wrote.',
             },
             {
-              text: '"Queue their edits and apply them on top when they reconnect, last write wins."',
+              text: '"Queue their edits on the device and replay them on top when they reconnect, last write wins."',
               quality: 'weak',
               feedback: "Either their two hours overwrite everyone else's work or the reverse, silently. That is the exact failure this design exists to prevent.",
             },
             {
-              text: '"It will converge, but a long divergence can merge into something nobody wrote. I\'d merge, flag the result as unreviewed, and show the author a diff against the last saved version before it becomes a new version."',
+              text: '"It will converge, but two hours apart can merge into a prompt nobody wrote. I\'d merge, mark it unreviewed, and show the author a diff against the last saved version before it becomes one."',
               quality: 'strong',
               feedback: 'Strong. You separate mechanical convergence from semantic correctness, and put a human where judgment is needed.',
             },
@@ -247,7 +247,7 @@ const lesson: Lesson = {
       prompt: 'What does a text CRDT pay in exchange for merging without a central server?',
       choices: [
         {
-          text: 'Metadata: a unique ID on every character, plus tombstones for deleted ones',
+          text: 'Metadata: a permanent ID per character, plus tombstones',
           correct: true,
           feedback: 'Yes. Stable IDs are what let edits commute, and they cost memory and bandwidth.',
         },
@@ -284,23 +284,24 @@ const lesson: Lesson = {
       skill: 'design.collab',
       kind: 'spotbug',
       prompt: 'Two users insert at the same index at the same moment. After syncing, their copies disagree. Tap the line responsible.',
-      code: 'def transform(op, other):\n    """Shift op so it applies after other."""\n    pos, text = op\n    if other[0] <= pos:\n        pos += len(other[1])\n    return (pos, text)\n\n# Both insert at index 6 of "Use a tone."\na = (6, "warm ")\nb = (6, "dry ")\n# site A ends with: Use a warm dry tone.\n# site B ends with: Use a dry warm tone.',
+      code: 'def transform(op, other):\n    # shift op to apply after other\n    pos, text = op\n    if other[0] <= pos:\n        pos += len(other[1])\n    return (pos, text)\n\nbase = "Use a tone."\na = (6, "warm ")  # site A\nb = (6, "dry ")   # site B\n# A ends: "Use a warm dry tone."\n# B ends: "Use a dry warm tone."',
       bugLines: [4],
       explanation: "With equal positions, `<=` makes *each* site shift the other's insert to the right, so the two sites order the words differently. Ties need a deterministic tie-break both sites agree on, such as the lower site ID goes first.",
       fix: {
-        code: 'def transform(op, other, site, other_site):\n    pos, text = op\n    # tie: the lower site id goes first\n    if other[0] < pos or (\n        other[0] == pos and other_site < site\n    ):\n        pos += len(other[1])\n    return (pos, text)',
+        code: 'def transform(op, other, me, them):\n    pos, text = op\n    # tie: lower site id goes first\n    if (other[0], them) < (pos, me):\n        pos += len(other[1])\n    return (pos, text)',
+        caption: 'Tuple comparison breaks position ties by site id.',
       },
     },
     {
       id: 'design-collab.check-then-act',
       skill: 'design.collab',
       kind: 'spotbug',
-      prompt: 'Two saves based on version 7 arrive at once. Both succeed, and one body is lost. Tap the line that lets that happen.',
-      code: 'def save(db, prompt_id, base_version, body):\n    (head,) = db.execute(\n        "SELECT head FROM prompts WHERE id = ?",\n        (prompt_id,)).fetchone()\n    if head != base_version:\n        raise Conflict(prompt_id)\n    db.execute(\n        "UPDATE prompts SET head = ?, body = ?"\n        " WHERE id = ?",\n        (head + 1, body, prompt_id))\n    return head + 1',
-      bugLines: [9],
-      explanation: 'Both requests can read head 7 and pass the check before either writes, and then the UPDATE overwrites unconditionally. The write itself must re-check the version (`AND head = ?`) and treat zero rows updated as a conflict.',
+      prompt: 'Two saves based on version 7 arrive together. Both pass the `if`, both write, and one body is lost. Tap the line that should have stopped the second write.',
+      code: 'def save(db, pid, base, body):\n    (head,) = db.execute(\n        "SELECT head FROM prompts"\n        " WHERE id = ?", (pid,)\n    ).fetchone()\n    if head != base:\n        raise Conflict(pid)\n    db.execute(\n        "UPDATE prompts"\n        " SET head = ?, body = ?"\n        " WHERE id = ?",\n        (head + 1, body, pid))\n    return head + 1',
+      bugLines: [11],
+      explanation: 'Both requests read head 7 and pass the check before either writes, and the UPDATE then overwrites unconditionally. Make the write re-check the version (`AND head = ?`) and treat zero rows updated as a conflict. The pessimistic alternative is `SELECT ... FOR UPDATE` inside a transaction, which holds a row lock instead.',
       fix: {
-        code: 'cur = db.execute(\n    "UPDATE prompts SET head = ?, body = ?"\n    " WHERE id = ? AND head = ?",\n    (base_version + 1, body, prompt_id, base_version))\nif cur.rowcount == 0:\n    raise Conflict(prompt_id)',
+        code: 'cur = db.execute(\n    "UPDATE prompts"\n    " SET head = ?, body = ?"\n    " WHERE id = ? AND head = ?",\n    (base + 1, body, pid, base))\nif cur.rowcount == 0:\n    raise Conflict(pid)',
       },
     },
     {

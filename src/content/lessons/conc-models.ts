@@ -48,8 +48,8 @@ const lesson: Lesson = {
       id: 'gil',
       title: 'The GIL: one thread runs Python at a time',
       body:
-        'In standard CPython, a thread must hold the **Global Interpreter Lock** to execute Python bytecode. One holder at a time, so two threads crunching Python take turns instead of using two cores. The holder is asked to hand off every 5 ms by default (`sys.getswitchinterval()`).\n\n' +
-        'Threads still pay off where the GIL is released: during blocking I/O, and inside many C extensions while they crunch (`hashlib` on large buffers, `zlib`, much of NumPy).',
+        'In standard CPython, a thread must hold the **Global Interpreter Lock** to execute Python bytecode. One holder at a time, so two threads crunching Python take turns instead of using two cores. A waiting thread asks the holder to hand over after 5 ms (`sys.getswitchinterval()`).\n\n' +
+        'Threads still pay off where the GIL is released: blocking I/O, and many C extensions mid-computation (`hashlib` on large buffers, `zlib`, much of NumPy).',
       callout: {
         tone: 'warn',
         text: '"Python threads can\'t run in parallel" overstates it. Only *Python bytecode* is serialized. C code that has released the GIL runs on other cores at the same time.',
@@ -71,7 +71,7 @@ const lesson: Lesson = {
       prompt: 'A teammate hashes 64 MB chunks with `hashlib.sha256` on 4 threads and gets a real speedup. Another says that is impossible because of the GIL. Who is right?',
       choices: [
         {
-          text: 'The first: `hashlib` releases the GIL while it hashes a large buffer, so the C code runs on several cores at once.',
+          text: 'The first: `hashlib` releases the GIL while hashing a large buffer, so the hashing runs on several cores.',
           correct: true,
           feedback: 'Right. The docs say the GIL is released while hashing more than 2047 bytes passed at once. Only bytecode is serialized.',
         },
@@ -80,11 +80,11 @@ const lesson: Lesson = {
           feedback: 'That is the usual one-line summary of the GIL, and it is too strong. The lock serializes Python bytecode, not C code that has let go of it.',
         },
         {
-          text: 'The first, because hashing is I/O-bound and threads overlap I/O waits.',
+          text: 'The first, because hashing 64 MB is I/O-bound, and threads overlap I/O waits well.',
           feedback: 'The bytes are already in memory, so there is nothing to wait on. Hashing is CPU work; the speedup comes from the GIL being released.',
         },
         {
-          text: 'The first, because CPython switches threads every 5 ms and spreads them across cores.',
+          text: 'The first, because CPython switches threads every 5 ms and spreads those threads across cores.',
           feedback: 'Switching interleaves threads on one GIL; it does not run them in parallel. Taking turns faster is still taking turns.',
         },
       ],
@@ -114,7 +114,7 @@ if __name__ == "__main__":   # workers may re-import this module
       },
       callout: {
         tone: 'tip',
-        text: 'Lambdas and nested functions are pickled by reference and cannot be found by name, so a process pool fails with `PicklingError`. Define workers at module top level.',
+        text: 'Functions are pickled by name, and a worker cannot look up a lambda or a nested function by name, so the pool fails with a "Can\'t pickle" error. Define workers at module top level.',
       },
     },
     {
@@ -134,7 +134,7 @@ if __name__ == "__main__":   # workers may re-import this module
       id: 'asyncio',
       title: 'asyncio: one thread, many waits',
       body:
-        '`asyncio` runs many tasks on one thread. Each `await` is a coroutine saying *I am waiting, run someone else*, and the event loop switches to a task that is ready. Overlapping 10,000 network waits is cheap; 10,000 threads would cost memory and scheduling.\n\n' +
+        '`asyncio` runs many tasks on one thread. When a task awaits something that is not ready, it hands control back to the event loop, which runs a task that is. Overlapping 10,000 network waits is cheap; 10,000 threads would cost memory and scheduling.\n\n' +
         'The catch is the word ==cooperative==. Code between two `await`s runs uninterrupted, so a blocking call or a long CPU loop stalls every task on the loop.',
       code: {
         code: `import asyncio
@@ -234,11 +234,11 @@ asyncio.run(main())`,
       id: 'free-threaded',
       title: 'The GIL is becoming optional',
       body:
-        'PEP 703 added a CPython build without the GIL. It was experimental in 3.13 and is officially supported but still optional in 3.14; it is not the default build. You opt in by installing the separate build, often named `python3.14t`.\n\n' +
+        'PEP 703 added a CPython build without the GIL: experimental in 3.13, officially supported but optional since 3.14. As of October 2026 it is not the default; you install it separately, often as `python3.14t`.\n\n' +
         'The trade: real thread parallelism for Python code, some single-threaded overhead, and extensions that have not declared support switch the GIL back on. Races the GIL used to hide show up fast.',
       callout: {
         tone: 'source',
-        text: '[PEP 779](https://peps.python.org/pep-0779/) defines the phases and says making it the default needs a future PEP. The [free-threading HOWTO](https://docs.python.org/3/howto/free-threading-python.html) covers extension support and `sys._is_gil_enabled()`. Checked October 2026.',
+        text: '[PEP 779](https://peps.python.org/pep-0779/) (accepted June 2025) made 3.14 the supported-but-optional phase and leaves making it the default to a future PEP. The [free-threading HOWTO](https://docs.python.org/3/howto/free-threading-python.html) covers extension support and `sys._is_gil_enabled()`. Checked October 5, 2026, with 3.15 due October 9.',
       },
     },
     {
@@ -252,17 +252,17 @@ asyncio.run(main())`,
           interviewer: 'On a big directory this takes 40 minutes. How would you make it faster?',
           options: [
             {
-              text: 'Hashing is CPU work, so I would move it into a `ProcessPoolExecutor`.',
+              text: 'Hashing is the CPU-heavy part, so I would move it into a `ProcessPoolExecutor`, one worker per core, and keep the directory walk in the parent.',
               quality: 'okay',
               feedback: 'Plausible, but a guess. In many dedup runs reading dominates, and `hashlib` already releases the GIL on large buffers.',
             },
             {
-              text: 'First I would time the stages on a sample. Walking and reading are I/O; hashing is CPU, though `hashlib` releases the GIL on big buffers. The fix depends on which dominates.',
+              text: 'Time the stages on a sample first. Reading is I/O, hashing is CPU (but `hashlib` drops the GIL on big buffers). Which one dominates decides the fix.',
               quality: 'strong',
               feedback: 'Measure, then name the bottleneck. You also showed you know the GIL detail that changes the answer.',
             },
             {
-              text: 'Rewrite it with asyncio. Async is faster than threads.',
+              text: 'Rewrite it with asyncio. Async avoids thread overhead entirely, so it is the faster model for a job with this much work in it.',
               quality: 'weak',
               feedback: 'asyncio does not speed up CPU work, and it has no native async file I/O. "Faster" without a bottleneck is a slogan.',
             },
@@ -272,17 +272,17 @@ asyncio.run(main())`,
           interviewer: 'Timing says 85% of the run is reading files off a network drive. What now?',
           options: [
             {
-              text: 'One process per file, so each read gets its own GIL.',
+              text: 'One process per file, so each read gets its own interpreter and its own GIL, and nothing has to wait on anything else.',
               quality: 'weak',
               feedback: 'Thousands of spawns, and the GIL was never the bottleneck: blocked reads already release it.',
             },
             {
-              text: 'asyncio with an async file library.',
+              text: 'asyncio with an async file library such as `aiofiles`, so one thread keeps hundreds of reads in flight with no pool to tune.',
               quality: 'okay',
               feedback: 'It can work, but async file libraries generally hand reads to a thread pool anyway. More machinery than a thread pool, same mechanism.',
             },
             {
-              text: 'A `ThreadPoolExecutor`: blocked reads release the GIL, so 16-32 threads keep many reads in flight. I would make the count a parameter and measure, because past some point the drive is the limit.',
+              text: 'A `ThreadPoolExecutor`: blocked reads release the GIL. Start at 16-32 threads, make it a parameter, and measure, since past some point the drive is the limit.',
               quality: 'strong',
               feedback: 'Right model, a bounded pool, and an honest limit. Saying you would tune it by measurement is the senior move.',
             },
@@ -292,17 +292,17 @@ asyncio.run(main())`,
           interviewer: "Didn't Python get rid of the GIL recently? Doesn't that make all this moot?",
           options: [
             {
-              text: 'Only in the optional free-threaded build; the default still has a GIL. Here it barely matters, since the drive is the bottleneck. If we did run free-threaded, I would audit shared state first.',
+              text: 'Only in the optional free-threaded build; the default still has one. Here the drive is the bottleneck anyway. On free-threaded, I would audit shared state first.',
               quality: 'strong',
               feedback: 'Accurate, hedged, and tied back to this problem. The audit point shows you know what the GIL was quietly doing for you.',
             },
             {
-              text: 'Yes, since 3.13 there is no GIL, so threads win for everything now.',
+              text: 'Yes, since 3.13 Python ships without a GIL, so threads beat processes for everything, CPU-bound work included.',
               quality: 'weak',
               feedback: '3.13 shipped an experimental, opt-in build; 3.14 made it supported but still optional. Overclaiming a fact the interviewer can check costs trust.',
             },
             {
-              text: 'I am not sure of the current status, so I would go with what the profile shows.',
+              text: 'I am not sure of the current status, so I would not bet the design on it. I would go with what the profile shows.',
               quality: 'okay',
               feedback: 'Honest, and the instinct is right. Knowing the facts (optional build, extensions must opt in) would make it strong.',
             },

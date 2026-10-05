@@ -30,10 +30,11 @@ const lesson: Lesson = {
         code: `from concurrent.futures import ThreadPoolExecutor
 
 with ThreadPoolExecutor(max_workers=8) as pool:
-    fut = pool.submit(fetch, "https://example.com/a")
-    other_work()            # main thread is free meanwhile
-    body = fut.result()     # blocks; the value, or a re-raise`,
-        highlight: [6],
+    fut = pool.submit(fetch, url)
+    other_work()   # runs while fetch does
+    # waits, then returns or re-raises
+    body = fut.result()`,
+        highlight: [7],
       },
     },
     {
@@ -68,7 +69,7 @@ with ThreadPoolExecutor(max_workers=8) as pool:
       id: 'map-vs-completed',
       title: 'map keeps order; as_completed keeps pace',
       body:
-        '`pool.map(fn, items)` yields results ==in input order==, however they finish. It blocks on each result in turn, and a failed item raises at the moment you iterate to it, which ends that loop.\n\n' +
+        '`pool.map(fn, items)` submits every item up front, then yields results ==in input order==, however they finish. It blocks on each result in turn, and a failed item raises when you iterate to it, which ends that loop.\n\n' +
         '`as_completed(futures)` yields each future as it finishes. Use it for progress bars, first-good-answer races, and handling errors one item at a time.',
     },
     {
@@ -99,7 +100,7 @@ with ThreadPoolExecutor(max_workers=3) as pool:
     {
       kind: 'cloze',
       id: 'as-completed',
-      prompt: 'Fetch every URL concurrently. Record each page or failure as it lands, and never let one bad URL end the loop.',
+      prompt: 'Fetch every URL concurrently and record each page or failure as it lands. One bad URL must not end the loop; the batch as a whole gets 60 s.',
       code: `with ThreadPoolExecutor(max_workers=8) as pool:
     futures = {pool.{{0}}(fetch, url): url for url in urls}
     for fut in {{1}}(futures, timeout=60):
@@ -116,7 +117,7 @@ with ThreadPoolExecutor(max_workers=3) as pool:
         { options: ['exception', 'done', 'result'], answer: 2 },
       ],
       explanation:
-        '`submit` gives one future per URL, and the dict maps each future back to its URL, because `as_completed` yields futures, not inputs. `wait` returns a `(done, not_done)` pair of sets, not a stream. `result()` is the call that re-raises, so it belongs inside the `try`; `exception()` returns the error instead, and the `except` branch would never run.',
+        '`submit` gives one future per URL, and the dict maps each future back to its URL, because `as_completed` yields futures, not inputs. `wait` returns a `(done, not_done)` pair of sets, not a stream. `result()` is the call that re-raises, so it belongs inside the `try`; `exception()` returns the error instead, and the `except` branch would never run. The `timeout=60` bounds the whole loop: anything still running then makes `as_completed` raise `TimeoutError`.',
       hint: 'You need one future per URL, a stream of futures in finishing order, and the method that raises.',
     },
     {
@@ -211,8 +212,8 @@ print("finished")`,
       id: 'processes',
       title: 'Processes: everything crosses a pickle',
       body:
-        'CPU-bound pure Python needs `ProcessPoolExecutor`: separate interpreters, each with its own GIL. The price is that the function, its arguments and its result are ==pickled== across a process boundary.\n\n' +
-        'Top-level functions pickle by name. Lambdas and functions defined inside other functions do not. Create the pool under `if __name__ == "__main__":`, because spawned workers re-import your module.',
+        'On standard CPython, CPU-bound pure Python needs `ProcessPoolExecutor`: separate interpreters, each with its own GIL. The price is that the function, its arguments and its result are ==pickled== across a process boundary.\n\n' +
+        'Top-level functions pickle by name. Lambdas and functions defined inside other functions do not. Create the pool under `if __name__ == "__main__":`, because workers usually start fresh and re-import your module.',
       callout: {
         tone: 'tip',
         text: 'Thousands of tiny tasks? `pool.map(fn, items, chunksize=100)` ships them in batches instead of one round trip each. Thread pools ignore `chunksize`.',
@@ -245,7 +246,7 @@ print("finished")`,
       tolerance: 0.1,
       unit: 's',
       explanation:
-        'Threads waiting on sockets release the GIL, so 16 waits overlap: 1,000 ÷ 16 ≈ 63 rounds of 0.2 s, about 12.6 s, against 200 s with one worker. That is why I/O pools are sized by how much concurrency the far end tolerates, while CPU pools stop helping past the core count.',
+        'Threads waiting on sockets release the GIL, so 16 waits overlap: 1,000 × 0.2 s ÷ 16 = 12.5 s (63 rounds in practice, so about 12.6 s), against 200 s with one worker. That is why I/O pools are sized by how much concurrency the far end tolerates, while CPU pools stop helping past the core count.',
       hint: 'How many fetches are in flight at once, and how long does each round of them take?',
     },
     {
@@ -258,17 +259,17 @@ print("finished")`,
           interviewer: 'How would you parallelize it?',
           options: [
             {
-              text: 'CPU-bound Python means threads take turns on the GIL, so `ProcessPoolExecutor` with 8 workers. I map over paths, not pixels, to keep pickling cheap, with a `chunksize` to batch the round trips.',
+              text: 'CPU-bound Python takes turns on the GIL, so `ProcessPoolExecutor` with 8 workers. I send paths, not pixels, so little gets pickled, and set a `chunksize` to batch round trips.',
               quality: 'strong',
               feedback: 'Picks the executor from the workload, keeps the pickled payload small, and knows the per-task overhead.',
             },
             {
-              text: '`ThreadPoolExecutor` with 64 threads. Threads are cheaper than processes, and more workers means more throughput on a big batch like this.',
+              text: '`ThreadPoolExecutor` with 64 threads. Threads are cheaper to start than processes and share memory, so more of them means more throughput on a batch this big.',
               quality: 'weak',
               feedback: 'Pure-Python CPU work serializes on the GIL in standard CPython. 64 threads add switching overhead and little else.',
             },
             {
-              text: '`ProcessPoolExecutor` with one task per image, since processes get around the GIL. Then measure it against the single-threaded version.',
+              text: '`ProcessPoolExecutor` with one task per image, since processes get around the GIL. Then I would time it against the single-threaded version to confirm the speedup.',
               quality: 'okay',
               feedback: 'The right executor for the right reason, but no thought about what gets pickled or the cost of 10,000 tiny round trips.',
             },
@@ -278,17 +279,17 @@ print("finished")`,
           interviewer: 'Three files in the batch are corrupt. What does your code do?',
           options: [
             {
-              text: 'Catch the exception inside the worker function and return `None` for bad files, then filter the `None`s out before saving.',
+              text: 'Catch the exception inside the worker function and return `None` for bad files, then filter the `None`s out of the results before saving them.',
               quality: 'okay',
               feedback: 'The batch survives, but `None` hides which file failed and why, and callers must remember to filter it.',
             },
             {
-              text: '`map` raises at the first bad file and I lose everything after it. So: `submit` each path, loop over `as_completed`, catch per future, and return successes plus `(path, error)` failures.',
+              text: '`map` raises at the first bad file, and I lose every result after it. So I `submit` each path, catch per future in `as_completed`, and return successes plus `(path, error)` pairs.',
               quality: 'strong',
               feedback: 'Knows exactly how `map` fails, isolates errors per item, and keeps them visible.',
             },
             {
-              text: 'Wrap the whole `map` loop in a single try/except, log that the batch failed, and rerun it once the bad files are cleaned up.',
+              text: 'Wrap the whole `map` loop in one try/except, log that the batch failed along with the exception message, and rerun it once the bad files are cleaned up.',
               quality: 'weak',
               feedback: 'One corrupt file then sinks 9,997 good ones, and the log does not say which file.',
             },
@@ -298,17 +299,17 @@ print("finished")`,
           interviewer: 'How would you test it?',
           options: [
             {
-              text: 'Concurrency bugs are nondeterministic and hard to reproduce, so I would rely on careful code review rather than tests here.',
+              text: 'Concurrency bugs are nondeterministic and hard to reproduce, so tests here would mostly pass by luck. I would rely on careful code review and good logging instead.',
               quality: 'weak',
-              feedback: 'Testing your own implementation is part of what this round looks for. Most of this is easy to test.',
+              feedback: 'Candidates report being expected to write their own tests in these rounds. And most of this is deterministic: the transform, the failure list and the outputs do not depend on scheduling.',
             },
             {
-              text: 'Run it against the real folder of 10,000 images and check the output folder ends up with the same number of files.',
+              text: 'Run it end to end on the real folder of 10,000 images and check that the output folder ends up with the same number of files as the input.',
               quality: 'okay',
               feedback: 'Catches gross failures, but slowly, and a missing thumbnail tells you nothing about why.',
             },
             {
-              text: 'Unit-test the transform as a pure function. Then run a tiny batch with one planted corrupt file, with 1 worker and with 4: same outputs, same failure list.',
+              text: 'Unit-test the transform as a pure function. Then a tiny batch with one planted corrupt file, run with 1 worker and with 4: same outputs, same failure list.',
               quality: 'strong',
               feedback: 'A planted failure, an oracle (the single-worker run), and assertions on exactly what you claimed.',
             },
@@ -392,8 +393,9 @@ def fetch_or_none(url: str, timeout: float = 2.0):
       fix: {
         code: `def fetch_or_none(url: str, timeout: float = 2.0):
     try:
-        return fetch(url, timeout=timeout)   # the socket enforces it
-    except TimeoutError:
+        # the deadline lives in the request
+        return fetch(url, timeout=timeout)
+    except TimeoutError:  # or your client's
         return None`,
       },
     },
@@ -430,10 +432,10 @@ if __name__ == "__main__":
       skill: 'conc.executors',
       kind: 'compare',
       question: 'Interviewer: *Why did you use `as_completed` here instead of `map`?*',
-      a: 'It is faster. `map` waits for every result to finish before it gives you anything back.',
+      a: 'It is faster. `map` waits for the whole batch to finish before it gives you anything, while `as_completed` streams results, so the total runtime drops.',
       b: 'Same total work. I wanted each result as soon as it lands, so the progress count is live and a failed URL is caught and recorded on its own instead of ending my loop. If I needed input order, I would use `map`.',
       better: 'b',
-      explanation: '**A** is wrong twice: `map` is lazy and yields each result as soon as it and everything before it are done, and neither makes the work faster. **B** names the real differences, finishing order and per-item failure handling, and when the other tool is right.',
+      explanation: '**A** is wrong twice: `map` hands back each result as soon as it and every earlier one are done, not after the whole batch, and neither call makes the work itself faster. **B** names the real differences, finishing order and per-item failure handling, and when the other tool is right.',
     },
   ],
 }

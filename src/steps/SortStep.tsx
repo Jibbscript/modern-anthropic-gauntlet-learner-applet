@@ -55,6 +55,7 @@ export default function SortStep({ step, phase, attempt, setController, lessonId
   const [live, setLive] = useState('')
   /** the item that is flying back from a chip: it must not "deal in" from below */
   const returning = useRef<number | null>(null)
+  const lastPlaced = useRef(0)
   const rootRef = useRef<HTMLDivElement>(null)
   const locked = phase !== 'answer'
   const labelOf = useMemo(() => Object.fromEntries(step.buckets.map((b) => [b.id, b.label])), [step.buckets])
@@ -94,12 +95,16 @@ export default function SortStep({ step, phase, attempt, setController, lessonId
 
   const place = (b: string) => {
     if (locked || !st.deck.length) return
+    // an accidental double tap must not sort the next card before the learner has read it
+    const now = performance.now()
+    if (now - lastPlaced.current < 260) return
+    lastPlaced.current = now
     const [top, ...rest] = st.deck
     returning.current = null
     setSt({ deck: rest, placed: [...st.placed, { i: top, b }] })
     sfx('select')
     haptic('light')
-    setLive(`Sorted into ${labelOf[b]}. ${rest.length ? `${rest.length} left.` : 'All cards sorted.'}`)
+    setLive(`Sorted into ${labelOf[b]}. ${rest.length ? `Next card: ${plain(step.items[rest[0]].text)}` : 'All cards sorted.'}`)
   }
 
   const unplace = (i: number) => {
@@ -108,7 +113,7 @@ export default function SortStep({ step, phase, attempt, setController, lessonId
     setSt({ deck: [i, ...st.deck], placed: st.placed.filter((p) => p.i !== i) })
     sfx('tap')
     haptic('light')
-    setLive('Card returned to the top of the deck.')
+    setLive(`${plain(step.items[i].text)} is back on top of the deck.`)
   }
 
   // desktop nicety: number keys pick a bucket (only when focus is not somewhere else that wants keys)
@@ -149,7 +154,7 @@ export default function SortStep({ step, phase, attempt, setController, lessonId
         ? 'Tap the bucket this card belongs in'
         : 'All cards sorted'
       : phase === 'revealed'
-        ? 'Where each card goes'
+        ? 'The answer'
         : 'Your sort'
 
   return (

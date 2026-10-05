@@ -72,7 +72,7 @@ const lesson: Lesson = {
         { left: 'AI R&D-5', right: 'Dramatically accelerate the rate of effective scaling' },
       ],
       explanation:
-        'Two families: **misuse** (chemical, biological, radiological and nuclear weapons) and **autonomy** (AI doing AI research). Crossing a threshold requires a stronger set of safeguards, an ASL Standard: in v2, CBRN uplift required ASL-3 and autonomous AI R&D required ASL-4 or higher. Note that AI R&D-4 is measured against Anthropic\'s own entry-level researchers.',
+        "Two families: **misuse** (chemical, biological, radiological and nuclear weapons) and **autonomy** (AI doing AI research). Crossing a threshold requires a stronger set of safeguards, an ASL Standard: in v2, CBRN uplift required ASL-3 and autonomous AI R&D required ASL-4 or higher.\n\nThis is v2-era vocabulary. v3.0 redefined the AI R&D threshold as compressing two years of 2018-2024 progress into one, and 2026 point releases revised both families. Check the current wording before you quote it.",
     },
     {
       kind: 'mcq',
@@ -110,7 +110,7 @@ const lesson: Lesson = {
       title: 'What v3 changed (Feb 2026)',
       body:
         'RSP v3.0 took effect Feb 24, 2026.\n\n' +
-        "- It splits what Anthropic will do 'regardless of what others do' from an 'ambitious capabilities-to-mitigations map' for the whole industry.\n" +
+        "- It separates what Anthropic will do 'regardless of what others do' from a recommended map for the whole industry.\n" +
         "- It adds a **Frontier Safety Roadmap** of public goals Anthropic will 'openly grade', and **Risk Reports** every 3-6 months.\n" +
         "- The 2023 pause pledge is gone. Per TIME, Anthropic now commits only to 'delay', if leadership believes it leads the race *and* judges catastrophic risk significant.",
       callout: {
@@ -138,8 +138,7 @@ const lesson: Lesson = {
       id: 'anthropic-case',
       title: "Anthropic's case",
       body:
-        "Anthropic gave three reasons: a 'zone of ambiguity' muddled the public case for risk, the political climate turned anti-regulatory, and higher-level safeguards are 'very hard to meet unilaterally' (RAND calls its top security level 'currently not possible').\n\n" +
-        'The core argument:\n\n' +
+        "Anthropic's three reasons: a 'zone of ambiguity' muddled the public case for risk, the climate turned anti-regulatory, and higher-level safeguards are 'very hard to meet unilaterally' (RAND calls its top security level 'currently not possible'). The core argument:\n\n" +
         '> If one AI developer paused development to implement safety measures while others moved forward training and deploying AI systems without strong mitigations, that could result in a world that is less safe.',
       callout: {
         tone: 'quote',
@@ -151,7 +150,7 @@ const lesson: Lesson = {
       id: 'critics-case',
       title: "The critics' case",
       body:
-        "A precommitment earns its value when it gets costly; that is why you make it in advance. TIME framed v3 as Anthropic dropping its flagship safety pledge. METR's Chris Painter warned of a 'frog-boiling' effect. Critics also note the timing, alongside a $30B raise and a Pentagon fight.\n\n" +
+        "A precommitment earns its value in the costly moment; that's why you make it early. TIME framed v3 as Anthropic dropping its flagship safety pledge. METR's Chris Painter warned of a 'frog-boiling' effect. Critics also note the timing, alongside a $30B raise and a Pentagon fight.\n\n" +
         "A middle view, from GovAI (Mar 2026): 'it's better to be honest about constraints than to keep commitments that won't be followed in practice.'",
       callout: {
         tone: 'source',
@@ -212,17 +211,17 @@ const lesson: Lesson = {
           interviewer: 'What do you make of the changes Anthropic made to its RSP this year?',
           options: [
             {
-              text: "I think it was the right call. If Anthropic paused alone while competitors kept going, the world wouldn't be any safer, and Anthropic would lose its seat at the table.",
+              text: "I think it was the right call. If Anthropic paused on its own while competitors kept going, the world wouldn't be any safer, and Anthropic would lose its seat at the table where the rules get written.",
               quality: 'okay',
-              feedback: "You adopted Anthropic's argument wholesale. No facts, no tension, nothing of your own.",
+              feedback: "A position, but it adopts Anthropic's argument wholesale. No facts about what changed, no tension, nothing of your own.",
             },
             {
-              text: "v3 swapped the 2023 pause pledge for a conditional delay, plus Risk Reports and a graded roadmap. The honesty argument partly convinces me. What bothers me is that leadership decides when delay applies. Outside review that changes real decisions would move me.",
+              text: "v3 swapped the 2023 pause pledge for a conditional delay plus Risk Reports. I partly buy the honesty argument, but leadership alone decides when delay applies. Outside review that changes a real decision would move me.",
               quality: 'strong',
-              feedback: 'Informed, with a position, a concern and an update condition. That is the whole pattern in four sentences.',
+              feedback: 'Informed, with a position, a concern and an update condition. That is the whole pattern in three sentences.',
             },
             {
-              text: "I haven't followed the details that closely, to be honest. But I trust Anthropic's leadership to make the right call on things like this.",
+              text: "I haven't followed the details that closely, to be honest. But I trust Anthropic's leadership to make the right call on things like this; they understand the tradeoffs far better than I do.",
               quality: 'weak',
               feedback: 'Deference is the answer they are screening out. They want your judgment, not your trust.',
             },
@@ -232,18 +231,18 @@ const lesson: Lesson = {
           interviewer: "Critics say a pledge only matters if you keep it when it's expensive. Aren't they right?",
           options: [
             {
-              text: "Partly. A precommitment exists for the costly moment, and METR warned about frog-boiling. Anthropic's answer is that top-level safeguards can't be met unilaterally yet. I land in between: honest beats hollow, but someone outside leadership should check the bar for delay.",
+              text: "Partly. A pledge exists for the costly moment, and METR warned about frog-boiling. But top-level safeguards may not be achievable alone yet. So: honest beats hollow, but someone outside leadership should check the bar.",
               quality: 'strong',
               feedback: 'You steelmanned the critic, stated the counter fairly and landed somewhere specific.',
             },
             {
-              text: 'Yes, completely. It shows the RSP was always marketing, and the moment it got in the way of growth, they dropped it.',
+              text: 'Yes, completely. It shows the RSP was always marketing. The moment it got in the way of a $30B raise, they dropped it, and the rest of the policy will go the same way.',
               quality: 'weak',
               feedback:
                 'Cynicism is a shortcut, not a view. The RSP produced costly actions (ASL-3 went live in 2025) and industry copies. Engage with that or it sounds like a slogan.',
             },
             {
-              text: "There was probably some commercial pressure behind the timing, but from everything I've read, the people involved seem sincere about it.",
+              text: "There was probably some commercial pressure behind the timing, but from everything I've read, the people involved seem sincere about safety, so I'd give them the benefit of the doubt.",
               quality: 'okay',
               feedback: 'Fair-minded but vague. Sincerity is not the question; whether the commitment works is.',
             },
@@ -253,17 +252,17 @@ const lesson: Lesson = {
           interviewer: 'What would change your mind?',
           options: [
             {
-              text: "Honestly, nothing. I've thought about this a lot and I'm pretty confident in where I've landed.",
+              text: "Honestly, nothing. I've read both sides carefully, I've thought about this a lot, and I'm confident in where I've landed.",
               quality: 'weak',
               feedback: 'Updating on evidence is one of the things being tested. A view with no exit is a red flag.',
             },
             {
-              text: "More transparency about how these decisions actually get made internally, and who gets a say when it's a close call.",
+              text: "More transparency about how these decisions actually get made internally, who gets a say when it's a close call, and how disagreements get resolved.",
               quality: 'okay',
               feedback: 'Reasonable, but not falsifiable. What would you see, and which way would it move you?',
             },
             {
-              text: "If a Risk Report showed a threshold being approached and nothing changed, I'd count that against v3. If outside reviewers, which the Trust can now request, published findings that changed a release, I'd count it for v3.",
+              text: "A Risk Report showing a threshold getting close with nothing changing would count against v3. Outside reviewers, requested by the Trust, changing a release would count for it.",
               quality: 'strong',
               feedback: 'Concrete observations in both directions, tied to mechanisms that exist. That is what an open mind sounds like.',
             },
@@ -271,7 +270,7 @@ const lesson: Lesson = {
         },
       ],
       wrapUp:
-        "Facts and dates right, a view of your own, the best counterargument, and a concrete update condition. That pattern works for any 'what do you think of X' question about Anthropic.",
+        "Facts and dates right, a view of your own, the best counterargument, and a concrete update condition. The strong answers here landed in the middle, but that isn't the requirement: a well-argued 'v3 was a mistake' or 'v3 was right' scores the same if it has all four.",
     },
     {
       kind: 'reflect',
@@ -297,10 +296,10 @@ const lesson: Lesson = {
       body:
         '1. The RSP is an **if-then**: capability thresholds (CBRN, AI R&D) trigger ASL safeguards, modeled on biosafety levels.\n' +
         '2. **ASL-3** went live for Claude Opus 4 in May 2025 as a CBRN precaution, not because of the blackmail test.\n' +
-        "3. **v3.0** (Feb 2026) swapped the unilateral pause for conditional 'delay', Risk Reports and a graded roadmap; v3.4 is current as of October 2026. Bring a view, the best counterargument and what would change your mind.",
+        "3. **v3.0** (Feb 2026) swapped the pause pledge for conditional 'delay', Risk Reports and a graded roadmap. Bring a view, the best counterargument and what would change your mind.",
       callout: {
         tone: 'warn',
-        text: 'The RSP changed five times in 2026. Check the [updates page](https://www.anthropic.com/rsp-updates) the week of your interview.',
+        text: 'The RSP changed five times in 2026; v3.4 (Jul 8) is current as of October 2026. Check the [updates page](https://www.anthropic.com/rsp-updates) the week of your interview.',
       },
     },
   ],
@@ -320,13 +319,13 @@ const lesson: Lesson = {
         "A candidate says: 'Under the RSP, Anthropic will pause training if its safeguards can't keep up.' As of October 2026, what's the best correction?",
       choices: [
         {
-          text: "That was the 2023 framing. Since v3.0 (Feb 2026) it's a conditional 'delay', though Anthropic says it remains free to pause",
+          text: "Outdated: since v3.0 (Feb 2026) it's a conditional 'delay', not a pause pledge",
           correct: true,
-          feedback: 'Right, and the nuance from v3.1 is worth having ready.',
+          feedback: 'Right. Have the v3.1 nuance ready too: Anthropic says it remains free to pause, which is a freedom, not a commitment.',
         },
-        { text: "It's correct as stated: every version has kept the pause commitment", feedback: 'v3.0 removed it. This is the most common out-of-date claim.' },
-        { text: 'The RSP never mentioned pausing; it only ever covered deployment', feedback: "v1 said the ASL system 'implicitly requires us to temporarily pause training.'" },
-        { text: "Pausing is now required by California's SB 53 instead", feedback: 'SB 53 requires published frameworks, incident reporting and whistleblower protections, not pauses.' },
+        { text: "It's correct as stated: every version since 2023 has kept the pause commitment", feedback: 'v3.0 removed it. This is the most common out-of-date claim.' },
+        { text: 'The RSP never mentioned pausing; it has only ever covered deployment decisions', feedback: "v1 said the ASL system 'implicitly requires us to temporarily pause training.'" },
+        { text: "Pausing is now required by California's SB 53 instead of by the RSP", feedback: 'SB 53 requires published frameworks, incident reporting and whistleblower protections, not pauses.' },
       ],
       explanation: "v3.0 replaced the 2023 pledge with a conditional delay. v3.1 (Apr 2026) clarified Anthropic remains 'free to take measures such as pausing', which is a freedom, not a commitment.",
     },
@@ -353,7 +352,7 @@ const lesson: Lesson = {
         { id: 'autonomy', label: 'Autonomy (AI R&D)' },
       ],
       items: [
-        { text: 'Helping a state weapons program make real progress', bucket: 'misuse' },
+        { text: "Substantially uplifting a state program's chemical or biological weapons work", bucket: 'misuse' },
         { text: "Doing a junior AI researcher's job end to end", bucket: 'autonomy' },
         { text: 'Compressing two years of AI progress into one', bucket: 'autonomy' },
         { text: 'Helping someone with basic lab skills toward a mass-casualty weapon', bucket: 'misuse' },
@@ -380,10 +379,10 @@ const lesson: Lesson = {
       skill: 'why.disagree',
       kind: 'compare',
       question: "What do you think of Anthropic's RSP?",
-      a: "It's the best safety framework in the industry. OpenAI and DeepMind basically copied it, which shows Anthropic is leading on safety.",
-      b: "It changed the industry: OpenAI and Google DeepMind adopted similar frameworks within months, and laws like SB 53 now require published ones. But v3 swapped the pause pledge for a conditional delay, so now I'd judge it by whether Risk Reports and outside review actually change decisions.",
-      better: 'b',
-      explanation: 'A is praise with one fact. B credits the real impact, names the 2026 change, and says how it would evaluate it from here.',
+      a: "It changed the industry: OpenAI and Google DeepMind adopted similar frameworks within months, and laws like SB 53 now require published ones. But v3 swapped the pause pledge for a conditional delay, so I'd judge it by whether Risk Reports and outside review change decisions.",
+      b: "It's the best safety framework in the industry, full stop. OpenAI and DeepMind basically copied it, which shows Anthropic is the one lab really leading on safety, and I'd be proud to help it keep that lead.",
+      better: 'a',
+      explanation: 'B is praise with one fact and no date; it would have read the same in 2023. A credits the real impact, names the 2026 change, and says how it would evaluate it from here.',
     },
     {
       id: 'why-rsp.frog',

@@ -14,13 +14,17 @@
  *   that same namespace, then its `test_*` functions run in definition order.
  *   Coroutine functions are awaited (with a per-test timeout); anything else
  *   is called directly. Sync tests run while an event loop is running (as in
- *   the browser), so user code must not call `asyncio.run()`.
+ *   the browser), so `asyncio.run()` is refused while a suite runs (it would
+ *   only work in some browsers).
+ * - Global state the learner changes (recursion limit, builtins) is restored
+ *   after each run; `restart: true` asks the runner for a fresh interpreter
+ *   when tasks that ignore cancellation are left behind.
  * - stdout/stderr are captured (capped) and also streamed to `report` in
  *   throttled chunks so a run killed by the watchdog still shows output.
  * - `report(json)` receives progress events: {type:'plan'}, {type:'start'},
  *   {type:'done'}, {type:'out'}. The final return value is a JSON string:
  *   {results:[{name, level, ok, error?, line?, trace?, ms}], stdout,
- *    error?, errorLine?, ms}
+ *    error?, errorLine?, ms, restart?}
  *
  * Kept free of backticks and dollar-brace so it can live in String.raw.
  */
@@ -128,12 +132,21 @@ def _head(e):
 
 def _trace(e, files):
     lines = []
-    for fn, ln, q in _frames(e.__traceback__):
-        if fn in files:
-            lines.append('%s line %d, in %s' % (fn, ln, q))
-            src = _src_line(fn, ln)
-            if src:
-                lines.append('    ' + src)
+    frames = [f for f in _frames(e.__traceback__) if f[0] in files]
+    i = 0
+    while i < len(frames):
+        fn, ln, q = frames[i]
+        lines.append('%s line %d, in %s' % (fn, ln, q))
+        src = _src_line(fn, ln)
+        if src:
+            lines.append('    ' + src)
+        # collapse runaway recursion the way CPython does
+        j = i + 1
+        while j < len(frames) and frames[j] == frames[i]:
+            j += 1
+        if j - i > 1:
+            lines.append('  [previous line repeated %d more times]' % (j - i - 1))
+        i = j
     lines.append(_head(e))
     return _clip('\n'.join(lines), 2400)
 
@@ -172,6 +185,8 @@ def _describe(e, test_file):
         return 'NotImplementedError: %s is not implemented yet' % user[-1][2], line
     if isinstance(e, RuntimeError) and "can't start new thread" in str(e):
         text += ' (threads cannot start in the browser runtime; locks work, and asyncio is available)'
+    elif isinstance(e, RuntimeError) and any(s in str(e) for s in _LOOP_ERRORS):
+        text += ' (the tests already run inside an event loop: make the function async and await it)'
     if user:
         fn, ln, q = user[-1]
         src = _src_line(USER_FILE, ln)
@@ -232,6 +247,26 @@ def _tasks():
         return set()
 
 
+# RuntimeError texts that mean "you tried to block on an event loop from inside one"
+_LOOP_ERRORS = (
+    'cannot be called from a running event loop',
+    'This event loop is already running',
+    'Cannot run the event loop while another loop is running',
+    'stack switching not supported',
+)
+
+
+def _no_asyncio_run(main, *args, **kwargs):
+    """Stands in for asyncio.run while a suite runs. CPython refuses
+    asyncio.run inside a running loop, but Pyodide allows it where the browser
+    supports stack switching (Chrome) and fails with an obscure error where it
+    doesn't (Safari). Refusing it everywhere keeps a lab's result the same on
+    every device and in the CPython content check."""
+    if _inspect.iscoroutine(main):
+        main.close()
+    raise RuntimeError('asyncio.run() cannot be called from a running event loop')
+
+
 async def _call(fn, timeout):
     """run one test; returns None or raises. Async tests get a timeout."""
     if _inspect.iscoroutinefunction(fn):
@@ -284,8 +319,15 @@ async def run_suite(user_code, tests_json, test_timeout=5.0, report=None):
     cap = _Capture(emit)
     out = {'results': [], 'stdout': ''}
     results = out['results']
+    # the browser keeps one interpreter alive across runs: undo what the
+    # learner's code may have changed globally once this run is over
     old_in = _sys.stdin
+    old_limit = _sys.getrecursionlimit()
+    old_builtins = dict(_builtins.__dict__)
+    real_run = _asyncio.run
+    baseline = _tasks()
     _sys.stdin = _io.StringIO('')
+    _asyncio.run = _no_asyncio_run
     try:
         with _contextlib.redirect_stdout(cap), _contextlib.redirect_stderr(cap):
             ns, err, line = _load_user(user_code)
@@ -344,6 +386,30 @@ async def run_suite(user_code, tests_json, test_timeout=5.0, report=None):
                         emit({'type': 'done', 'result': rec})
     finally:
         _sys.stdin = old_in
+        _asyncio.run = real_run
+        try:
+            _sys.setrecursionlimit(old_limit)
+        except Exception:
+            pass
+        try:
+            bd = _builtins.__dict__
+            if len(bd) != len(old_builtins) or any(bd.get(k) is not v for k, v in old_builtins.items()):
+                bd.clear()
+                bd.update(old_builtins)
+        except Exception:
+            pass
+    # tasks the learner's code left behind (e.g. a retry loop that swallows
+    # CancelledError) would keep running in the shared interpreter
+    leftover = [t for t in _tasks() - baseline if not t.done()]
+    if leftover:
+        for t in leftover:
+            t.cancel()
+        try:
+            await _asyncio.wait(leftover, timeout=0.3)
+        except BaseException:
+            pass
+        if any(not t.done() for t in leftover):
+            out['restart'] = True
     out['stdout'] = cap.getvalue()
     out['ms'] = round((_time.perf_counter() - t_start) * 1000, 1)
     return _json.dumps(out)

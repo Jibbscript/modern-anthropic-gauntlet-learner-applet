@@ -147,3 +147,12 @@
 .compare-radio--dimmed {
   opacity: 0.6;
 }
+
+@media (hover: hover) and (pointer: fine) {
+  .compare-card.tile--idle:not(:disabled):hover {
+    --t-line: var(--line-strong);
+  }
+  .compare-card.tile--idle:not(:disabled):hover .compare-radio {
+    box-shadow: inset 0 0 0 2px var(--select);
+  }
+}

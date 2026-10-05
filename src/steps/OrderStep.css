@@ -124,8 +124,13 @@
 .order-card__main:disabled {
   cursor: default;
 }
+/* keyboard focus rings the whole card, not just the button inside it */
 .order-card__main:focus-visible {
-  outline-offset: -3px;
+  outline: none;
+}
+.order-card:has(> .order-card__main:focus-visible) {
+  outline: 3px solid var(--select);
+  outline-offset: 2px;
 }
 
 .order-card__num {

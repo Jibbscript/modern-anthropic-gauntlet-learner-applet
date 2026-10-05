@@ -340,6 +340,45 @@
 .prac-row__btn {
   flex: none;
 }
+/* 40px face + 4px edge = a 44px tap target */
+.prac-row__btn .btn__face {
+  min-height: 40px;
+  padding: 0 14px;
+}
+.prac-row__big.is-new {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--c-ink, var(--ink-2));
+}
+.prac-row--more .prac-row__main {
+  gap: 2px;
+}
+.prac-more__arts {
+  flex: none;
+  display: flex;
+  align-items: center;
+  width: 60px;
+  height: 44px;
+  margin: 0 -6px 0 -10px;
+}
+.prac-more__art {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 44px;
+  overflow: visible;
+}
+.prac-more__art .ca {
+  flex: none;
+  width: 44px;
+  height: 44px;
+}
+.prac-more__art:only-child {
+  width: 44px;
+}
+.prac-row__meta--wrap {
+  white-space: normal;
+}
 .prac-row__chev {
   flex: none;
   color: var(--ink-3);
@@ -362,6 +401,32 @@
   .prac-row {
     padding-left: var(--s-3);
     padding-right: var(--s-3);
+  }
+  .prac-more__arts {
+    width: 40px;
+    margin: 0 -4px 0 -8px;
+  }
+  .prac-more__art {
+    width: 40px;
+  }
+  .prac-more__art:not(:first-child) {
+    display: none;
+  }
+}
+
+/* narrow phones: smaller lab art so titles get the room */
+@media (max-width: 359px) {
+  .prac-lab {
+    padding: var(--s-3) var(--s-3) var(--s-3) var(--s-3);
+  }
+  .prac-lab__art {
+    width: 44px;
+    height: 44px;
+    border-radius: 14px;
+  }
+  .prac-lab__art svg {
+    width: 22px;
+    height: 22px;
   }
 }
 
@@ -406,7 +471,9 @@
   fill: var(--ink-3);
 }
 .prac-fc__day.is-today {
+  font-size: 12px;
   font-weight: 700;
+  letter-spacing: 0.01em;
   fill: var(--ink-inverse);
 }
 .prac-fc__pill {

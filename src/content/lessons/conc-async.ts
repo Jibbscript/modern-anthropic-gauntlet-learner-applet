@@ -33,8 +33,10 @@ const lesson: Lesson = {
         for u in urls:
             await client.get(u)
         # concurrent: all in flight together
-        return await asyncio.gather(*(client.get(u) for u in urls))`,
-        highlight: [7],
+        return await asyncio.gather(
+            *(client.get(u) for u in urls)
+        )`,
+        highlight: [7, 8, 9],
       },
     },
     {
@@ -52,7 +54,11 @@ async def job(name, delay):
     return name
 
 async def main():
-    results = await asyncio.gather(job("a", 0.3), job("b", 0.1), job("c", 0.2))
+    results = await asyncio.gather(
+        job("a", 0.3),
+        job("b", 0.1),
+        job("c", 0.2),
+    )
     print("".join(order), "".join(results))
 
 asyncio.run(main())`,
@@ -122,8 +128,12 @@ async def crawl(urls):
       id: 'semaphore',
       title: 'Cap what is in flight',
       body:
-        '`gather` over 10,000 URLs opens 10,000 requests at once. The server answers with 429s, or your process runs out of sockets.\n\n' +
+        '`gather` over 10,000 URLs starts 10,000 requests at once. Depending on the client, the server answers with 429s, you run out of sockets, or requests time out waiting for a pooled connection.\n\n' +
         'An `asyncio.Semaphore(20)` holds 20 permits. Each request takes one with `async with sem:` and returns it when done, so at most 20 are ever in flight. A semaphore caps ==concurrency==, not requests per second.',
+      callout: {
+        tone: 'warn',
+        text: '`httpx.AsyncClient` caps its pool at 100 connections by default, so a 10,000-wide `gather` does not open 10,000 sockets. The rest queue for a slot, and after the default 5 s they fail with `PoolTimeout`, which looks like a flaky server. Cap concurrency yourself.',
+      },
     },
     {
       kind: 'cloze',
@@ -143,7 +153,7 @@ async def crawl(urls):
         { options: ['run', 'gather', 'wait'], answer: 1 },
       ],
       explanation:
-        '`Semaphore(limit)` hands out `limit` permits; a `Lock` is a single permit and takes no count. An asyncio semaphore is entered with `async with`, because acquiring may have to wait, and a plain `with` raises `TypeError`. `gather` runs every wrapper and returns status codes in URL order; `asyncio.run` cannot start inside a running loop.',
+        '`Semaphore(limit)` hands out `limit` permits; a `Lock` is a single permit and takes no count. An asyncio semaphore is entered with `async with`, because acquiring may have to wait, and a plain `with` raises `TypeError`. `gather` runs every wrapper and returns status codes in URL order. `wait` takes one collection of tasks and returns `(done, pending)` sets, not results, and `asyncio.run` cannot start inside a running loop.',
       hint: 'The primitive that counts permits, the context-manager form that can await, and the call that collects results in order.',
     },
     {
@@ -164,7 +174,7 @@ async def crawl(urls):
       tolerance: 0.1,
       unit: 'requests',
       explanation:
-        'The stored burst plus the refill: 10 + 2 × 5 = 20. After the first instant the client is held to exactly the refill rate. In general, the most a bucket admits in any `t` seconds is `capacity + rate × t`.',
+        'The stored burst plus the refill: 10 + 2 × 5 = 20 (19 if the client stops just before the 20th token lands). After the first instant the client is held to exactly the refill rate. In general, the most a bucket admits in any `t` seconds is `capacity + rate × t`.',
       hint: 'What was in the bucket at the start, and how much flowed in during the 5 seconds?',
     },
     {
@@ -181,7 +191,8 @@ async def crawl(urls):
 
 async def fetch_all(client, urls):
     async with asyncio.TaskGroup() as tg:
-        tasks = [tg.create_task(fetch(client, u)) for u in urls]
+        tasks = [tg.create_task(fetch(client, u))
+                 for u in urls]
     return [t.result() for t in tasks]`,
       },
     },
@@ -191,12 +202,12 @@ async def fetch_all(client, urls):
       prompt: 'Inside one `TaskGroup`: task A sleeps 0.5 s, task B raises `ValueError` after 0.1 s, task C finishes after 0.05 s. What happens?',
       choices: [
         {
-          text: 'C completes, A is cancelled, and the `async with` raises an `ExceptionGroup` holding the `ValueError`',
+          text: 'C finishes, A is cancelled, and the block raises an `ExceptionGroup` holding the `ValueError`',
           correct: true,
           feedback: 'Yes. C was done before anything failed. A was still running, so the group cancelled it, waited for it to unwind, then raised.',
         },
         {
-          text: 'The `ValueError` is raised at once, and A keeps running in the background',
+          text: 'The `ValueError` is raised at once from the block, and A keeps running in the background',
           feedback: 'That is plain `gather`. TaskGroup exists so that no task outlives the block.',
         },
         {
@@ -204,7 +215,7 @@ async def fetch_all(client, urls):
           feedback: 'A TaskGroup does not wait out a failed task\'s siblings; it cancels them. And it raises an `ExceptionGroup`, which you catch with `except*`.',
         },
         {
-          text: 'All three are cancelled, including C, and the group swallows the error',
+          text: 'All three are cancelled, C included, and the group logs the error and swallows it',
           feedback: 'C had already finished, so there was nothing to cancel, and a TaskGroup never swallows a failure.',
         },
       ],
@@ -222,17 +233,17 @@ async def fetch_all(client, urls):
           interviewer: 'How do you structure the client?',
           options: [
             {
-              text: '`asyncio.gather` over all 50,000 calls with an async HTTP client, since asyncio can hold that many requests open on one thread.',
+              text: '`asyncio.gather` over all 50,000 calls with an async HTTP client. asyncio can hold that many pending requests on one thread, and the client pools connections.',
               quality: 'okay',
-              feedback: 'The async client is right, but 50,000 simultaneous calls blow through both limits in the first second.',
+              feedback: 'The async client is right, but nothing here enforces 50 per second, and 50,000 calls queued behind one connection pool start failing with pool timeouts.',
             },
             {
-              text: 'One `httpx.AsyncClient`, a token bucket at 50/s and a `Semaphore(100)`. At 1 to 4 s per call, 50/s means 50 to 200 in flight, so when calls slow down the connection cap binds.',
+              text: 'One async client, a token bucket at 50/s, a `Semaphore(100)`. At 1 to 4 s per call, 50/s means 50 to 200 in flight, so when calls slow down the cap binds.',
               quality: 'strong',
               feedback: 'Two limits, two mechanisms, and a quick Little\'s-law check of which one binds when.',
             },
             {
-              text: 'One thread per document, 50,000 threads. The work is I/O-bound, so the GIL is not a problem and nothing ever waits.',
+              text: 'One thread per document, 50,000 threads. The work is I/O-bound, so the GIL is released while they wait, and every document is in flight from the start.',
               quality: 'weak',
               feedback: '50,000 OS threads cost a lot of memory and ignore both limits. The bottleneck is the API\'s rules, not your parallelism.',
             },
@@ -242,17 +253,17 @@ async def fetch_all(client, urls):
           interviewer: 'Some calls come back 429 anyway. Now what?',
           options: [
             {
-              text: 'Honor `Retry-After` if sent, else exponential backoff with jitter and a retry cap, recording failures per document. Repeated 429s mean my bucket is too fast, so I lower its rate.',
+              text: 'Honor `Retry-After` if sent, else exponential backoff with jitter and a retry cap, logging failures per document. Repeated 429s mean my bucket is too fast.',
               quality: 'strong',
               feedback: 'Listens to the server, spreads retries out, bounds them, and adapts the limiter.',
             },
             {
-              text: 'Retry each failed call immediately in a loop until it succeeds, so no document is ever dropped from the batch.',
+              text: 'Retry each failed call immediately, in a loop, until it succeeds. The batch must be complete, so no document can ever be dropped from it.',
               quality: 'weak',
               feedback: 'Immediate retries arrive while you are still over the limit and earn more 429s: a load spike you caused yourself.',
             },
             {
-              text: 'Retry each failed call up to three times, waiting a fixed second between attempts, then log it as failed.',
+              text: 'Retry each failed call up to three times, waiting a fixed one second between attempts, then log the document as failed and move on.',
               quality: 'okay',
               feedback: 'Bounded, which is good. But fixed waits make failed calls retry in lockstep, and you ignore what the server told you.',
             },
@@ -262,19 +273,19 @@ async def fetch_all(client, urls):
           interviewer: 'A teammate\'s helper inside your coroutine calls `requests.post`. Problem?',
           options: [
             {
-              text: 'Wrap the call in `asyncio.to_thread(requests.post, ...)` so it runs in a thread, and move on to the next task.',
+              text: 'Wrap it in `asyncio.to_thread(requests.post, ...)` so the call runs in a worker thread, then move on to the next item on the list.',
               quality: 'okay',
               feedback: 'It works: the call leaves the loop. But you did not say why it was a problem, and the real fix is an async client.',
             },
             {
-              text: 'Raise the semaphore limit from 100 to 500 so more requests can run in parallel and make up the lost time.',
+              text: 'Raise the semaphore limit from 100 to 500, so more requests can run in parallel while that one call is busy and make up the lost time.',
               quality: 'weak',
               feedback: 'More permits do nothing while the loop thread is stuck inside a blocking call, and 500 would break the 100-connection limit anyway.',
             },
             {
-              text: 'It blocks the loop thread, so nothing else progresses while it runs. Switch to the async client, with `to_thread` as a stopgap. Detect it by timing 1 vs 50 permits: no change means blocking.',
+              text: 'It blocks the loop thread, so every task stalls while it runs. Use the async client, `to_thread` as a stopgap. Tell: 1 vs 50 permits, same speed.',
               quality: 'strong',
-              feedback: 'Names the mechanism, gives a fix and a stopgap, and a cheap way to detect it.',
+              feedback: 'Names the mechanism, a fix, a stopgap, and a cheap way to detect it. asyncio\'s debug mode, `asyncio.run(main(), debug=True)`, also logs any step that holds the loop over 100 ms.',
             },
           ],
         },
@@ -371,12 +382,12 @@ async def fetch_all(urls):
       kind: 'mcq',
       prompt: '`async with asyncio.timeout(2): await slow_call()`, and `slow_call` needs 5 s. What happens at the 2 s mark?',
       choices: [
-        { text: '`slow_call` is cancelled, and `TimeoutError` is raised from the `async with` block', correct: true },
+        { text: '`slow_call` is cancelled, and the block raises `TimeoutError`', correct: true },
         {
           text: '`TimeoutError` is raised, but `slow_call` keeps running in the background',
           feedback: 'That is a thread future\'s `result(timeout=...)`. asyncio can cancel, because a coroutine only runs between awaits.',
         },
-        { text: 'Nothing; `asyncio.timeout` only applies to network calls', feedback: 'It applies to whatever is awaited inside the block.' },
+        { text: 'Nothing: `asyncio.timeout` only applies to network calls', feedback: 'It applies to whatever is awaited inside the block.' },
         { text: '`slow_call` returns `None` early', feedback: 'Cancellation raises inside `slow_call`; it does not make it return a value.' },
       ],
       explanation: 'At the deadline asyncio throws `CancelledError` into the awaited coroutine at its current `await`, then converts it to `TimeoutError` as the block exits. A coroutine stuck in a blocking call cannot be cancelled until it next awaits.',

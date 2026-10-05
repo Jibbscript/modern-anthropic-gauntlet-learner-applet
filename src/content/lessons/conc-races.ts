@@ -34,11 +34,11 @@ const lesson: Lesson = {
 LOAD_CONST    1
 BINARY_OP     +=    # add, privately
 STORE_GLOBAL  x     # write it back`,
-        caption: '`dis` output for `x += 1` on CPython 3.11 (simplified).',
+        caption: '`dis` output for `x += 1` on a global, CPython 3.11 (simplified).',
       },
       callout: {
         tone: 'insight',
-        text: 'How often a switch lands inside the window depends on the build. In quick tests on CPython 3.11-3.13, a bare `x += 1` on an int never split, while the `get`-then-store version lost 6-26% of 800,000 updates. A free-threaded 3.14 build lost updates on both. Neither is promised atomic.',
+        text: 'How often a switch lands inside the window depends on the build. In quick tests on CPython 3.11-3.13, a bare `x += 1` on an int never split, while the `get`-then-store version lost anywhere from none to over half of 800,000 updates, run to run. A free-threaded 3.14 build lost updates on both. Neither is promised atomic.',
       },
     },
     {
@@ -66,7 +66,7 @@ STORE_GLOBAL  x     # write it back`,
           feedback: 'Backwards. Blocking I/O *releases* the GIL; Python code holds it. The protection is real, just per bytecode.',
         },
         {
-          text: 'Dicts are not thread-safe, so `get` returned a corrupted value.',
+          text: 'Dicts are not thread-safe, so a concurrent `get` returned a corrupted, half-written value.',
           feedback: 'Each dict operation is atomic in CPython, so nothing was corrupted. The value read was correct and then went *stale* before the write.',
         },
         {
@@ -163,25 +163,25 @@ def get_thumbnail(path: str) -> bytes:
       prompt: 'Your test calls `record()` from 2 threads, 1,000 calls each, 50 runs in a row. All green. Why is that weak evidence of thread safety?',
       choices: [
         {
-          text: 'Losing an update needs a switch inside a window a few bytecodes wide. Short runs often finish one thread before the next starts, and timing varies by machine and Python version.',
+          text: 'The bad switch must land inside a window a few bytecodes wide, and short runs rarely give it the chance.',
           correct: true,
-          feedback: 'Right. Passing runs sample a few interleavings. They do not rule out the bad ones.',
+          feedback: 'Right. 1,000 quick calls can finish before the other thread even starts. Passing runs sample a few interleavings; they do not rule out the bad ones.',
         },
         {
-          text: 'It is strong evidence: 50 runs of 2,000 calls is 100,000 chances to fail.',
+          text: 'It is strong evidence: 50 runs of 2,000 calls each is 100,000 independent chances to fail.',
           feedback: 'The chances are not independent. The scheduler tends to repeat similar interleavings, and 1,000 fast calls can finish within one 5 ms switch interval.',
         },
         {
-          text: 'pytest runs threads one at a time, so the test was never concurrent.',
+          text: 'pytest runs each thread to completion one at a time, so the test was never concurrent.',
           feedback: 'pytest does nothing of the sort; threads run as usual. The concurrency was real, but the bad timing never happened.',
         },
         {
-          text: 'The GIL protects code in tests but not in production servers.',
-          feedback: 'Same interpreter, same GIL in both places. What differs is load, timing, and sometimes the Python build.',
+          text: 'The GIL fully protects code in short tests, but not under production load on many cores.',
+          feedback: 'Same interpreter, same GIL in both places, and the GIL never protected the sequence. What differs is load and timing, so the window gets hit more often.',
         },
       ],
       explanation:
-        'In a quick test, this exact counter passed 50 of 50 short runs on CPython 3.11-3.13, then lost 6-26% of its updates at 4 threads x 200,000 calls. Reason about the window; let stress tests back you up.',
+        'In quick tests on CPython 3.11-3.13, this exact counter passed 50 of 50 short runs. At 4 threads x 200,000 calls it lost updates in almost every run, and how many varied wildly. Reason about the window; let stress tests back you up.',
       hint: 'How long do 1,000 dictionary updates take, compared to a thread switch interval of 5 ms?',
     },
     {
@@ -239,7 +239,7 @@ class Account:
         { options: ['with self._lock', 'with threading.Lock()', 'if self._lock.acquire()'], answer: 0 },
       ],
       explanation:
-        'Create one lock per account, once. `threading.Lock` without parentheses is the factory, so `with` on it raises `TypeError`; `threading.local()` is per-thread storage, the opposite of sharing. `with threading.Lock()` makes a fresh lock on every call, so no two threads ever contend. `if self._lock.acquire()` never releases, so the second withdrawal hangs forever.',
+        'One lock per account, created once, taken with `with`. `threading.Lock` without parentheses is not a lock but the thing that makes one, so `with` on it raises `TypeError`; `threading.local()` is per-thread storage, the opposite of sharing. `with threading.Lock()` builds a fresh lock per call, so nobody ever waits. `if self._lock.acquire()` never releases: the second withdrawal hangs.',
       hint: 'Every thread has to wait on the *same* lock, and the lock has to come back.',
     },
     {
@@ -259,7 +259,7 @@ class Account:
       title: 'What to remember',
       body:
         '1. A race is two threads both inside a read-then-write window. Two shapes: ==read-modify-write== (`+=`, get-then-store) and ==check-then-act== (`if missing: insert`).\n' +
-        '2. The GIL makes single operations atomic, not your sequence of them. Free-threaded builds make that gap wider.\n' +
+        '2. The GIL makes single operations atomic, not your sequence of them. On free-threaded builds, the same races fire far more often.\n' +
         '3. Fix: one lock that covers the whole check-and-act, taken by every path that touches the data. A green test is a sample, not a proof.',
     },
   ],

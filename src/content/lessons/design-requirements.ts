@@ -12,10 +12,10 @@ const lesson: Lesson = {
       id: 'hook',
       eyebrow: 'Scoping',
       title: 'Three systems wearing one name',
-      body: 'Candidates in 2026 report a *prompt playground* design prompt: teams write prompts, save versions, run them against a model, share them.\n\nIt sounds like CRUD with a Run button. But if teammates must see each other type, it needs real-time merging. If prompts run to megabytes, storage changes. If runs are conversations, every run carries history.\n\nThree questions, three different systems. The first five minutes decide which one you build.',
+      body: 'Candidates in 2026 report a *prompt playground* design prompt: users write prompts, run them against a model, save versions, share them.\n\nIt sounds like CRUD with a Run button. But if teammates must see each other type, it needs real-time merging. If prompts run to megabytes, storage changes. If runs are conversations, every run carries history.\n\nThree questions, three different systems. The first five minutes decide which one you build.',
       callout: {
         tone: 'source',
-        text: 'Reported in [PracHub](https://prachub.com/interview-experiences/anthropic-software-engineer-interview-experience-rejected-after-a-weak-system-design-round) and on prep sites (2026). Details like very large prompts come from prep-site write-ups, not verbatim questions.',
+        text: 'Named in a July 2026 [PracHub candidate report](https://prachub.com/interview-experiences/anthropic-software-engineer-interview-experience-rejected-after-a-weak-system-design-round) and in prep guides such as [Hello Interview](https://www.hellointerview.com/guides/anthropic/senior). Specifics like 10 MB+ prompts are prep-site expansions, not verbatim questions.',
       },
     },
     {
@@ -25,22 +25,22 @@ const lesson: Lesson = {
       prompt: 'You get one clarifying question before you start writing. Which buys the most?',
       choices: [
         {
-          text: 'When two teammates edit one prompt, must they see each other type, or are versioned saves enough?',
+          text: 'Must teammates editing one prompt see each other type, or are versioned saves enough?',
           correct: true,
           feedback:
             'Yes. The answer decides whether you need a real-time merge engine (operational transform or a CRDT) or a simple versioned save. Nothing else forks the design as hard.',
         },
         {
-          text: 'Roughly how many users should I design for, and how fast is usage growing?',
+          text: 'Roughly how many users should I design for, and how fast is usage expected to grow?',
           feedback:
             "You'll need it soon, and you can assume a number. But at plausible scale every playground needs a database, a blob store and a run queue. The answer shifts sizes, not shape.",
         },
         {
-          text: 'Which database and cloud provider does your team already run in production?',
+          text: 'Which database and cloud provider does your team already run in production today?',
           feedback: 'An implementation detail. Interviewers usually want your reasoning, not a match to their stack, and it does not change what the product must do.',
         },
         {
-          text: 'Should I go with microservices, or start from one well-structured monolith?',
+          text: 'Should I go with microservices, or start from one well-structured monolith first?',
           feedback: 'That is your call to make and justify, not a requirement to collect. Asking it hands the design back to the interviewer.',
         },
       ],
@@ -97,7 +97,7 @@ const lesson: Lesson = {
       kind: 'concept',
       id: 'envelope',
       title: 'The back-of-envelope chain',
-      body: 'Most capacity estimates are one chain of multiplications:\n\n1. daily users × actions per user = actions per day\n2. ÷ 86,400 seconds = average per second\n3. × a peak factor (often 2-5x) = peak per second\n\nRound hard. A day is about 10^5 seconds, so a million actions a day is roughly 10 a second. Write every assumption in the doc so the interviewer can change one and watch the answer move.',
+      body: 'Most capacity estimates are one chain of multiplications:\n\n1. daily users × actions per user = actions per day\n2. ÷ 86,400 seconds = average per second\n3. × a peak factor (often 2-5x) = peak per second\n\nRound hard. A day is about 10^5 seconds, so a million actions a day is roughly 10 a second. Write every assumption down so the interviewer can change one and watch the answer move.',
     },
     {
       kind: 'widget',
@@ -122,10 +122,10 @@ const lesson: Lesson = {
       id: 'tokens-per-sec',
       prompt: 'At that peak of about 70 runs a second, each run sends a 2,500-token prompt and gets 500 tokens back. How many tokens per second flow through model calls?',
       answer: 208333,
-      tolerance: 0.25,
+      tolerance: 0.15,
       unit: 'tokens/s',
       explanation:
-        '69.4 runs/s × 3,000 tokens ≈ **208,000 tokens a second** at peak. That number, not request count, is your real load: it drives cost, provider rate limits and per-team quotas.',
+        '69.4 runs/s × 3,000 tokens ≈ **208,000 tokens a second** at peak. Counting only the prompt gives 174,000, a sixth short. Tokens, not request count, are your real load: they drive cost, provider rate limits and per-team quotas.',
       hint: 'Runs per second × tokens per run. Count both directions.',
     },
     {
@@ -143,7 +143,7 @@ const lesson: Lesson = {
       kind: 'concept',
       id: 'numbers-to-decisions',
       title: 'Read the numbers back as decisions',
-      body: "- **70 runs a second is small.** One Postgres handles the metadata; no sharding in v1.\n- **200,000 tokens a second is the real load.** Quotas and provider rate limits matter more than the database.\n- **Runs stream for seconds.** In flight = arrival rate × duration (Little's law). With 15-second runs, that's 70 × 15 ≈ 1,000 open streams.\n- **Big prompts set storage.** Bodies go to object storage, deduplicated by hash.",
+      body: "- **70 runs a second is small.** One Postgres holds the metadata; no sharding in v1.\n- **200,000 tokens a second is the real load.** Quotas and provider rate limits matter more than the database.\n- **Runs stream for seconds.** In flight = arrival rate × duration (Little's law): 70 × 15-second runs ≈ 1,000 open streams.\n- **Big prompts set storage.** Bodies go to object storage, deduplicated by hash.",
     },
     {
       kind: 'interview',
@@ -155,17 +155,17 @@ const lesson: Lesson = {
           interviewer: 'Design a prompt playground for teams.',
           options: [
             {
-              text: '"How many users should I design for?"',
+              text: '"Before I start: how many users should I design for, and how fast is usage expected to grow?"',
               quality: 'okay',
               feedback: 'A fair question, but you could assume it. It does not tell you whether you need a real-time merge engine or how big a prompt can get.',
             },
             {
-              text: '"I\'ll write my assumptions and the three questions that change the design most: live co-editing or versioned saves, how big prompts get, and whether runs carry chat history."',
+              text: '"I\'ll write my assumptions, plus the three questions that change the design most: live co-editing, prompt size, and whether runs carry chat history."',
               quality: 'strong',
               feedback: 'Strong. You go straight to the forks, and you put them in the doc where the answers will stay visible.',
             },
             {
-              text: '"Okay. I\'ll start with a load balancer in front of stateless API servers."',
+              text: '"Okay. I\'ll start with a load balancer in front of stateless API servers and a Postgres primary."',
               quality: 'weak',
               feedback: 'Components before scope. You may be designing a different product from the one in the interviewer\'s head.',
             },
@@ -180,12 +180,12 @@ const lesson: Lesson = {
               feedback: 'Strong. Numbers on the page, an invitation to correct them, and you flag which assumption matters most.',
             },
             {
-              text: '"Let\'s design for a billion users, so it scales whatever happens."',
+              text: '"Let\'s design for a billion users from day one, so the system scales whatever happens later."',
               quality: 'weak',
               feedback: 'Over-scoping. It forces sharding and global replication the product does not need, and shows you are not sizing to requirements.',
             },
             {
-              text: '"Okay, I\'ll keep the design general and not tie it to specific numbers."',
+              text: '"Okay, I\'ll keep the design general for now and not tie it to specific numbers until later."',
               quality: 'okay',
               feedback: 'Safe, but without numbers you cannot say which parts are hard, so every component gets the same vague treatment.',
             },
@@ -195,12 +195,12 @@ const lesson: Lesson = {
           interviewer: "What's your latency requirement?",
           options: [
             {
-              text: '"Under 100 milliseconds."',
+              text: '"Under 100 milliseconds at p99 for every request, so the whole product feels instant."',
               quality: 'okay',
               feedback: 'A number is better than none, but one number for everything is wrong somewhere: a model run cannot finish in 100 ms, and typing should not wait at all.',
             },
             {
-              text: '"As low as possible. Latency is always the top priority."',
+              text: '"As low as we can get it. Latency is always the top priority in a user-facing product."',
               quality: 'weak',
               feedback: 'Not checkable, and not true: here, cost and isolation can matter more than shaving milliseconds off a save.',
             },

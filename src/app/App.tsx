@@ -124,6 +124,11 @@ export function App() {
   const stack = useNav((s) => s.stack)
   const state = useStore()
 
+  // lessons can gain cards in content updates; give finished lessons their new cards
+  useEffect(() => {
+    useStore.getState().syncCards(Object.fromEntries(CATALOG.courses.flatMap((c) => c.lessons.map((l) => [l.id, l.cards.map((k) => k.id)]))))
+  }, [])
+
   // award achievements whenever progress changes
   useEffect(() => {
     const fresh = newlyEarned(useStore.getState(), CATALOG)

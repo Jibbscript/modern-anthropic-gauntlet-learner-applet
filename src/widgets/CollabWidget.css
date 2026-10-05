@@ -321,6 +321,61 @@
   pointer-events: none;
 }
 
+/* --------------------------------------------------------------- order */
+.collab-order {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-2);
+  overflow: hidden;
+}
+.collab-order__opts {
+  display: flex;
+  gap: 6px;
+  padding: 3px;
+  border-radius: var(--r-pill);
+  background: var(--surface-3);
+}
+.collab-order__opt {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 34px;
+  padding: 0 12px 0 6px;
+  border-radius: var(--r-pill);
+  color: var(--ink-2);
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  transition: background var(--dur-2), color var(--dur-2), box-shadow var(--dur-2);
+}
+.collab-order__opt.is-on {
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow:
+    inset 0 0 0 1.5px var(--u),
+    0 2px 0 0 var(--u-edge);
+}
+.collab-order__opt:disabled {
+  opacity: 0.6;
+}
+.collab-order__badge {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--ink-3);
+  font-size: 11px;
+  font-weight: 700;
+  box-shadow: inset 0 0 0 1.5px var(--line-strong);
+}
+.collab-order__opt.is-on .collab-order__badge {
+  background: var(--u);
+  color: #fff;
+  box-shadow: none;
+}
+
 /* ------------------------------------------------------------ controls */
 .collab-controls {
   display: flex;
@@ -364,17 +419,6 @@
 .collab-result__head svg {
   flex: none;
 }
-.collab-merged {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-.collab-merged__doc {
-  padding: var(--s-2) var(--s-3);
-  border-radius: var(--r-sm);
-  background: var(--surface-2);
-  box-shadow: inset 0 0 0 1px var(--line);
-}
 .collab-why {
   margin: 0;
   font-size: var(--fs-sm);
@@ -388,10 +432,9 @@
   gap: 6px;
 }
 .collab-ot__row {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: baseline;
-  gap: 2px var(--s-2);
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
   padding: var(--s-2) var(--s-3);
   border-radius: var(--r-sm);
   background: var(--surface-2);
@@ -404,7 +447,7 @@
 }
 .collab-ot__math {
   font-family: var(--font-code);
-  font-size: var(--fs-sm);
+  font-size: var(--fs-md);
   font-weight: 600;
   white-space: nowrap;
 }
@@ -421,7 +464,6 @@
   color: var(--u-ink);
 }
 .collab-ot__why {
-  grid-column: 1 / -1;
   font-size: var(--fs-xs);
   line-height: 1.35;
   color: var(--ink-3);

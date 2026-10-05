@@ -36,7 +36,7 @@ const lesson: Lesson = {
       callout: {
         tone: 'insight',
         text:
-          'Reports describe follow-ups three or four levels deep. One candidate called it "almost like a therapy session"; another, "like a lawyer call, very interrogative." Axios (Aug 2026) reported that questions are suggested, not scripted, so wording varies by interviewer.',
+          'Reports describe follow-ups three or four levels deep. One candidate called it "almost like a therapy session"; another, "like a lawyer call, very interrogative." Axios (Aug 2026) reported that questions are suggested, not fully scripted, so wording varies by interviewer.',
       },
     },
     {
@@ -87,7 +87,7 @@ const lesson: Lesson = {
         {
           text: "Would you support delaying a risky release if other labs wouldn't?",
           bucket: 'probe',
-          why: 'A tradeoff with no safe answer, adapted from a Sep 2026 candidate report.',
+          why: 'A tradeoff with no safe answer, adapted from a reported Sep 2026 values-round question.',
         },
       ],
       explanation:
@@ -113,9 +113,9 @@ const lesson: Lesson = {
       eyebrow: 'Which is stronger?',
       question: 'You mentioned you shipped the migration anyway. *What did you actually think at the time?*',
       a:
-        "I recognized the risk early, so I aligned with stakeholders on a phased rollout plan and made sure monitoring was in place. We delivered on schedule with zero customer-facing incidents. It reinforced how much clear communication and proactive risk management matter, and I've applied that on every launch since.",
+        "I recognized the risk early, so I aligned with stakeholders on a phased rollout plan and made sure monitoring and alerting were in place. We delivered on schedule with zero customer-facing incidents. It reinforced how much clear communication and proactive risk management matter, and I've applied that lesson on every launch since.",
       b:
-        "Honestly, I thought it wasn't ready, and I was annoyed I'd be the one paged. But my evidence was one flaky test, so I wasn't sure enough to block it. I asked for a feature flag instead. Looking back, the flag was right, but I should have said I was worried in the meeting, not in a DM afterward.",
+        "Honestly, I thought it wasn't ready, and I was annoyed I'd be the one paged. But my evidence was one flaky test, not enough to block it, so I asked for a feature flag. Looking back, the flag was right, but I should have said I was worried in the meeting, not in a DM afterward.",
       better: 'b',
       explanation:
         "A answers a different question. It restates the action and the result, which the interviewer already heard. B answers this one: the actual thought, including the unflattering part, how sure the candidate was and why, and a specific self-critique. Notice that the self-critique is small and concrete, not a humble-brag.",
@@ -125,7 +125,7 @@ const lesson: Lesson = {
       id: 'looking-for',
       title: 'What the probes are after',
       body:
-        'Strip away the wording and most probes test five things:\n\n' +
+        'A useful lens: strip away the wording, and most probes test one of five things.\n\n' +
         '- **Own judgment**: your reasoning, not the expected answer\n' +
         '- **Honesty**: including the part that makes you look worse\n' +
         '- **Calibration**: how sure you were, and on what evidence\n' +
@@ -160,8 +160,9 @@ const lesson: Lesson = {
         'A common prep instinct: learn what Anthropic believes, then agree with all of it. Praise the mission, endorse every policy, call the RSP admirable.\n\n' +
         'It feels like the safe play in a culture interview. Before you try it, decide for yourself whether it is.',
       callout: {
-        tone: 'quote',
-        text: '"We\'re not looking for a specific belief." Daniela Amodei, describing Anthropic\'s culture interview (Bloomberg Businessweek, May 2026)',
+        tone: 'source',
+        text:
+          'Daniela Amodei\'s own example question: "What are some of the slightly unusual beliefs you hold, and how have you defended them in uncomfortable situations because you felt they were right?" And: "We\'re not looking for a specific belief." (Bloomberg Businessweek, May 2026, via [GIGAZINE](https://gigazine.net/gsc_news/en/20260601-anthropic-recruiting))',
       },
     },
     {
@@ -258,7 +259,7 @@ const lesson: Lesson = {
           interviewer: 'What did you actually think, at the time?',
           options: [
             {
-              text: "I thought it was important to support the team's decision. So I documented my concerns, backed the launch fully, and we hit our engagement targets for the quarter.",
+              text: "I thought it was important to support the team's decision once it was made. So I documented my concerns, backed the launch fully, and in the end we comfortably hit our engagement targets for the quarter.",
               quality: 'weak',
               feedback: 'This restates what you did and how it turned out. The question was what you *thought*.',
             },
@@ -364,7 +365,7 @@ const lesson: Lesson = {
           feedback: 'Agreement you can defend is a view, not flattery. The objection and the mind-changer prove you thought about it.',
         },
         {
-          text: "Invent a mild disagreement anyway, so that you don't come across as sycophantic.",
+          text: "Invent a mild disagreement anyway, so that you don't come across as sycophantic or rehearsed.",
           feedback: 'A manufactured critique collapses at the first follow-up, and it misrepresents what you think.',
         },
         {
@@ -397,10 +398,10 @@ const lesson: Lesson = {
       skill: 'values.judgment',
       kind: 'compare',
       question: 'You pushed a launch back two weeks to fix flaky tests. *How do you feel about that decision now?*',
-      a: 'Good. It was clearly the right call. Quality matters, the extra two weeks paid for themselves, and I would make the same decision again without hesitating.',
-      b: "Mostly right, but I overrated the risk. Two of the five flaky tests turned out to be harmless. Next time I'd spend a day triaging before asking for two weeks.",
-      better: 'b',
-      explanation: 'A defends the decision without examining it. B gives a split verdict with evidence and a concrete change, which is what *how do you feel now?* is probing for.',
+      a: "Mostly right, but I overrated the risk: two of the five flaky tests were harmless. Next time I'd spend a day triaging before asking for two weeks.",
+      b: 'Good, honestly. It was clearly the right call. Quality matters, the extra two weeks paid for themselves, and I would make the same decision again without a second thought.',
+      better: 'a',
+      explanation: 'B defends the decision without examining it. A gives a split verdict with evidence and a concrete change, which is what *how do you feel now?* is probing for. It is also shorter: depth is not length.',
     },
     {
       id: 'values-probes.five-targets',
@@ -416,9 +417,9 @@ const lesson: Lesson = {
       prompt: 'After your story, the interviewer asks *What did you actually think at the time?* Which reply misreads the question?',
       choices: [
         {
-          text: 'Walking back through the actions you took and the result, in more detail.',
+          text: 'We set up a phased rollout, added monitoring, and shipped on time.',
           correct: true,
-          feedback: 'Right: they asked for your thinking, and this repeats the plot.',
+          feedback: 'Right: they asked for your thinking, and this repeats the plot, in *we*.',
         },
         {
           text: 'I thought it was a mistake, but I was only about 60% sure.',

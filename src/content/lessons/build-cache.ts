@@ -17,7 +17,7 @@ const lesson: Lesson = {
         'Every cache answers one question: ==what do I throw away?== Least recently used, expired, or both. The follow-up: what happens when twenty threads ask at once?',
       callout: {
         tone: 'insight',
-        text: 'Caches are among the practical problems candidates report: often an LRU or memoization cache keyed on a function\'s arguments, with follow-ups on persistence through pickle or a write-ahead log. Formats vary; the build, extend, make-it-concurrent shape holds.',
+        text: 'Caches are among the practical problems candidates report: often an LRU or memoization cache keyed on a function\'s arguments, with follow-ups on persistence through pickle or a write-ahead log. Formats vary, but the reports share a shape: build it, extend it, then make it concurrent or durable.',
       },
     },
     {
@@ -158,7 +158,7 @@ area(2.0, h=3)
 print(calls)`,
       answers: ['3'],
       explanation:
-        'Call 1 misses; call 2 is an exact repeat and hits. `area(w=2, h=3)` moves `w` into kwargs, a different key: miss. `area(2, 3)` passes `h` positionally: miss. `area(2.0, h=3)` hits, because `2.0 == 2` and they hash the same. One distinct computation, three real calls. To collapse them, normalize with `inspect.signature(fn).bind(*args, **kwargs)`.',
+        'Call 1 misses; call 2 repeats it and hits. `area(w=2, h=3)` moves `w` into kwargs: new key, miss. `area(2, 3)` passes `h` positionally: miss. `area(2.0, h=3)` hits, since `2.0 == 2` with equal hashes, so it returns the cached int `6`, not `6.0` (`lru_cache(typed=True)` exists for this). One computation, three real calls; binding with `inspect.signature(fn).bind(...)` plus `apply_defaults()` collapses them.',
       hint: 'Write out the key tuple for each call. Which ones compare equal?',
     },
     {
@@ -324,7 +324,7 @@ now = 60.0; assert cache.get("k") is None`,
               feedback: 'Correctness, throughput, and the stampede, in three sentences.',
             },
             {
-              text: 'Nothing changes: dict operations are atomic under the GIL.',
+              text: 'Nothing changes. `OrderedDict` is implemented in C, so each of its operations is atomic under the GIL, and the cache is already thread-safe.',
               quality: 'weak',
               feedback: 'Single operations are; check-then-`move_to_end` is two. Another thread can evict in between and you get a `KeyError`.',
             },
@@ -334,12 +334,12 @@ now = 60.0; assert cache.get("k") is None`,
           interviewer: 'The process restarts nightly and the cache takes an hour to warm. Make it survive a restart, including a crash.',
           options: [
             {
-              text: 'Pickle the cache in an `atexit` handler on shutdown, and load it on start.',
+              text: 'Register an `atexit` handler that pickles the cache on the way down, and load the pickle on start. Restarts then keep the warm cache for free.',
               quality: 'weak',
-              feedback: '`atexit` never runs on a crash or `kill -9`, which is exactly the case they asked about.',
+              feedback: '`atexit` runs on a normal exit or an uncaught exception, but not on `kill -9`, an OOM kill, a segfault, or a default SIGTERM. Those are the crashes they asked about.',
             },
             {
-              text: 'Append each `put` to a write-ahead log and flush it; on start, replay the log. Every so often, pickle a snapshot to a temp file, `os.replace` it into place, and truncate the log. I would ask how much loss is acceptable, since fsync per write is the expensive part.',
+              text: 'Append each `put` (and each hit, if exact LRU order matters) to a write-ahead log; on start, replay it. Every so often, pickle a snapshot to a temp file, `os.replace` it into place, and start a new log. I would ask how much loss is acceptable, since fsync per write is the expensive part.',
               quality: 'strong',
               feedback: 'Crash-safe, bounded replay time, atomic snapshots, and a question about the real durability requirement.',
             },
@@ -419,7 +419,7 @@ print("".join(d))`,
         { text: 'moves `k` to the front', feedback: 'Nothing moves to the front unless you call `move_to_end(k, last=False)`.' },
         { text: 'raises unless you delete `k` first', feedback: 'Assignment to an existing key is always allowed; it just does not reorder.' },
       ],
-      explanation: 'Order reflects first insertion. Updating a value does not count as reinsertion, so an LRU must refresh recency itself.',
+      explanation: 'Plain assignment never reorders an existing key; only `move_to_end` (or delete and reinsert) does. So an LRU must refresh recency itself.',
     },
     {
       id: 'build-cache.clock',

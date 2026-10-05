@@ -113,6 +113,8 @@ export interface GauntletActions {
   rehearseStory(slot: StorySlotId, grade: Grade): void
   saveLab(labId: string, patch: Partial<LabProgress>): void
   passLabLevel(labId: string, level: number, elapsedMs: number): void
+  /** add review cards for completed lessons that gained cards after completion */
+  syncCards(cardsByLesson: Record<string, string[]>): void
   unlockAchievements(ids: string[]): void
   markAchievementsSeen(): void
   resetAll(): void
@@ -389,6 +391,22 @@ export const useStore = create<Store>()(
           streak,
         })
       },
+
+      syncCards: (cardsByLesson) =>
+        set((s) => {
+          const t = now()
+          let added = 0
+          const cards = { ...s.cards }
+          for (const [lessonId, ids] of Object.entries(cardsByLesson)) {
+            if (!s.lessons[lessonId]?.completedAt) continue
+            for (const id of ids)
+              if (!cards[id]) {
+                cards[id] = newCard(t)
+                added++
+              }
+          }
+          return added ? { cards } : {}
+        }),
 
       unlockAchievements: (ids) =>
         set((s) => {

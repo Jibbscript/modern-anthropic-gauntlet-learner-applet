@@ -354,8 +354,20 @@ function LabView({ lab, onExit }: { lab: Lab; onExit: () => void }) {
   const [askSolution, setAskSolution] = useState<null | 'solution' | 'compare'>(null)
   const [askReset, setAskReset] = useState(false)
   const [compared, setCompared] = useState<Record<number, boolean>>({})
+  /** self-check ticks, keyed `${level}:${testName}`; kept here so they survive tab switches */
+  const [ticks, setTicks] = useState<Record<string, boolean>>({})
   const editorRef = useRef<EditorHandle>(null)
   const testsRef = useRef<HTMLDivElement>(null)
+  /** a run is in flight (a ref, so a fast double Cmd+Enter can't start two) */
+  const busy = useRef(false)
+  /** false once the lab is closed; a run that finishes later still records a pass, quietly */
+  const alive = useRef(true)
+  useEffect(() => {
+    alive.current = true
+    return () => {
+      alive.current = false
+    }
+  }, [])
   const codeRef = useRef(code)
   codeRef.current = code
 
@@ -410,7 +422,10 @@ function LabView({ lab, onExit }: { lab: Lab; onExit: () => void }) {
     (level: number) => {
       const ms = Math.max(1000, timerElapsed())
       useStore.getState().passLabLevel(labId, level, ms)
+      if (!alive.current) return
       setCleared({ level, ms })
+      // the Spec tab now shows the level just unlocked
+      setView(Math.min(level + 1, n - 1))
       haptic('success')
       if (level + 1 >= n) {
         sfx('complete')
@@ -424,7 +439,8 @@ function LabView({ lab, onExit }: { lab: Lab; onExit: () => void }) {
   )
 
   const run = useCallback(async () => {
-    if (running) return
+    if (busy.current) return
+    busy.current = true
     const levels = current + 1
     const src = codeRef.current
     if (src !== savedRef.current) {
@@ -442,26 +458,32 @@ function LabView({ lab, onExit }: { lab: Lab; onExit: () => void }) {
         lab.levels.slice(0, levels).map((l) => l.tests),
       )
       const wallMs = performance.now() - t0
-      setLast({ r, levels, code: src, wallMs })
-      if (r.timedOut) void runner.warmup()
       const expected = lab.levels.slice(0, levels).reduce((k, l) => k + testNames(l.tests).length, 0)
       const allOk = !r.error && r.results.length > 0 && r.results.length >= expected && r.results.every((t) => t.ok)
       const levelPassed = useStore.getState().labs[labId]?.levelsPassed ?? 0
-      if (allOk && levelPassed === current && levelPassed < n) passLevel(current)
+      const newPass = allOk && levelPassed === current && levelPassed < n
+      if (!alive.current) {
+        if (newPass) passLevel(current)
+        return
+      }
+      setLast({ r, levels, code: src, wallMs })
+      if (newPass) passLevel(current)
       else if (allOk) {
         sfx('correct')
         haptic('success')
       } else haptic('error')
       switchTab('tests')
     } catch (err) {
+      if (!alive.current) return
       if (!(err instanceof RunnerUnavailableError)) {
         setLast({ r: { results: [], stdout: '', error: String((err as Error)?.message ?? err) }, levels, code: src, wallMs: 0 })
       }
       switchTab('tests')
     } finally {
-      setRunning(false)
+      busy.current = false
+      if (alive.current) setRunning(false)
     }
-  }, [running, current, labId, lab, runner, n, passLevel, switchTab])
+  }, [current, labId, lab, runner, n, passLevel, switchTab])
 
   useEffect(() => {
     if (cleared) testsRef.current?.scrollTo({ top: 0, behavior: 'smooth' })
@@ -602,6 +624,8 @@ function LabView({ lab, onExit }: { lab: Lab; onExit: () => void }) {
                   complete={complete}
                   code={code}
                   compared={!!compared[current]}
+                  checked={ticks}
+                  onToggle={(name) => setTicks((s) => ({ ...s, [`${current}:${name}`]: !s[`${current}:${name}`] }))}
                   onCompare={() => setAskSolution('compare')}
                   onRetry={() => {
                     setManualCheck(false)
@@ -1315,6 +1339,8 @@ function SelfCheckPanel({
   complete,
   code,
   compared,
+  checked,
+  onToggle,
   onCompare,
   onRetry,
   reason,
@@ -1330,6 +1356,9 @@ function SelfCheckPanel({
   complete: boolean
   code: string
   compared: boolean
+  /** ticks keyed `${level}:${testName}` */
+  checked: Record<string, boolean>
+  onToggle: (name: string) => void
   onCompare: () => void
   onRetry: () => void
   reason: string
@@ -1343,9 +1372,9 @@ function SelfCheckPanel({
   const n = lab.levels.length
   const lv = lab.levels[level]
   const chunks = useMemo(() => splitTests(lv.tests), [lv.tests])
-  const [checked, setChecked] = useState<Record<string, boolean>>({})
+  const isOn = (name: string) => !!checked[`${level}:${name}`]
   const tests = chunks.filter((c) => c.name)
-  const done = tests.filter((c) => checked[c.name!]).length
+  const done = tests.filter((c) => isOn(c.name!)).length
   const diff = useMemo(() => (compared ? lineDiff(code, lv.solution) : null), [compared, code, lv.solution])
 
   return (
@@ -1383,19 +1412,19 @@ function SelfCheckPanel({
         <div className="lab-checks">
           {chunks.map((c, i) =>
             c.name ? (
-              <div key={i} className={['lab-check', checked[c.name] && 'lab-check--on'].filter(Boolean).join(' ')}>
+              <div key={i} className={['lab-check', isOn(c.name) && 'lab-check--on'].filter(Boolean).join(' ')}>
                 <button
                   type="button"
                   className="lab-check__toggle"
-                  aria-pressed={!!checked[c.name]}
+                  aria-pressed={isOn(c.name)}
                   onClick={() => {
                     sfx('select')
-                    setChecked((s) => ({ ...s, [c.name!]: !s[c.name!] }))
+                    onToggle(c.name!)
                   }}
                 >
-                  <span className="lab-check__box">{checked[c.name] && <Check size={14} strokeWidth={3.4} />}</span>
+                  <span className="lab-check__box">{isOn(c.name) && <Check size={14} strokeWidth={3.4} />}</span>
                   <TestName name={c.name} />
-                  <span className="lab-check__label">{checked[c.name] ? 'Handled' : 'Check'}</span>
+                  <span className="lab-check__label">{isOn(c.name) ? 'Handled' : 'Check'}</span>
                 </button>
                 <Code code={c.code} />
               </div>

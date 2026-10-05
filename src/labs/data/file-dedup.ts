@@ -644,6 +644,7 @@ const level3: LabLevel = {
 - The partial pass reads only the first 4096 bytes of a file.
 - A file is read in full only if its partial hash matched another file's.
 - A file of 4096 bytes or less is opened **once**: its partial hash already covers every byte.
+- No file is opened more than **twice**: once for its partial hash, and once more only if it needs a full hash.
 
 Example: 20 files of 256 KiB that differ in their first byte should cost 80 KiB of reads (20 × 4 KiB), not 5 MiB.`,
   tests: L3_TESTS,
@@ -891,7 +892,7 @@ const level4: LabLevel = {
 - \`"delete"\`: every other path in the groups, sorted.
 - \`"files_scanned"\`: how many regular files are under \`root\`. Symlinks don't count; empty files do.
 
-\`prefer\` is an optional directory, like \`"/originals"\`. When a group has files inside it, keep the smallest of **those** instead. A group with nothing inside it falls back to its smallest path.
+\`prefer\` is an optional directory, like \`"/originals"\`. When a group has files inside it, keep the smallest of **those** instead. A group with nothing inside it falls back to its smallest path. Inside means anywhere below that directory, matching whole names: \`/originals/2023/a.jpg\` is inside \`/originals\`, but \`/originals-old/a.jpg\` is not.
 
 Don't hash anything twice: \`report\` must read no more bytes than one \`find_duplicates\` call does.
 

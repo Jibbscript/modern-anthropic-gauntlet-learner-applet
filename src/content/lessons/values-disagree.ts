@@ -28,7 +28,7 @@ const lesson: Lesson = {
       id: 'channels',
       title: 'The channels, in order',
       body:
-        'Disagreement has a usual escalation path. Each step costs more trust to use, so start low.\n\n' +
+        'Disagreement has a usual escalation path. Each step up costs more time and goodwill, so start low.\n\n' +
         "1. **1:1**: ask the decision-maker what you're missing, then make your case\n" +
         '2. **Written proposal**: one page that others can review and challenge\n' +
         '3. **Data**: propose a small experiment that would settle it\n' +
@@ -121,12 +121,12 @@ const lesson: Lesson = {
         'Your team picked a message queue you think is the wrong fit. You made your case in the design review, with benchmarks. The tech lead heard you out and chose the other one. What now?',
       choices: [
         {
-          text: 'Commit fully. Record your concern in the design doc, and agree on a signal, like p99 over a threshold, that would reopen it.',
+          text: 'Commit fully. Note your concern in the design doc and agree on a signal, say p99 over a threshold, that reopens it.',
           correct: true,
           feedback: 'Disagree and commit, done well. The revisit trigger turns your objection into a test instead of a grudge.',
         },
         {
-          text: 'Keep raising it at standups until the team sees the problem; persistence shows you care about quality and maintainability.',
+          text: 'Keep raising it at standups and in retros until the team sees the problem; persistence shows you care about quality and long-term maintainability.',
           feedback: "You've had a fair hearing. Relitigating a preference wears out the team, and your credibility for the next disagreement.",
         },
         {
@@ -149,20 +149,20 @@ const lesson: Lesson = {
         "Your manager asks you to ship logging that sends full user conversations to a third-party analytics vendor. The privacy policy doesn't mention it. You raised it 1:1, and they said *legal is fine with it, just ship it.* What now?",
       choices: [
         {
-          text: "Ask to see the legal sign-off, or check with the privacy team yourself, and tell your manager you're doing it. Don't ship until then.",
+          text: "Don't ship yet. Ask to see the legal sign-off or check with the privacy team, and tell your manager you're doing it.",
           correct: true,
           feedback: 'A principle, so you persist, but through channels and in the open. You might be wrong about legal, and checking settles it.',
         },
         {
-          text: 'Ship it. You raised the concern, your manager made the call, and that is what disagree and commit means.',
+          text: 'Ship it. You raised the concern 1:1, your manager heard you and made the call, and that is what disagree and commit means.',
           feedback: 'Disagree and commit is for preferences. User data going somewhere users were never told about is a principle question, and *legal is fine* is a claim you can check.',
         },
         {
-          text: "Refuse to ship it, and post in the company-wide channel so leadership sees what's happening before it goes out.",
+          text: "Refuse to ship it, and post in the company-wide channel so that leadership sees exactly what's happening before it goes out.",
           feedback: "Persistence is right; going public first isn't. There's a direct channel, privacy or legal, that you haven't tried yet.",
         },
         {
-          text: 'Ship it, but quietly strip the message content from the payload first, so nothing sensitive actually leaves.',
+          text: 'Ship it, but quietly strip the message content out of the payload first, so that nothing sensitive actually leaves the building.',
           feedback: 'A secret workaround swaps one undisclosed decision for another. Make the disagreement visible instead.',
         },
       ],
@@ -198,7 +198,7 @@ const lesson: Lesson = {
       callout: {
         tone: 'insight',
         text:
-          "Coaches who debrief candidates report that evaluators value holding complexity, admitting what you don't know and sticking to unpopular convictions, and mark down stated values that don't match past behavior.",
+          "Interview coaches and 2026 press coverage report that evaluators value holding complexity, admitting what you don't know and sticking to unpopular convictions, and mark down stated values that don't match past behavior.",
       },
     },
     {
@@ -207,12 +207,12 @@ const lesson: Lesson = {
       eyebrow: 'Which is stronger?',
       question: "*Tell me about a time you disagreed with your company's direction.*",
       a:
-        'Leadership decided to sunset our self-hosted product to push everyone to cloud. Honestly, it was a revenue grab. I told them it would alienate our best customers, they ignored engineering as usual, and sure enough we lost two big accounts. A lot of us left within the year, me included.',
+        "Leadership decided to sunset our self-hosted product. I thought we'd lose our most regulated customers and wrote a memo with renewal data. Their case was real: self-hosted took a third of engineering for 8% of revenue. We lost two accounts and shipped twice as fast. I'd call it right, but too abrupt for customers.",
       b:
-        "Leadership decided to sunset our self-hosted product. I thought we'd lose our most regulated customers, and wrote a memo with renewal data. Their case was real: self-hosted took a third of engineering for 8% of revenue. We did lose two accounts, and we shipped twice as fast. I'd now call it right, but too abrupt for customers.",
-      better: 'b',
+        'Leadership decided to sunset our self-hosted product to push everyone to cloud. Honestly, it was a pure revenue grab dressed up as strategy. I told them it would alienate our best customers, they ignored engineering as usual, and sure enough we lost two big accounts. A lot of good engineers left within the year, me included.',
+      better: 'a',
       explanation:
-        "A has a villain, a vindication and an exit, and no sign the candidate understood the other side. B states leadership's reasoning in terms they would agree with, shows the channel and the evidence, and gives a split verdict. Both stories include the lost accounts. Only B treats them as data rather than proof.",
+        "B has a villain, a vindication and an exit, and no sign the candidate understood the other side. A states leadership's reasoning in terms they would agree with, shows the channel and the evidence, and gives a split verdict. Both stories include the lost accounts. Only A treats them as data rather than proof.",
     },
     {
       kind: 'interview',
@@ -229,7 +229,7 @@ const lesson: Lesson = {
               feedback: 'The decision, your view, and their goal stated fairly, all before a word about what you did.',
             },
             {
-              text: 'Leadership pushed weekly releases because a VP wanted to look fast to the board. Engineering saw the problems coming a mile away, but nobody upstairs was interested in hearing it from us.',
+              text: 'Leadership pushed weekly releases because a VP wanted to look fast in front of the board. Engineering saw the problems coming a mile away, but honestly nobody upstairs was interested in hearing any of it from us.',
               quality: 'weak',
               feedback: 'A villain and a guess at motives. The interviewer learns more about how you talk about leaders than about the decision.',
             },
@@ -244,7 +244,7 @@ const lesson: Lesson = {
           interviewer: 'What did you actually do about it?',
           options: [
             {
-              text: 'I raised it with my manager a couple of times, and mentioned it in our retro. In the end it was leadership\'s call, so I went along with it.',
+              text: "I raised it with my manager a couple of times and mentioned it again in our retro. In the end it was leadership's call to make, so I went along with it.",
               quality: 'okay',
               feedback: 'You raised it, which counts. But there was no evidence or proposal, and *went along with it* sounds more like resignation than commitment.',
             },
@@ -254,7 +254,7 @@ const lesson: Lesson = {
               feedback: "Staying quiet about something you expected to cause incidents is the passive ditch. Interviewers will read it as how you'd behave inside.",
             },
             {
-              text: 'I asked my manager what was driving it, then wrote a one-pager with six months of incident data: keep a long soak for schema and auth changes only. They adopted half. Then I committed.',
+              text: 'I asked my manager what was driving it, then wrote a one-pager with six months of incident data: keep the long soak for schema and auth changes only. They took schema, not auth. I committed.',
               quality: 'strong',
               feedback: 'Understanding first, then evidence, a concrete proposal, a partial win, and real commitment afterward.',
             },
@@ -269,12 +269,12 @@ const lesson: Lesson = {
               feedback: "This cherry-picks the half that flatters you. If the story continued past that quarter, they'll ask, and you'll be caught.",
             },
             {
-              text: "Half. Incidents rose for a quarter, so the risk was real. Then they fell below the old rate once rollbacks got faster, which I hadn't priced in. The real variable was rollback speed, not soak time.",
+              text: "Half. Incidents rose for a quarter, so the risk was real. Then they fell below the old rate once rollbacks got faster, which I hadn't priced in. Rollback speed mattered more than soak time.",
               quality: 'strong',
               feedback: "A split verdict with evidence, and a sharper model than you started with. That's what *were you right?* is fishing for.",
             },
             {
-              text: "It's hard to say, honestly. There were a lot of factors involved that year, and it's difficult to isolate which one actually made the difference.",
+              text: "It's hard to say, honestly. There were a lot of other factors in play that year, like team changes and a new on-call rotation, so it's difficult to isolate which one actually made the difference.",
               quality: 'okay',
               feedback: 'Sometimes true, but it ducks the question. Give your best guess, with the evidence on each side.',
             },
@@ -292,25 +292,26 @@ const lesson: Lesson = {
         'A write-up of a Sep 2026 values round lists this possible follow-up: *Suppose you joined and strongly disagreed with a company safety decision. What would you do?* Which answer is strongest?',
       choices: [
         {
-          text: "Learn the reasoning first; I may lack context. If I still disagree, argue it in writing with evidence, and escalate if it's a real safety issue. I'd know my line in advance.",
+          text: "Learn the reasoning first; I may lack context. If I still disagree, argue in writing with evidence, escalating if it's a real safety issue. And know my line beforehand.",
           correct: true,
-          feedback: 'Understand, argue, escalate by stakes, and a line named in advance. It shows a process, and it allows for being wrong.',
+          feedback: 'Understand, argue, escalate by stakes, and a line named in advance. It shows a process, and it allows for being wrong. Expect the follow-up: *so where is your line?*',
         },
         {
-          text: "I'd trust the decision. Leadership has far more context on safety than a new engineer does, and second-guessing them from outside the room wouldn't help anyone.",
+          text: "I'd trust the decision. Leadership has far more context on safety than a new engineer does, and second-guessing them from outside the room wouldn't really help anyone.",
           feedback: 'Blind deference. It suggests you would stay quiet in exactly the situation the question describes.',
         },
         {
-          text: "I'd raise it publicly. If it's really a safety issue, then people outside the company deserve to know about it right away, not after an internal process.",
-          feedback: 'This skips every internal channel. Going outside first, before you even know the reasoning, is the aggressive ditch.',
+          text: "I'd raise it publicly. If it's really a safety issue, then people outside the company deserve to know about it right away, not after an internal process drags on.",
+          feedback:
+            "Going outside isn't always wrong: California's SB 53 (signed Sep 2025, endorsed by Anthropic) includes whistleblower protections. But going public first, before you even know the reasoning, skips every channel that could resolve it.",
         },
         {
-          text: "I'd leave. I wouldn't want to work somewhere that made safety decisions I disagreed with, so for me it would be a clear dealbreaker.",
+          text: "I'd leave. I wouldn't want to work somewhere that made safety decisions I strongly disagreed with, so for me that would be a clear dealbreaker, full stop.",
           feedback: 'Exit as the first move, not the last. It also implies you expect to agree with every decision, which nobody does.',
         },
       ],
       explanation:
-        'Same structure as any disagreement: understand, argue with evidence, match persistence to stakes. Anthropic\'s published values (company page, as of Oct 2026) say the mission is "the final arbiter in our decisions" and that "none of us are bystanders." Read that as permission to raise it, not as a promise about how any one disagreement goes.',
+        'Same structure as any disagreement: understand, argue with evidence, match persistence to stakes. Anthropic\'s published values (company page, accessed Oct 2026) say the mission is "the final arbiter in our decisions" and that "none of us are bystanders." You can cite that as a reason you would speak up. It is a stated norm, not a promise about how any one disagreement goes, so your answer should not depend on it.',
     },
     {
       kind: 'reflect',
@@ -373,7 +374,7 @@ const lesson: Lesson = {
       prompt: 'When is *disagree and commit* the wrong response?',
       choices: [
         {
-          text: 'When it is a principle, such as harm to users or a legal line, and channels remain untried',
+          text: "When it's a principle, like harm to users or a legal line, and channels remain untried",
           correct: true,
           feedback: 'Right. Committing to a principle violation because you were overruled once is not what the norm is for.',
         },
@@ -397,7 +398,7 @@ const lesson: Lesson = {
       skill: 'values.disagreement',
       kind: 'compare',
       question: 'You argued against a migration two years ago, and it was later reversed. *Looking back, were you right?*',
-      a: 'Yes. They reversed the decision eighteen months later, which vindicated what I had been saying all along. I think the team should have listened earlier.',
+      a: 'Yes. They reversed the decision eighteen months later, which vindicated what I had been saying all along. Honestly, I think the team should have listened to me much earlier.',
       b: 'Partly. It was reversed eighteen months later, but over cost, not the reliability risk I had argued about. My concern was real; it just was not the one that mattered.',
       better: 'b',
       explanation: 'A treats the reversal as proof. B checks whether the reversal happened for the reason the candidate predicted, which is the honest test, and finds it only partly did.',

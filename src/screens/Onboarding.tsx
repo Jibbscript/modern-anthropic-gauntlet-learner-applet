@@ -120,6 +120,8 @@ export default function Onboarding() {
   const [conf, setConf] = useState<Partial<Record<AreaId, number>>>(() => ({ ...prev.confidence }))
   const [goal, setGoal] = useState(GOALS.some((g) => g.xp === prevGoal) ? prevGoal : 60)
   const [finishing, setFinishing] = useState(false)
+  /** set while revisiting a step from the plan summary: Continue returns to the plan */
+  const [editing, setEditing] = useState(false)
 
   const id: StepId = STEPS[step]
   const go = (to: number) => {
@@ -127,7 +129,13 @@ export default function Onboarding() {
     setDir(to > step ? 1 : -1)
     setStep(to)
   }
-  const next = () => go(step + 1)
+  const next = () => {
+    if (editing) {
+      setEditing(false)
+      go(STEPS.length - 1)
+    } else go(step + 1)
+  }
+  const cta = editing ? 'Back to plan' : 'Continue'
 
   const days = date ? daysBetween(today, date) : null
   const pastDate = days != null && days < 0
@@ -137,7 +145,8 @@ export default function Onboarding() {
     const ranked = CONF_AREAS.map((a, i) => ({ a, v: conf[a] ?? 3, order: COURSES.findIndex((c) => c.id === a), i }))
       .filter((x) => COURSE_BY_ID[x.a])
       .sort((x, y) => x.v - y.v || x.order - y.order)
-    return ranked[0] ? { course: COURSE_BY_ID[ranked[0].a], v: ranked[0].v } : null
+    const tied = ranked.length > 1 && ranked.every((x) => x.v === ranked[0].v)
+    return ranked[0] ? { course: COURSE_BY_ID[ranked[0].a], v: ranked[0].v, tied } : null
   }, [conf])
 
   const finish = () => {
@@ -177,7 +186,7 @@ export default function Onboarding() {
       body = <About name={name} setName={setName} role={role} setRole={setRole} onEnter={() => role && next()} />
       foot = (
         <Button block size="lg" disabled={!role} onClick={next}>
-          {role ? 'Continue' : 'Pick a role'}
+          {role ? cta : 'Pick a role'}
         </Button>
       )
       break
@@ -200,7 +209,7 @@ export default function Onboarding() {
       )
       foot = (
         <Button block size="lg" disabled={!choice || pastDate || (choice === 'custom' && !date)} onClick={next}>
-          Continue
+          {cta}
         </Button>
       )
       break
@@ -208,7 +217,7 @@ export default function Onboarding() {
       body = <Confidence conf={conf} setConf={setConf} />
       foot = (
         <Button block size="lg" disabled={rated < CONF_AREAS.length} onClick={next}>
-          {rated < CONF_AREAS.length ? `Rate ${CONF_AREAS.length - rated} more` : 'Continue'}
+          {rated < CONF_AREAS.length ? `Rate ${CONF_AREAS.length - rated} more` : cta}
         </Button>
       )
       break
@@ -216,7 +225,7 @@ export default function Onboarding() {
       body = <Goal goal={goal} setGoal={setGoal} />
       foot = (
         <Button block size="lg" onClick={next}>
-          Continue
+          {cta}
         </Button>
       )
       break
@@ -229,7 +238,10 @@ export default function Onboarding() {
           days={choice === 'none' ? null : days}
           goal={goal}
           first={first}
-          onEdit={go}
+          onEdit={(to) => {
+            setEditing(true)
+            go(to)
+          }}
         />
       )
       foot = (
@@ -251,7 +263,14 @@ export default function Onboarding() {
             exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.18 }}
           >
-            <IconButton label="Back" className="onb-head__back" onClick={() => go(step - 1)}>
+            <IconButton
+              label="Back"
+              className="onb-head__back"
+              onClick={() => {
+                setEditing(false)
+                go(step - 1)
+              }}
+            >
               <ChevronLeft size={28} strokeWidth={2.6} />
             </IconButton>
             <div className="onb-head__bar">
@@ -709,11 +728,17 @@ function Plan(p: {
   date: string
   days: number | null
   goal: number
-  first: { course: Course; v: number } | null
+  first: { course: Course; v: number; tied: boolean } | null
   onEdit: (step: number) => void
 }) {
   const g = GOALS.find((x) => x.xp === p.goal) ?? GOALS[1]
-  const reason = !p.first ? '' : p.first.v <= 2 ? `You rated it ${CONF_LABEL[p.first.v]}, so it comes first.` : 'Your lowest-rated area, so it comes first.'
+  const reason = !p.first
+    ? ''
+    : p.first.tied
+      ? 'You rated every area the same, so start where the loop starts.'
+      : p.first.v <= 2
+        ? `You rated it ${CONF_LABEL[p.first.v]}, so it comes first.`
+        : 'Your lowest-rated area, so it comes first.'
   const rows: { icon: LucideIcon; label: string; value: string; step: number }[] = [
     { icon: UserRound, label: 'Role', value: p.name ? `${p.name} · ${ROLE_LABEL[p.role]}` : ROLE_LABEL[p.role], step: 1 },
     {
@@ -746,8 +771,10 @@ function Plan(p: {
             <span className="onb-sum__icon" aria-hidden>
               <r.icon size={18} strokeWidth={2.6} />
             </span>
-            <span className="onb-sum__label">{r.label}</span>
-            <span className="onb-sum__value">{r.value}</span>
+            <span className="onb-sum__text">
+              <span className="onb-sum__label">{r.label}</span>
+              <span className="onb-sum__value">{r.value}</span>
+            </span>
             <ChevronRight className="onb-sum__chev" size={18} strokeWidth={2.6} aria-hidden />
           </button>
         ))}

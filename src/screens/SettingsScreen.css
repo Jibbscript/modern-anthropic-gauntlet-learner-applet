@@ -145,6 +145,20 @@
   opacity: 0;
   cursor: pointer;
 }
+.set-input--date.is-empty:not(:focus)::-webkit-datetime-edit {
+  color: transparent;
+}
+.set-date__ph {
+  position: absolute;
+  left: 42px;
+  color: var(--ink-3);
+  font-size: var(--fs-md);
+  font-weight: 400;
+  pointer-events: none;
+}
+.set-input--date:focus + .set-date__ph {
+  display: none;
+}
 .set-date__clear {
   position: absolute;
   z-index: 1;

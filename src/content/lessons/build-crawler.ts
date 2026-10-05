@@ -17,7 +17,7 @@ const lesson: Lesson = {
         'That arc is the question. The BFS is the warm-up; the signal is in how you handle shared state. Get level 1 done quickly so the conversation has time to get there.',
       callout: {
         tone: 'insight',
-        text: 'Candidates report a same-host crawler that then has to be made concurrent; one public aggregator of candidate reports listed it as the most frequent coding question as of Oct 2026 ([aceoffer](https://aceoffer.app/interviews/anthropic/coding-questions)). Formats vary, so treat this as a likely shape, not a script.',
+        text: 'Candidates report a same-host crawler that then has to be made concurrent; one commercial prep site that aggregates those reports counted it as the most-reported coding question (61 of 299 reports, [aceoffer](https://aceoffer.app/interviews/anthropic/coding-questions), Oct 2026). Formats vary, so treat this as a likely shape, not a script.',
       },
     },
     {
@@ -26,14 +26,14 @@ const lesson: Lesson = {
       eyebrow: 'Plan the round',
       prompt: 'Put the build in the order you would tackle it in a progressive interview, where each level builds on the last.',
       items: [
-        'Single-threaded BFS that returns every page it reached',
-        'Normalize links: resolve relative URLs, drop `#fragments`, stay on one host',
+        'Single-threaded BFS over a toy site that returns every page it reached',
+        'Harden the visited set: resolve relative links, drop `#fragments`, stay on one host',
         'Fetch with a pool of N workers sharing one frontier',
         'Fix the duplicate fetches the workers introduce',
         'Add politeness: per-host rate limit and robots.txt',
       ],
       explanation:
-        'Correct before concurrent. Normalizing is part of *correct*: a visited set of raw strings dedupes nothing. Duplicate fetches only appear once workers share state, so the fix follows the pool. Politeness comes last because it only matters once you are fast enough to hurt someone. Test at every level, not only at the end.',
+        'Correct before concurrent. Get the loop running end to end first, then make its visited set mean something: a set of raw strings misses `/a` vs `/a#top`. Duplicate fetches only appear once workers share state, so the fix follows the pool. Politeness comes last because it only matters once you are fast enough to hurt someone. Test at every level, not only at the end.',
       hint: 'Which problems cannot exist until an earlier level does?',
     },
     {
@@ -59,7 +59,7 @@ def crawl(start: str, fetch_links) -> set[str]:
                 seen.add(link)
                 frontier.append(link)
     return seen`,
-        highlight: [12, 13],
+        highlight: [13, 14],
       },
     },
     {
@@ -268,9 +268,9 @@ def test_each_page_fetched_once():
               feedback: 'Why threads fit, the shape, and the risk, all before typing. That is the conversation they want.',
             },
             {
-              text: 'Switch to `multiprocessing` so we get around the GIL.',
+              text: 'The GIL stops threads running in parallel, so a `multiprocessing.Pool` with one process per core, merging each process\'s results at the end.',
               quality: 'weak',
-              feedback: 'The time goes to network waits, which already release the GIL. Processes add pickling and make `seen` far harder to share.',
+              feedback: 'The time goes to network waits, which already release the GIL. Processes cap you at a few concurrent fetches when you could have fifty in flight, add pickling, and make a shared `seen` far harder.',
             },
           ],
         },
@@ -310,7 +310,7 @@ def test_each_page_fetched_once():
             {
               text: 'With the lock in place it is correct by construction, so I would move on to the next feature.',
               quality: 'weak',
-              feedback: 'The prompt literally asked you to test it yourself. Confidence is not evidence, and locks are easy to put in the wrong place.',
+              feedback: 'They just asked how you would check. Confidence is not evidence, and a lock is easy to put in the wrong place, as the fetch-inside-the-check bug shows.',
             },
           ],
         },
