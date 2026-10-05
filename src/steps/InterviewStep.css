@@ -165,14 +165,29 @@
   --b-line: var(--bad);
 }
 
+/* verdict chip + note: the chip floats so the note wraps under it instead of squeezing into a narrow column */
 .interview-note {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
+  display: flow-root;
+  align-self: stretch;
   max-width: 100%;
-  padding: 0 2px 0 0;
+  padding: 0 2px;
 }
 .interview-note .interview-chip {
+  float: left;
+  margin: 0 8px 2px 0;
+}
+.interview-note__text.rich {
+  display: block;
+  min-width: 0;
+  font-size: var(--fs-sm);
+  line-height: 1.45;
+  color: var(--ink-2);
+  padding-top: 2px;
+}
+.interview-note__text.rich > * + * {
+  margin-top: 0.5em;
+}
+.interview-chip {
   flex: none;
   margin-top: 1px;
 }
@@ -185,6 +200,10 @@
 }
 .interview-chip {
   padding: 3px 9px 3px 8px;
+  line-height: 1.25;
+}
+.interview-chip svg {
+  flex: none;
 }
 .interview-chip--strong {
   background: var(--good-soft);
@@ -392,12 +411,26 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
+  min-width: 0;
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.05em;
   text-transform: uppercase;
   color: var(--q-ink);
   white-space: nowrap;
+}
+.interview-tally__label svg {
+  flex: none;
+}
+/* 320-359px: the three tally cells are ~57px inside; the label alone fits, the icon does not */
+@media (max-width: 359px) {
+  .interview-tally__label svg {
+    display: none;
+  }
+  .interview-tally__cell {
+    padding-left: 8px;
+    padding-right: 8px;
+  }
 }
 .interview-tally__n {
   font-size: var(--fs-2xl);

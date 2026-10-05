@@ -842,6 +842,17 @@
   flex: none;
 }
 
+/* grow the 32px link to a 44px tap target without changing layout */
+.lab-link {
+  position: relative;
+}
+
+.lab-link::before {
+  content: '';
+  position: absolute;
+  inset: -6px -4px;
+}
+
 /* stdout */
 .lab-out {
   border-radius: var(--r-md);

@@ -435,7 +435,7 @@ function ReviewCard({ s, now }: { s: GauntletState; now: number }) {
               <span>First pass locks them in</span>
             )}
             <span className="learn-review__dot" aria-hidden="true" />
-            <span className="tabular">{session < n ? `${session} now, ≈ ${mins} min` : `≈ ${mins} min`}</span>
+            <span className="tabular">{session < n ? `First ${session}, ≈ ${mins} min` : `≈ ${mins} min`}</span>
           </div>
         </div>
       </div>
@@ -593,7 +593,9 @@ export default function LearnScreen() {
     ? `${live.count}-day streak, done today`
     : live.count > 0
       ? `${live.count}-day streak, at risk: not done today`
-      : 'No streak yet'
+      : s.streak.best > 0
+        ? 'Streak ended. One lesson starts a new one'
+        : 'No streak yet'
 
   const open = (k: SheetKind) => {
     sfx('tap')

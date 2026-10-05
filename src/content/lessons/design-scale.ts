@@ -146,7 +146,7 @@ const lesson: Lesson = {
       id: 'metadata-db',
       question: "Your doc's storage section needs one paragraph on the metadata database. Which one belongs there?",
       a: 'We will use a distributed SQL database for metadata. It scales horizontally, survives losing a node without manual failover, and still gives us serializable transactions. Products like ours outgrow a single Postgres, and migrating a live database later is far riskier than starting distributed.',
-      b: "**We chose** one Postgres primary plus a replica **over** distributed SQL **because** peak is about 70 runs a second and metadata grows well under 1 TB a year, and *insert a version, move the head* stays one local transaction. **Cost:** a vertical ceiling, and failover we run ourselves. **Revisit if** sustained writes pass half the primary's tested capacity; then shard by `org_id`.",
+      b: "We chose one Postgres primary plus a replica over distributed SQL because peak is about 70 runs a second and metadata grows well under 1 TB a year, and *insert a version, move the head* stays one local transaction. Cost: a vertical ceiling, and failover we run ourselves. Revisit if sustained writes pass half the primary's tested capacity; then shard by `org_id`.",
       better: 'b',
       explanation:
         "Both designs are defensible; B is the better paragraph: it ties the choice to this system's numbers, admits its cost and gives a trigger you can measure. A argues from what products *like ours* do and never prices its own costs (consensus latency on every write, a harder system to run). Its migration worry is real, and B answers it: *a vertical ceiling*, plus when to act.",

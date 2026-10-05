@@ -130,16 +130,18 @@
   text-align: center;
 }
 .race-write > span {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
+  display: inline;
+  line-height: 1.35;
+  text-wrap: balance;
 }
 .race-write .is-bad {
   color: var(--bad-ink);
   font-weight: 700;
 }
 .race-write svg {
-  flex: none;
+  display: inline-block;
+  vertical-align: -2px;
+  margin-right: 5px;
 }
 
 /* -------------------------------------------------------------- swaps */
@@ -332,7 +334,18 @@
 .race-ins__short {
   display: none;
 }
-@container race-col (max-width: 112px) {
+/* two columns on a 320px phone: keep the operands, just tighter */
+@container race-col (max-width: 124px) {
+  .race-ins__lock {
+    display: none;
+  }
+  .race-ins {
+    gap: 4px;
+    padding-right: 3px;
+    font-size: 12px;
+  }
+}
+@container race-col (max-width: 99px) {
   .race-ins__arg,
   .race-ins__lock,
   .race-ins__long,

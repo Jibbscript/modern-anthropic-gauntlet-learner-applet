@@ -10,7 +10,7 @@ import { Button, IconButton } from '../ui/Button'
 import { Callout } from '../ui/Callout'
 import { courseStyle } from '../ui/course'
 import { haptic, sfx } from '../ui/fx'
-import { STATUS_LABEL, ago, dueIn, groupOf, isDrafted, layerDone, storyStatus } from './StoriesScreen'
+import { STATUS_LABEL, ago, dueIn, groupOf, isDrafted, layerDone, storyStatus, type StoryGroup } from './StoriesScreen'
 import './StoryEditor.css'
 
 const WPM = 150
@@ -18,13 +18,30 @@ const WPM = 150
 const MAX_SECONDS = 180
 const SAVE_MS = 450
 
-const TIPS = [
-  '**What lands in a culture answer**',
-  '- Say what you actually thought at the time, not the polished version.',
-  '- Name the cost: what it took from you, the team or the project.',
-  '- Say what you would do differently now, and why.',
-  '- No villains. Give the other side’s view at its strongest.',
-].join('\n')
+/** what interviewers listen for, per kind of story */
+const TIPS: Record<StoryGroup['id'], string> = {
+  culture: [
+    '**What lands in a culture answer**',
+    '- Say what you actually thought at the time, not the polished version.',
+    '- Name the cost: what it took from you, the team or the project.',
+    '- Say what you would do differently now, and why.',
+    '- No villains. Give the other side’s view at its strongest.',
+  ].join('\n'),
+  recruiter: [
+    '**What lands on a recruiter screen**',
+    '- Be specific: a team, a paper, a decision. Not the mission statement.',
+    '- Tie it to something you have actually done.',
+    '- Real disagreement is fine. Show you understand the other side first.',
+    '- Keep it under two minutes; they will ask for more.',
+  ].join('\n'),
+  technical: [
+    '**What lands in a technical story**',
+    '- Say “I” for your part and “we” for the team’s. Interviewers listen for the difference.',
+    '- Name the alternatives you rejected and why.',
+    '- Bring numbers: scale, latency, cost, what changed.',
+    '- Say what broke and what you would change now.',
+  ].join('\n'),
+}
 
 export function wordCount(text: string): number {
   const t = text.trim()
@@ -77,6 +94,8 @@ export default function StoryEditor({ slot }: { slot: StorySlotId }) {
   const [save, setSave] = useState<SaveState>('idle')
   const pending = useRef<{ layers: Record<number, string>; notes?: string } | null>(null)
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  /** "Saved" shows for a moment, then the header goes back to the story's status */
+  const savedTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const flush = useCallback(() => {
     if (timer.current) clearTimeout(timer.current)
@@ -86,12 +105,15 @@ export default function StoryEditor({ slot }: { slot: StorySlotId }) {
     pending.current = null
     saveStory(slot, p)
     setSave('saved')
+    if (savedTimer.current) clearTimeout(savedTimer.current)
+    savedTimer.current = setTimeout(() => setSave('idle'), 1600)
   }, [saveStory, slot])
 
   const queue = useCallback(
     (patch: { layers?: Record<number, string>; notes?: string }) => {
       const prev = pending.current ?? { layers: {} }
       pending.current = { layers: { ...prev.layers, ...(patch.layers ?? {}) }, notes: patch.notes ?? prev.notes }
+      if (savedTimer.current) clearTimeout(savedTimer.current)
       setSave('saving')
       if (timer.current) clearTimeout(timer.current)
       timer.current = setTimeout(flush, SAVE_MS)
@@ -110,6 +132,13 @@ export default function StoryEditor({ slot }: { slot: StorySlotId }) {
       flush()
     }
   }, [flush])
+  // declared after the flush effect so its cleanup runs last and clears the timer flush just set
+  useEffect(
+    () => () => {
+      if (savedTimer.current) clearTimeout(savedTimer.current)
+    },
+    [],
+  )
 
   const related = useMemo(
     () =>
@@ -146,6 +175,8 @@ export default function StoryEditor({ slot }: { slot: StorySlotId }) {
   const seconds = (words / WPM) * 60
   const long = seconds > MAX_SECONDS
   const need = Math.max(0, 2 - done)
+  // a story already on the rehearsal schedule can always be rehearsed, even if it is thin
+  const canRehearse = drafted || status === 'due'
 
   const statusLine =
     save === 'saving'
@@ -269,11 +300,12 @@ export default function StoryEditor({ slot }: { slot: StorySlotId }) {
           </ol>
 
           <section className="sed-sec">
-            <h3 className="sed-sec__title">
+            <h3 className="sed-sec__title" id="sed-notes-title">
               <NotebookPen size={18} strokeWidth={2.6} />
               Notes &amp; lesson reflections
             </h3>
             <AutoTextarea
+              aria-labelledby="sed-notes-title"
               className="sed-input sed-input--notes"
               value={notes}
               placeholder="Names, numbers, dates, the one line you want to land…"
@@ -290,13 +322,12 @@ export default function StoryEditor({ slot }: { slot: StorySlotId }) {
                 <div key={r.key} className="sed-refl">
                   <div className="sed-refl__head">
                     <BookOpenText size={15} strokeWidth={2.6} />
-                    <span>
-                      From the lesson <b>{r.lesson}</b>
-                    </span>
+                    <span>From the lesson</span>
                   </div>
+                  <b className="sed-refl__lesson">{r.lesson}</b>
                   <p className="sed-refl__text">{text}</p>
                   <Button
-                    size="sm"
+                    size="md"
                     variant="secondary"
                     className="sed-refl__btn"
                     disabled={added}
@@ -333,7 +364,7 @@ export default function StoryEditor({ slot }: { slot: StorySlotId }) {
             </section>
           )}
 
-          <Callout callout={{ tone: 'tip', text: TIPS }} />
+          <Callout callout={{ tone: 'tip', text: TIPS[group.id] }} />
         </div>
       </div>
 
@@ -371,15 +402,15 @@ export default function StoryEditor({ slot }: { slot: StorySlotId }) {
         <Button
           block
           size="lg"
-          variant={drafted ? 'course' : 'primary'}
-          disabled={!drafted}
-          icon={drafted ? <Mic size={20} strokeWidth={2.6} /> : undefined}
+          variant={canRehearse ? 'course' : 'primary'}
+          disabled={!canRehearse}
+          icon={canRehearse ? <Mic size={20} strokeWidth={2.6} /> : undefined}
           onClick={() => {
             flush()
             nav.openDrill([slot])
           }}
         >
-          {drafted ? 'Rehearse this story' : `Write ${need} more ${need === 1 ? 'layer' : 'layers'} to rehearse`}
+          {canRehearse ? 'Rehearse this story' : `Write ${need} more ${need === 1 ? 'layer' : 'layers'} to rehearse`}
         </Button>
       </footer>
     </div>

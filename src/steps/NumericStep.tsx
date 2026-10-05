@@ -199,6 +199,8 @@ export default function NumericStep({ step, phase, attempt, setController, onHin
   const unit = step.unit?.trim() || undefined
   /** "×" and "%" read as part of the number ("6.5×"), not as a word in a chip */
   const sym = !!unit && SYMBOL_UNIT.test(unit)
+  /** short units ("s", "ms", "GB") sit beside the digits like "86,400 s"; longer ones get a chip */
+  const inline = !!unit && (sym || unit.length <= 2)
   const value = useMemo(() => parseNumber(raw, unit), [raw, unit])
   const verdict = useMemo(() => (value == null ? null : judge(value, step.answer, tol)), [value, step.answer, tol])
   const withUnit = (n: string) => (!unit ? n : sym ? `${n}${unit}` : `${n} ${unit}`)
@@ -238,8 +240,8 @@ export default function NumericStep({ step, phase, attempt, setController, onHin
 
   // the number shrinks to fit beside the unit chip (see --nf-chars in the CSS); a symbol unit counts as glyphs
   const fit = {
-    '--nf-chars': Math.max(3, (raw || '0').length + (sym ? unit!.length : 0)),
-    '--nf-unit': unit && !sym ? `${unit.length * 9 + 36}px` : '0px',
+    '--nf-chars': Math.max(3, (raw || '0').length + (inline ? unit!.length + 1 : 0)),
+    '--nf-unit': unit && !inline ? `${unit.length * 9 + 36}px` : '0px',
   } as CSSProperties
   const fieldState = phase === 'answer' ? 'answer' : phase === 'correct' ? 'correct' : 'incorrect'
   // already a plain number (commas allowed): a "= …" echo would just repeat it
@@ -303,36 +305,36 @@ export default function NumericStep({ step, phase, attempt, setController, onHin
           transition={{ duration: phase === 'incorrect' ? 0.42 : 0.34 }}
           onClick={() => !locked && input.current?.focus()}
         >
-          <span className="numeric__grow" data-value={raw || '0'}>
-            <input
-              ref={input}
-              id={`numeric-${step.id}`}
-              className="numeric__input tabular"
-              type="text"
-              inputMode="decimal"
-              enterKeyHint="done"
-              autoComplete="off"
-              autoCorrect="off"
-              autoCapitalize="off"
-              spellCheck={false}
-              placeholder="0"
-              size={1}
-              value={raw}
-              readOnly={locked}
-              onChange={(e) => setRaw(e.target.value)}
-              aria-label={unit ? `Your answer, in ${unit}` : 'Your answer'}
-              aria-invalid={raw.trim() !== '' && value == null}
-              aria-describedby={`numeric-${step.id}-status`}
-            />
-          </span>
-          {unit &&
-            (sym ? (
-              <span className="numeric__sym" aria-hidden>
+          <span className="numeric__num">
+            <span className="numeric__grow" data-value={raw || '0'}>
+              <input
+                ref={input}
+                id={`numeric-${step.id}`}
+                className="numeric__input tabular"
+                type="text"
+                inputMode="decimal"
+                enterKeyHint="done"
+                autoComplete="off"
+                autoCorrect="off"
+                autoCapitalize="off"
+                spellCheck={false}
+                placeholder="0"
+                size={1}
+                value={raw}
+                readOnly={locked}
+                onChange={(e) => setRaw(e.target.value)}
+                aria-label={unit ? `Your answer, in ${unit}` : 'Your answer'}
+                aria-invalid={raw.trim() !== '' && value == null}
+                aria-describedby={`numeric-${step.id}-status`}
+              />
+            </span>
+            {inline && (
+              <span className={sym ? 'numeric__sym' : 'numeric__sym numeric__sym--word'} aria-hidden>
                 {unit}
               </span>
-            ) : (
-              <span className="numeric__unit">{unit}</span>
-            ))}
+            )}
+          </span>
+          {unit && !inline && <span className="numeric__unit">{unit}</span>}
           <AnimatePresence>
             {phase === 'correct' && (
               <motion.span
@@ -394,8 +396,8 @@ export default function NumericStep({ step, phase, attempt, setController, onHin
         >
           <span className="eyebrow numeric__answer-label">Answer</span>
           <span className="numeric__answer-val tabular">
-            {sym ? withUnit(fmtNum(step.answer)) : fmtNum(step.answer)}
-            {unit && !sym && <span className="numeric__unit numeric__unit--good">{unit}</span>}
+            {inline ? withUnit(fmtNum(step.answer)) : fmtNum(step.answer)}
+            {unit && !inline && <span className="numeric__unit numeric__unit--good">{unit}</span>}
           </span>
           {words && <span className="numeric__answer-sub">≈ {words}</span>}
           {tol > 0 && (

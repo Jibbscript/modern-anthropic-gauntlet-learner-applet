@@ -33,6 +33,9 @@
 .cs--amber .btn--course {
   --face-ink: color-mix(in oklab, var(--c-edge) 35%, #000);
 }
+.cs--amber .cs-sheet__status-icon.is-now {
+  color: color-mix(in oklab, var(--c-edge) 35%, #000);
+}
 
 /* --------------------------------------------------------------- top bar */
 .cs-top {
@@ -215,7 +218,8 @@
   margin-bottom: var(--edge-h);
   border-radius: var(--r-lg);
   background: var(--surface);
-  box-shadow: inset 0 0 0 2px var(--lvl-line), 0 var(--edge-h) 0 0 var(--lvl-line);
+  /* the last shadow paints the 8px above the stuck card, so nodes don't show through the gap */
+  box-shadow: inset 0 0 0 2px var(--lvl-line), 0 var(--edge-h) 0 0 var(--lvl-line), 0 -10px 0 0 var(--bg);
 }
 .cs-level__text {
   display: flex;
@@ -291,6 +295,9 @@
   z-index: 1;
   -webkit-tap-highlight-color: transparent;
 }
+.cs-node--current .cs-node__btn {
+  scale: 1.1;
+}
 .cs-node__btn:focus-visible {
   outline-offset: 6px;
   border-radius: 50%;
@@ -328,6 +335,10 @@
   fill: none;
   stroke: var(--pk-inner);
   stroke-width: 2.5;
+}
+.cs-puck--available {
+  --pk-face: var(--surface);
+  --pk-edge: color-mix(in oklab, var(--c) 55%, var(--pk-rim));
 }
 .cs-puck--available .cs-puck__inner {
   stroke: var(--c);
@@ -665,6 +676,8 @@
 
 /* ----------------------------------------------------------------- sheet */
 .cs-sheet {
+  /* --surface-2 equals the sheet surface in dark mode; wells need their own tint */
+  --cs-well: color-mix(in oklab, var(--ink) 5%, var(--surface));
   display: flex;
   flex-direction: column;
   gap: var(--s-3);
@@ -702,6 +715,9 @@
   font-size: 15px;
   color: var(--ink-2);
 }
+.cs-sheet__meta .chip {
+  background: var(--cs-well);
+}
 .cs-sheet__meta,
 .cs-sheet__skills {
   display: flex;
@@ -714,7 +730,7 @@
   gap: var(--s-2);
   padding: 10px var(--s-3);
   border-radius: var(--r-md);
-  background: var(--surface-2);
+  background: var(--cs-well);
   font-size: var(--fs-sm);
   font-weight: 500;
   color: var(--ink-2);

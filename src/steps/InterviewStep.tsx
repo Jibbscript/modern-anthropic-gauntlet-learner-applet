@@ -27,7 +27,8 @@ const READ_MS = 950
 const COMMIT_MS = 170
 /** the reply bubble lands, then gets its verdict */
 const GRADE_MS = 320
-const WRAP_MS = 750
+/** after the last verdict, a beat to read it before the debrief and the feedback panel arrive */
+const WRAP_MS = 900
 
 const SPRING = { type: 'spring', stiffness: 520, damping: 32 } as const
 const POP = { type: 'spring', stiffness: 600, damping: 22 } as const
@@ -49,12 +50,15 @@ function scrollParent(el: HTMLElement): HTMLElement | null {
   return null
 }
 
-/** the strongest option of a turn (first 'strong', else first 'okay') */
-function bestOption(turn: Turn): number {
-  const s = turn.options.findIndex((o) => o.quality === 'strong')
-  if (s >= 0) return s
-  const o = turn.options.findIndex((x) => x.quality === 'okay')
-  return o >= 0 ? o : 0
+const RANK: Record<Quality, number> = { weak: 0, okay: 1, strong: 2 }
+
+/** the best option of a turn when it beats the learner's pick, else -1 (nothing better to show) */
+function strongerOption(turn: Turn, picked: number): number {
+  let best = -1
+  turn.options.forEach((o, i) => {
+    if (best < 0 || RANK[o.quality] > RANK[turn.options[best].quality]) best = i
+  })
+  return best >= 0 && best !== picked && RANK[turn.options[best].quality] > RANK[turn.options[picked].quality] ? best : -1
 }
 
 /**
@@ -139,7 +143,8 @@ export default function InterviewStep({ step, phase, attempt, complete }: StepPr
     if (n === 0) return undefined
     if (w > 0) return `${w} weak ${w === 1 ? 'reply' : 'replies'} out of ${n}. The bar is no weak replies.`
     if (o === 0) return n === 1 ? 'Your reply was strong.' : `All ${n} replies were strong.`
-    return `${s} strong, ${o} okay, no weak replies.`
+    if (s === 0) return n === 1 ? 'Not weak, but not strong either.' : `No weak replies, but none strong either.`
+    return `No weak replies: ${s} strong, ${o} okay.`
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [counts.strong, counts.okay, counts.weak, turns.length])
 
@@ -153,17 +158,37 @@ export default function InterviewStep({ step, phase, attempt, complete }: StepPr
   const current = picks.length
   const optionsOpen = phase === 'answer' && !wrapped && asked === current + 1 && current < turns.length && !typing
 
+  const rootRef = useRef<HTMLDivElement>(null)
+  /**
+   * Height floor for the step while a turn resolves. Removing the reply tiles
+   * shrinks the content; without a floor the scroll position clamps and the
+   * whole transcript jumps down. New messages grow past it again.
+   */
+  const [floor, setFloor] = useState(0)
+  const busy = useRef(false)
+
   const pick = (opt: number) => {
-    if (!optionsOpen || chosen != null) return
+    if (!optionsOpen || chosen != null || busy.current) return
+    busy.current = true
+    const root = rootRef.current
+    const sc = root && scrollParent(root)
+    if (root && sc) {
+      const top = root.getBoundingClientRect().top - sc.getBoundingClientRect().top + sc.scrollTop
+      setFloor(Math.ceil(sc.scrollTop + sc.clientHeight - top))
+    }
     setChosen(opt)
     const turn = current
+    const last = turn === turns.length - 1
     const q = turns[turn].options[opt].quality
     later(() => {
+      busy.current = false
       setChosen(null)
       setPicks((p) => (p.length === turn ? [...p, opt] : p))
     }, COMMIT_MS)
     later(() => {
       setGraded((g) => Math.max(g, turn + 1))
+      // the last verdict is followed by the feedback panel's own sound and haptic; don't stack two
+      if (last) return
       if (q === 'strong') {
         sfx('unlock')
         haptic('success')
@@ -192,8 +217,8 @@ export default function InterviewStep({ step, phase, attempt, complete }: StepPr
     return () => window.removeEventListener('keydown', onKey)
   })
 
-  // keep the newest message in view (without pushing its top out of sight); on reveal, go to the first stronger reply
-  const rootRef = useRef<HTMLDivElement>(null)
+  // keep the newest message (and the reply tiles under it) in view, never scrolling its top out of sight;
+  // on reveal, go back up to the first stronger reply
   const revealed = phase === 'revealed'
   const followUntil = useRef(0)
   const follow = useRef<() => void>(() => {})
@@ -201,18 +226,27 @@ export default function InterviewStep({ step, phase, attempt, complete }: StepPr
     const root = rootRef.current
     const sc = root && scrollParent(root)
     if (!root || !sc) return
-    const max = sc.scrollHeight - sc.clientHeight
+    const view = sc.clientHeight
+    const max = sc.scrollHeight - view
     if (max <= 0) return
-    const anchors = root.querySelectorAll<HTMLElement>('[data-anchor]')
+    const base = sc.getBoundingClientRect().top - sc.scrollTop
+    const top = (el: Element) => el.getBoundingClientRect().top - base
+    const bottom = (el: Element) => el.getBoundingClientRect().bottom - base
+    const behavior = reduce ? 'auto' : 'smooth'
     const reveal = revealed ? root.querySelector<HTMLElement>('[data-reveal]') : null
-    const anchor = reveal ?? anchors[anchors.length - 1]
-    let target = max
-    if (anchor) {
-      const top = anchor.getBoundingClientRect().top - sc.getBoundingClientRect().top + sc.scrollTop - 16
-      target = Math.max(0, Math.min(max, top))
+    if (reveal) {
+      const t = Math.max(0, Math.min(max, top(reveal) - 16))
+      if (Math.abs(t - sc.scrollTop) > 2) sc.scrollTo({ top: t, behavior })
+      return
     }
-    // only ever scroll down, except to bring the first revealed answer into view
-    if (target > sc.scrollTop + 2 || (reveal && Math.abs(target - sc.scrollTop) > 2)) sc.scrollTo({ top: target, behavior: reduce ? 'auto' : 'smooth' })
+    const anchors = root.querySelectorAll<HTMLElement>('[data-anchor]')
+    const anchor = anchors[anchors.length - 1]
+    if (!anchor) return
+    const opts = root.querySelector<HTMLElement>('.interview-options')
+    const end = Math.max(bottom(anchor), opts ? bottom(opts) : 0) + 20
+    const t = Math.max(0, Math.min(max, top(anchor) - 16, end - view))
+    // only ever scroll down: the learner may have scrolled up to re-read
+    if (t > sc.scrollTop + 2) sc.scrollTo({ top: t, behavior })
   }
   useEffect(() => {
     followUntil.current = performance.now() + 1200
@@ -232,7 +266,7 @@ export default function InterviewStep({ step, phase, attempt, complete }: StepPr
   }, [])
 
   return (
-    <div className="step interview" ref={rootRef}>
+    <div className="step interview" ref={rootRef} style={floor ? { minHeight: floor } : undefined}>
       <div className="interview-head">
         <div className="eyebrow step__eyebrow">{step.eyebrow ?? 'Interview sim'}</div>
         {turns.length > 1 && <Pips turns={turns.length} asked={asked} qualities={qualities} graded={graded} />}
@@ -248,13 +282,13 @@ export default function InterviewStep({ step, phase, attempt, complete }: StepPr
         {turns.slice(0, asked).map((turn, t) => {
           const p = picks[t]
           const q = p != null ? turn.options[p].quality : undefined
-          const best = bestOption(turn)
+          const best = p != null ? strongerOption(turn, p) : -1
           return (
             <Fragment key={t}>
               <Interviewer text={turn.interviewer} first={t === 0} />
-              {p != null && q && <Reply text={turn.options[p].text} feedback={turn.options[p].feedback} quality={q} graded={graded > t} reduce={reduce} />}
+              {p != null && q && <Reply text={turn.options[p].text} feedback={turn.options[p].feedback} quality={q} graded={graded > t} reduce={reduce} first={t === 0} />}
               <AnimatePresence initial={false}>
-                {revealed && p != null && q !== 'strong' && (
+                {revealed && best >= 0 && (
                   <motion.div
                     key="reveal"
                     className="interview-reveal"
@@ -275,26 +309,17 @@ export default function InterviewStep({ step, phase, attempt, complete }: StepPr
           )
         })}
 
-        <AnimatePresence>
-          {typing && (
-            <motion.div
-              key={`typing-${asked}`}
-              className="interview-row"
-              data-anchor
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.1 } }}
-              transition={SPRING}
-            >
-              <Avatar />
-              <div className="interview-typing" role="status" aria-label="Interviewer is typing">
-                <span />
-                <span />
-                <span />
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {/* no exit animation: the question bubble takes its place in the same frame, so nothing below jumps */}
+        {typing && (
+          <motion.div key={`typing-${asked}`} className="interview-row" data-anchor initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={SPRING}>
+            <Avatar />
+            <div className="interview-typing" role="status" aria-label="Interviewer is typing">
+              <span />
+              <span />
+              <span />
+            </div>
+          </motion.div>
+        )}
 
         {wrapped && <Debrief counts={counts} total={turns.length} wrapUp={step.wrapUp} />}
       </div>
@@ -365,7 +390,21 @@ function Interviewer({ text, first }: { text: string; first: boolean }) {
   )
 }
 
-function Reply({ text, feedback, quality, graded, reduce }: { text: string; feedback: string; quality: Quality; graded: boolean; reduce: boolean }) {
+function Reply({
+  text,
+  feedback,
+  quality,
+  graded,
+  reduce,
+  first,
+}: {
+  text: string
+  feedback: string
+  quality: Quality
+  graded: boolean
+  reduce: boolean
+  first: boolean
+}) {
   const { label, Icon } = QUALITY[quality]
   const tone = graded ? quality : 'sent'
   const settle =
@@ -378,7 +417,7 @@ function Reply({ text, feedback, quality, graded, reduce }: { text: string; feed
           : { x: 0, scale: 1 }
   return (
     <motion.div className="interview-me" data-anchor initial={{ opacity: 0, y: 16, scale: 0.94 }} animate={{ opacity: 1, y: 0, scale: 1 }} transition={SPRING}>
-      <div className="interview-name interview-name--me">You</div>
+      {first && <div className="interview-name interview-name--me">You</div>}
       <motion.div
         className={`interview-bubble interview-bubble--me interview-bubble--${tone}`}
         animate={settle}

@@ -1,6 +1,6 @@
 import type { Step } from '../../core/types'
 
-/** Cloze fixtures: multi-blank, two blanks on one line, blank inside an f-string, long line, single blank. */
+/** Cloze fixtures: multi-blank, two blanks on one line, blank inside an f-string, long line, single blank, plain-text phrases. */
 const steps: Step[] = [
   {
     kind: 'cloze',
@@ -72,6 +72,19 @@ const steps: Step[] = [
     ].join('\n'),
     blanks: [{ options: ['map', 'submit', 'shutdown'], answer: 0 }],
     explanation: '`pool.map(fn, items)` returns results in input order; `submit` schedules one call and returns a single future.',
+  },
+  {
+    kind: 'cloze',
+    id: 'fx-cloze-prose',
+    eyebrow: 'Edge case',
+    prompt: 'Plain-text cloze with phrase-length options that must wrap on a 320px phone.',
+    lang: 'text',
+    code: ['We store run outputs in', '{{0}}', 'and will revisit if {{1}}.'].join('\n'),
+    blanks: [
+      { options: ['object storage', 'Postgres TEXT columns', 'the cache'], answer: 0 },
+      { options: ['users need full-text search inside outputs', 'it ever becomes a problem', 'a better database comes out'], answer: 0 },
+    ],
+    explanation: 'A revisit trigger has to be something you would actually notice. *Search inside outputs* is observable; the other two never fire.',
   },
 ]
 

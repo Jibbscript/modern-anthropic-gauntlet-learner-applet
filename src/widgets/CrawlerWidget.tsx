@@ -135,6 +135,16 @@ export default function CrawlerWidget({ config, onComplete }: WidgetProps<Crawle
   const multiHost = hostsShown.length > 1
   const mode = DEDUPE.find((d) => d.id === opts.dedupe)!
 
+  /** why worker `wi` is fetching `page` a second time: a race on an in-flight page, or no memory at all */
+  const dupMessage = (wi: number, page: number, fresh: boolean) => {
+    const label = graph.pages[page].label
+    const other = sim.workers.findIndex((w, i) => i !== wi && w.page === page && !w.dup)
+    if (!fresh) return other >= 0 ? `W${other + 1} and W${wi + 1} are both fetching ${label}. One fetch is wasted.` : `W${wi + 1} is fetching ${label} a second time.`
+    if (opts.dedupe === 'check-then-add' && other >= 0) return `W${wi + 1} grabs ${label} while W${other + 1} is still fetching it: not in visited yet.`
+    if (other >= 0) return `W${wi + 1} fetches ${label} too, while W${other + 1} is on it. No visited set.`
+    return `W${wi + 1} fetches ${label} again: nothing remembers it was fetched.`
+  }
+
   const status = (() => {
     if (sim.finished) {
       const pages = `${uniqueDone} page${uniqueDone === 1 ? '' : 's'}`
@@ -143,11 +153,14 @@ export default function CrawlerWidget({ config, onComplete }: WidgetProps<Crawle
     }
     if (sim.tick === 0) return `Start from page ${graph.pages[0].label} (${graph.hosts[0]}). Press play or step.`
     const dup = sim.events.find((e): e is Extract<CrawlEvent, { kind: 'start' }> => e.kind === 'start' && e.dup)
-    if (dup) return `Worker ${dup.worker + 1} fetches ${graph.pages[dup.page].label} again: a duplicate.`
+    if (dup) return dupMessage(dup.worker, dup.page, true)
     const drop = sim.events.find((e) => e.kind === 'drop')
-    if (drop) return `${graph.pages[drop.page].label} was already visited, so it is dropped.`
+    if (drop) return `${graph.pages[drop.page].label} is in visited by now, so W${drop.worker + 1} drops it.`
     const skip = sim.events.find((e) => e.kind === 'skip')
     if (skip) return `${graph.pages[skip.page].label} is on ${graph.hosts[graph.pages[skip.page].host]}: skipped (off-host).`
+    // keep the duplicate in view for as long as the wasted fetch runs
+    const dupWorker = sim.workers.findIndex((w) => w.page >= 0 && w.dup)
+    if (dupWorker >= 0) return dupMessage(dupWorker, sim.workers[dupWorker].page, false)
     return `${sim.queue.length} URL${sim.queue.length === 1 ? '' : 's'} in the frontier, ${sim.workers.filter((w) => w.page >= 0).length} fetching.`
   })()
 
@@ -306,21 +319,31 @@ export default function CrawlerWidget({ config, onComplete }: WidgetProps<Crawle
 
         <div className="crawl-workers" style={{ ['--n' as string]: sim.workers.length } as CSSProperties}>
           {sim.workers.map((w, i) => (
-            <div key={i} className={`crawl-worker${w.page >= 0 ? ' crawl-worker--busy' : ''}${w.dup ? ' crawl-worker--dup' : ''}`} style={workerVar(i)}>
-              <span className="crawl-worker__id">W{i + 1}</span>
-              {w.page >= 0 ? (
-                <motion.span
-                  layoutId={reduce ? undefined : `qe-${w.entry}`}
-                  className="crawl-chip"
-                  style={hostVar(graph.pages[w.page].host)}
-                  transition={{ type: 'spring', stiffness: 520, damping: 34 }}
-                >
-                  {graph.pages[w.page].label}
-                </motion.span>
-              ) : (
-                <span className="crawl-worker__idle">idle</span>
-              )}
-              {w.dup && <span className="crawl-worker__dup">dup</span>}
+            <div
+              key={i}
+              className={`crawl-worker${w.page >= 0 ? ' crawl-worker--busy' : ''}${w.dup ? ' crawl-worker--dup' : ''}`}
+              style={workerVar(i)}
+              aria-label={`Worker ${i + 1}: ${w.page >= 0 ? `fetching ${graph.pages[w.page].label}${w.dup ? ' (duplicate)' : ''}` : 'idle'}`}
+            >
+              <span className="crawl-worker__in">
+                <span className="crawl-worker__id">
+                  <span className="crawl-worker__w">W</span>
+                  {i + 1}
+                </span>
+                {w.page >= 0 ? (
+                  <motion.span
+                    layoutId={reduce ? undefined : `qe-${w.entry}`}
+                    className="crawl-chip"
+                    style={hostVar(graph.pages[w.page].host)}
+                    transition={{ type: 'spring', stiffness: 520, damping: 34 }}
+                  >
+                    {graph.pages[w.page].label}
+                  </motion.span>
+                ) : (
+                  <span className="crawl-worker__idle">idle</span>
+                )}
+                {w.dup && <span className="crawl-worker__dup">dup</span>}
+              </span>
               <span className="crawl-worker__bar">
                 <motion.span
                   initial={false}

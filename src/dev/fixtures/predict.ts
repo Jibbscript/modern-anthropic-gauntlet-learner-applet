@@ -1,6 +1,6 @@
 import type { Step } from '../../core/types'
 
-/** Predict-the-output fixtures: one line, multi-line generator, quotes leniency, separators/spacing. */
+/** Predict-the-output fixtures: one line, multi-line generator, quotes leniency, separators/spacing, alternative answers with different line counts. */
 const steps: Step[] = [
   {
     kind: 'predict',
@@ -36,6 +36,15 @@ const steps: Step[] = [
     code: 'print(*["a", "b", "c"], sep=" | ")',
     answers: ['a | b | c'],
     explanation: 'Unpacking passes three arguments to `print`, which joins them with `sep` instead of a single space.',
+  },
+  {
+    kind: 'predict',
+    id: 'fx-predict-alts',
+    eyebrow: 'Edge case',
+    prompt: 'Several layouts are accepted here. What does the stack pop?',
+    code: ['stack = []', 'for x in (3, 6, 9):', '    stack.append(x)', 'while stack:', '    print(stack.pop())'].join('\n'),
+    answers: ['9\n6\n3', '9 6 3', '9, 6, 3'],
+    explanation: 'A list used as a stack pops from the end, so items come out in reverse order: **last in, first out**.',
   },
 ]
 

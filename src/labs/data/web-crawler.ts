@@ -3,18 +3,16 @@ import type { Lab, LabLevel } from '../../core/types'
 /** Python source: raw template (backslashes kept as typed), leading newline dropped. */
 const py = (s: TemplateStringsArray) => s.raw[0].replace(/^\n/, '')
 
-/**
- * learner code first, then the provided fakes (identical in starter and every solution).
- * The __future__ line keeps type hints lazy, so `clock: FakeClock` works although FakeClock is defined below.
- */
-const withWeb = (code: string) => `${FUTURE}${code}\n\n${PROVIDED}`
-const FUTURE = '# Lets type hints name the provided classes at the bottom of the file.\nfrom __future__ import annotations\n\n\n'
+/** learner code first, then the provided fakes (identical in starter and every solution) */
+const withWeb = (code: string) => `${code}\n\n${PROVIDED}`
 
 /* --------------------------------------------------------------- provided */
 
 const PROVIDED = py`
 # ---------------------------------------------------------------------------
 # Provided: a fake web, a fake clock and a link extractor. Don't edit.
+# It loads after your code: use these names inside your functions, and quote
+# them in type hints (clock: "FakeClock").
 # ---------------------------------------------------------------------------
 import asyncio
 import heapq
@@ -539,8 +537,10 @@ _L3_LIMIT_S = 3.0  # a correct crawl here takes well under a second, even on a s
 
 async def _l3_crawl(pages, start="https://a.com/", **kwargs):
     web = FakeWeb(pages)
+    crawling = crawl_async(start, web.afetch, **kwargs)
+    assert hasattr(crawling, "__await__"), f"crawl_async should be an async def, so the tests can await it; it returned {crawling!r}"
     try:
-        got = await _l3_asyncio.wait_for(crawl_async(start, web.afetch, **kwargs), _L3_LIMIT_S)
+        got = await _l3_asyncio.wait_for(crawling, _L3_LIMIT_S)
     except _l3_asyncio.TimeoutError:
         raise AssertionError(
             f"crawl_async didn't return within {_L3_LIMIT_S:g} s, so it is probably stuck: look for a worker "
@@ -777,8 +777,10 @@ def _l4_host_times(web, host):
 async def _l4_crawl(pages, seeds, latency=0.1, failures=None, **kwargs):
     clock = FakeClock()
     web = FakeWeb(pages, latency=latency, failures=failures, clock=clock)
+    crawling = crawl_polite(seeds, web.afetch, clock, **kwargs)
+    assert hasattr(crawling, "__await__"), f"crawl_polite should be an async def, so the tests can await it; it returned {crawling!r}"
     try:
-        got = await _l4_asyncio.wait_for(crawl_polite(seeds, web.afetch, clock, **kwargs), _L4_LIMIT_S)
+        got = await _l4_asyncio.wait_for(crawling, _L4_LIMIT_S)
     except _l4_asyncio.TimeoutError:
         raise AssertionError(
             f"crawl_polite didn't return within {_L4_LIMIT_S:g} s of real time, so it is probably stuck: look for "

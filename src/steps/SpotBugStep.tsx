@@ -74,7 +74,8 @@ export default function SpotBugStep({ step, phase, attempt, setController, onHin
     if (locked || !tappable(n)) return
     sfx('select')
     haptic('light')
-    setSel((s) => (s.includes(n) ? s.filter((x) => x !== n) : multi ? [...s, n] : [n]))
+    // never more picks than bugs: a new pick past the limit replaces the oldest, like single-bug mode moves it
+    setSel((s) => (s.includes(n) ? s.filter((x) => x !== n) : [...s, n].slice(-need)))
   }
 
   const stateOf = (n: number): LineState => {
@@ -99,6 +100,17 @@ export default function SpotBugStep({ step, phase, attempt, setController, onHin
       'aria-label': `Line ${n}: ${lines[n - 1].trim()}`,
       onClick: () => toggle(n),
       onKeyDown: (e: KeyboardEvent<HTMLDivElement>) => {
+        if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+          // move between tappable lines like a list
+          const rows = [...(e.currentTarget.parentElement?.querySelectorAll<HTMLElement>('[role="button"]') ?? [])]
+          const next = rows[rows.indexOf(e.currentTarget) + (e.key === 'ArrowDown' ? 1 : -1)]
+          if (next) {
+            e.preventDefault()
+            next.focus()
+            next.scrollIntoView({ block: 'nearest' })
+          }
+          return
+        }
         if (e.key !== 'Enter' && e.key !== ' ') return
         // keep Enter from also reaching the runner's global "Check" shortcut
         e.preventDefault()
@@ -115,7 +127,7 @@ export default function SpotBugStep({ step, phase, attempt, setController, onHin
   }, [step.fix, lines])
 
   const showFix = !!step.fix && (phase === 'revealed' || phase === 'correct')
-  const instr = multi ? `Tap the ${need} lines with the bug` : 'Tap the line with the bug'
+  const instr = multi ? 'Tap the lines with the bug' : 'Tap the line with the bug'
 
   return (
     <div className="step spotbug">
@@ -131,10 +143,15 @@ export default function SpotBugStep({ step, phase, attempt, setController, onHin
             initial={{ scale: 0.85 }}
             animate={{ scale: 1 }}
             transition={{ type: 'spring', stiffness: 600, damping: 20 }}
-            aria-live="polite"
+            aria-hidden
           >
-            {sel.length} of {need} selected
+            {sel.length} of {need}
           </motion.span>
+        )}
+        {multi && phase === 'answer' && (
+          <span className="visually-hidden" aria-live="polite">
+            {sel.length} of {need} lines selected
+          </span>
         )}
       </div>
 

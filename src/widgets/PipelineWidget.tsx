@@ -8,6 +8,7 @@ import type { PipelineConfig, WidgetProps } from './specs'
 import {
   MAX_PER_STAGE,
   STAGES,
+  bestThroughput,
   bottlenecks,
   defaultAllocation,
   peakBuffered,
@@ -33,7 +34,11 @@ export default function PipelineWidget({ config, onComplete }: WidgetProps<Pipel
     return STAGES.map((s, i) => Math.max(0.25, Number(c[s] ?? [1, 2, 4, 1][i])))
   }, [config.costs])
   const budget = Math.max(4, Math.min(16, Math.round(config.budget ?? 8)))
-  const target = config.target ?? 0.75
+  // a target no allocation within the budget can reach would make the step uncompletable: cap it at the best
+  const target = useMemo(() => {
+    const t = Number(config.target)
+    return Math.min(Number.isFinite(t) && t > 0 ? t : 0.75, bestThroughput(budget, costs))
+  }, [config.target, budget, costs])
   const goal = config.goal === 'explore' ? 'explore' : 'throughput'
   const reduceConfig = useReducedMotionConfig()
   const reduceOs = useReducedMotion()
@@ -186,10 +191,11 @@ export default function PipelineWidget({ config, onComplete }: WidgetProps<Pipel
             <small>u</small>
           </span>
         </div>
-        <div className="w-stat pipe-stat">
+        <div className="w-stat pipe-stat" title="Most images waiting in queues at once: the memory the queues cost">
           <span className="w-stat__label">Queued</span>
           <span className="w-stat__value">
             <Ticker value={peak} duration={reduce ? 0 : 0.5} />
+            <small>max</small>
           </span>
         </div>
       </div>
@@ -452,20 +458,29 @@ function TileLayer({ frame, layoutKey, reduce }: { frame: Frame; layoutKey: stri
     // the layer's own ref is attached before this effect runs (a parent's ref would not be yet)
     const card = layerRef.current?.parentElement
     if (!card) return
+    let alive = true
     const measure = () => {
+      if (!alive) return
       const c = card.getBoundingClientRect()
+      // undo any ancestor scale (an entrance animation) so places are in the card's own CSS pixels
+      const sx = card.offsetWidth ? c.width / card.offsetWidth : 1
+      const sy = card.offsetHeight ? c.height / card.offsetHeight : 1
       const m = new Map<string, Place>()
       card.querySelectorAll<HTMLElement>('[data-place]').forEach((el) => {
         const r = el.getBoundingClientRect()
-        m.set(el.dataset.place!, { x: r.left - c.left, y: r.top - c.top, w: r.width, h: r.height })
+        m.set(el.dataset.place!, { x: (r.left - c.left) / sx, y: (r.top - c.top) / sy, w: r.width / sx, h: r.height / sy })
       })
       setPlaces(m)
     }
     measure()
-    if (typeof ResizeObserver === 'undefined') return
-    const ro = new ResizeObserver(measure)
-    ro.observe(card)
-    return () => ro.disconnect()
+    // web fonts can shift the slots without resizing the card
+    void document.fonts?.ready.then(measure)
+    const ro = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(measure)
+    ro?.observe(card)
+    return () => {
+      alive = false
+      ro?.disconnect()
+    }
   }, [layoutKey])
 
   const inbox = frame.locs.map((l, i) => (l.at === 'src' ? i : -1)).filter((i) => i >= 0)

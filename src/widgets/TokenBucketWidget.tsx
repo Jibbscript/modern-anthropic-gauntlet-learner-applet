@@ -148,8 +148,9 @@ function Jar({ capacity, level, mode, uid, reduce, flash }: { capacity: number; 
 
 /* --------------------------------------------------------------- widget */
 export default function TokenBucketWidget({ config, onComplete }: WidgetProps<TokenBucketConfig>) {
-  const capacity = Math.max(1, Math.min(20, Math.round(config.capacity ?? 5)))
-  const rate = Math.max(0.05, Math.min(50, config.rate ?? 1))
+  const capacity = Number.isFinite(config.capacity) ? Math.max(1, Math.min(20, Math.round(config.capacity!))) : 5
+  // above ~5/s a hold can't outrun the refill on screen, and the window-edge burst disappears
+  const rate = Number.isFinite(config.rate) && config.rate! > 0 ? Math.max(0.1, Math.min(5, config.rate!)) : 1
   const compare = !!config.compareFixedWindow
   const goal = config.goal ?? 'burst'
   const windowLen = capacity / rate
@@ -362,7 +363,9 @@ export default function TokenBucketWidget({ config, onComplete }: WidgetProps<To
   const plotH = 46
   const okY = plotTop + plotH + 14
   const badY = okY + 15
-  const tx = (t: number) => width - ((now - t) / SPAN) * width
+  // "now" sits a few px in from the right edge so fresh dots aren't clipped
+  const plotW = width - 6
+  const tx = (t: number) => plotW - ((now - t) / SPAN) * plotW
   const ly = (v: number) => plotTop + (1 - v / capacity) * plotH
   // pruned to the visible span plus one point before it, so the line reaches the left edge
   const samples = samplesRef.current
@@ -370,10 +373,11 @@ export default function TokenBucketWidget({ config, onComplete }: WidgetProps<To
   samples.forEach((s, i) => {
     line += `${i ? 'L' : 'M'}${tx(s.t).toFixed(1)},${ly(s.v).toFixed(1)}`
   })
-  if (line) line += `L${width},${ly(lvl).toFixed(1)}`
-  const area = samples.length ? `${line}L${width},${plotTop + plotH}L${tx(samples[0].t).toFixed(1)},${plotTop + plotH}Z` : ''
+  if (line) line += `L${plotW},${ly(lvl).toFixed(1)}`
+  const area = samples.length ? `${line}L${plotW},${plotTop + plotH}L${tx(samples[0].t).toFixed(1)},${plotTop + plotH}Z` : ''
   const edges: number[] = []
-  if (mode === 'window') {
+  const edgeGap = (windowLen / SPAN) * plotW
+  if (mode === 'window' && edgeGap >= 4) {
     for (let k = Math.ceil((now - SPAN) / windowLen); k * windowLen <= now; k++) edges.push(k * windowLen)
   }
   const secTicks: number[] = []
@@ -535,23 +539,27 @@ export default function TokenBucketWidget({ config, onComplete }: WidgetProps<To
           {edges.map((e) => (
             <g key={`e${e}`}>
               <line x1={tx(e)} x2={tx(e)} y1={2} y2={badY + 8} className="tb-tl__edge" />
-              <text x={tx(e) + 3} y={plotTop - 5} className="tb-tl__edge-label">
-                reset
-              </text>
+              {edgeGap >= 44 && (
+                <text x={tx(e) + 3} y={plotTop - 5} className="tb-tl__edge-label">
+                  reset
+                </text>
+              )}
             </g>
           ))}
           {area && <path d={area} className="tb-tl__area" />}
           {line && <path d={line} className="tb-tl__line" />}
+          {eventsRef.current.map((e) => (
+            <circle key={e.id} cx={tx(e.t)} cy={e.ok ? okY : badY} r={3.6} className={e.ok ? 'tb-tl__ok' : 'tb-tl__bad'} />
+          ))}
+          {/* lane labels sit on a little plate so old dots slide under them */}
+          <rect x={0} y={okY - 9} width={30} height={badY - okY + 18} className="tb-tl__plate" />
           <text x={4} y={okY + 4} className="tb-tl__lane">
             200
           </text>
           <text x={4} y={badY + 4} className="tb-tl__lane">
             429
           </text>
-          {eventsRef.current.map((e) => (
-            <circle key={e.id} cx={tx(e.t)} cy={e.ok ? okY : badY} r={3.6} className={e.ok ? 'tb-tl__ok' : 'tb-tl__bad'} />
-          ))}
-          <line x1={width - 1} x2={width - 1} y1={2} y2={badY + 8} className="tb-tl__now" />
+          <line x1={plotW} x2={plotW} y1={2} y2={badY + 8} className="tb-tl__now" />
         </svg>
       </div>
 
@@ -560,7 +568,7 @@ export default function TokenBucketWidget({ config, onComplete }: WidgetProps<To
           <motion.div key="bb" className="tb-callout" initial={{ opacity: 0, y: 8, scale: 0.96 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0 }} transition={SPRING}>
             <TriangleAlert size={18} strokeWidth={2.6} />
             <span>
-              <b>Boundary burst:</b> {peak.count} requests got through in {fmt(span, 2)}s, {peak.count >= 2 * capacity ? 'twice' : `${(peak.count / capacity).toFixed(1)}×`} the {capacity}-per-window limit, because the counter reset mid-burst. A bucket never passes more than {bucketBound}.
+              <b>Boundary burst:</b> {peak.count} requests in {fmt(span, 2)}s, {peak.count >= 2 * capacity ? 'twice' : `${fmt(peak.count / capacity, 1)}×`} the {capacity}-per-window limit, because the counter reset mid-burst. A token bucket at the same rate caps any {fmt(span, 2)}s at {bucketBound}.
             </span>
           </motion.div>
         )}

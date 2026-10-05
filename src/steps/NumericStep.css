@@ -130,13 +130,27 @@
     color var(--dur-2),
     box-shadow var(--dur-2);
 }
+/* number + inline unit, baseline-aligned, centred as one group */
+.numeric__num {
+  display: inline-flex;
+  align-items: baseline;
+  min-width: 0;
+  max-width: 100%;
+}
 /* "×" / "%": set in the number's own font, hugging the digits */
 .numeric__sym {
   flex: none;
-  margin-left: calc(var(--s-3) * -1 + 2px);
+  margin-left: 1px;
   color: var(--ink-3);
   font-weight: 500;
   transition: color var(--dur-2);
+}
+/* "s", "ms", "GB": smaller, a space after the digits */
+.numeric__sym--word {
+  margin-left: 0.24em;
+  font-size: 0.5em;
+  font-weight: 700;
+  letter-spacing: 0;
 }
 .numeric__field--correct .numeric__sym,
 .numeric__field--incorrect .numeric__sym {

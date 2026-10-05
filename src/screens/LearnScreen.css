@@ -607,9 +607,10 @@ button.learn-card:focus-visible,
 }
 .learn-course__top {
   display: flex;
+  flex-wrap: wrap; /* on narrow phones the chip drops below the title instead of truncating it */
   align-items: center;
   justify-content: space-between;
-  gap: var(--s-2);
+  gap: 2px var(--s-2);
   min-width: 0;
 }
 .learn-course__title {
@@ -623,18 +624,34 @@ button.learn-card:focus-visible,
 }
 .learn-course__chip {
   flex: none;
+  background: color-mix(in oklab, var(--ink) 5%, var(--surface));
   padding: 3px 8px;
   gap: 4px;
+}
+.learn-course__chip.chip--course {
+  background: var(--c-soft);
+}
+.learn-course__chip.chip--good {
+  background: var(--good-soft);
 }
 .learn-course__sub {
   font-size: 13px;
   font-weight: 500;
   color: var(--ink-3);
   line-height: 1.35;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
+  white-space: nowrap;
   overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* narrow phones: one line cuts most subtitles to a few words, so allow two */
+@media (max-width: 359px) {
+  .learn-course__sub {
+    white-space: normal;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    text-wrap: pretty;
+  }
 }
 .learn-course__prog {
   display: flex;
@@ -702,7 +719,7 @@ button.learn-card:focus-visible,
 }
 .learn-sheet__lead {
   max-width: 32ch;
-  text-wrap: pretty;
+  text-wrap: balance;
   color: var(--ink-2);
   font-size: 15px;
 }

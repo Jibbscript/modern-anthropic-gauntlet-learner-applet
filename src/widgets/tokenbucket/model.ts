@@ -124,12 +124,15 @@ export function densest(times: number[], span: number): { count: number; from: n
   return best
 }
 
+/** fastest hold-to-burst rate: one request per frame must keep up, even at 30 fps */
+export const MAX_BURST_RATE = 30
+
 /**
  * Hold-to-burst rate: about 8 req/s, but always well above the refill so a
  * hold can both drain the bucket and push 2 x limit through a window edge.
  */
 export function burstRate(rate: number): number {
-  return Math.max(8, Math.ceil(rate * 4))
+  return Math.min(MAX_BURST_RATE, Math.max(8, Math.ceil(rate * 4)))
 }
 
 /**

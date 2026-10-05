@@ -590,9 +590,14 @@
   background: var(--good-soft);
   color: var(--good-ink);
 }
+/* white on the rose/orange hues is under 3:1; tint + ink reads in both themes */
 .sto-status--due {
-  background: var(--c);
-  color: #fff;
+  background: var(--c-soft);
+  box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--c) 55%, transparent);
+  color: var(--c-ink);
+}
+.sto-status--due svg {
+  color: var(--c);
 }
 
 .sto-dots {

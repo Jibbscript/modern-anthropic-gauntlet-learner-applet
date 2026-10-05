@@ -103,3 +103,62 @@ describe('crawler model', () => {
     expect(rows.length).toBe(72)
   })
 })
+
+describe('crawler model invariants (QA)', () => {
+  const opts = (w: number, dedupe: Dedupe, sameHost: boolean) => ({ workers: w, dedupe, sameHost })
+  const combos = graphs.flatMap((g) =>
+    (['none', 'check-then-add', 'atomic'] as Dedupe[]).flatMap((d) => [true, false].flatMap((sh) => [1, 2, 3, 4].map((w) => ({ g, o: opts(w, d, sh) })))),
+  )
+
+  it('check-then-add duplicates only ever start while another worker is fetching the same page', () => {
+    for (const { g, o } of combos.filter((c) => c.o.dedupe === 'check-then-add')) {
+      let s = initCrawl(g, o)
+      while (!s.finished) {
+        const prev = s
+        s = stepCrawl(g, o, s)
+        for (const e of s.events) {
+          if (e.kind !== 'start' || !e.dup) continue
+          // the page was never completed before this tick (else the dequeue check would drop it)...
+          expect(prev.done[e.page], `${g.id} ${JSON.stringify(o)} t=${s.tick}`).toBe(false)
+          // ...and some other worker holds it in flight right now
+          expect(s.workers.some((w, i) => i !== e.worker && w.page === e.page)).toBe(true)
+        }
+      }
+    }
+  })
+
+  it('atomic enqueues each page at most once; nobody ever fetches an off-host page with same-host on', () => {
+    for (const { g, o } of combos) {
+      let s = initCrawl(g, o)
+      const enq = new Array(g.pages.length).fill(0)
+      enq[0] = 1
+      while (!s.finished) {
+        s = stepCrawl(g, o, s)
+        for (const e of s.events) {
+          if (e.kind === 'enqueue') enq[e.page]++
+          if (e.kind === 'start' && o.sameHost) expect(g.pages[e.page].host).toBe(g.pages[0].host)
+        }
+        // no worker is ever idle while there is work it may take
+        if (!s.finished && !(o.dedupe === 'none' && s.totalFetches >= s.cap)) expect(s.queue.length === 0 || s.workers.every((w) => w.page >= 0)).toBe(true)
+      }
+      if (o.dedupe === 'atomic') expect(Math.max(...enq)).toBe(1)
+      // a finished crawl leaves nothing in flight, and nothing queued unless the fetch cap stopped it
+      expect(s.workers.every((w) => w.page < 0)).toBe(true)
+      if (!s.capped) expect(s.queue.length).toBe(0)
+      expect(s.totalFetches - s.dupes).toBe(s.fetches.filter((f) => f > 0).length)
+    }
+  })
+
+  it('without a visited set pages are re-fetched after they completed (not just raced)', () => {
+    const s = runCrawl(GRAPHS.cyclic, opts(1, 'none', true))
+    expect(s.dupes).toBeGreaterThan(0)
+    expect(s.capped).toBe(true)
+  })
+
+  it('the build-crawler lesson config races, and switching to atomic fixes it', () => {
+    expect(runCrawl(GRAPHS.small, opts(3, 'check-then-add', true)).dupes).toBeGreaterThan(0)
+    const fixed = runCrawl(GRAPHS.small, opts(3, 'atomic', true))
+    expect(fixed.dupes).toBe(0)
+    expect(fixed.finished && !fixed.capped).toBe(true)
+  })
+})

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode, type Ref, type RefObject } from 'react'
+import { useCallback, useEffect, useId, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode, type Ref, type RefObject } from 'react'
 import { IndentDecrease, IndentIncrease, Undo2 } from 'lucide-react'
 import { tokenLines } from '../ui/code/highlight'
 import { Toks } from '../ui/code/Code'
@@ -111,6 +111,7 @@ export function Editor({ value, onChange, onRun, errorLine, label = 'Code editor
   const charW = useRef(7.8)
   const escapeTab = useRef(false)
   const [showKeys] = useState(() => keys === 'always' || (keys === 'auto' && coarse()))
+  const helpId = useId()
 
   useIOSNoZoom(taRef)
 
@@ -368,6 +369,7 @@ export function Editor({ value, onChange, onRun, errorLine, label = 'Code editor
               className="ed__ta"
               value={value}
               aria-label={label}
+              aria-describedby={helpId}
               aria-keyshortcuts="Control+Enter Meta+Enter"
               autoCapitalize="off"
               autoComplete="off"
@@ -394,6 +396,10 @@ export function Editor({ value, onChange, onRun, errorLine, label = 'Code editor
           0000000000
         </span>
       </div>
+      {/* Tab indents here, so say how to leave (WCAG 2.1.2, no keyboard trap) */}
+      <span id={helpId} className="visually-hidden">
+        Tab inserts an indent. Press Escape, then Tab, to move focus out of the editor.{onRun ? ' Control or Command plus Enter runs the tests.' : ''}
+      </span>
       {showKeys && (
         <div className="ed-keys" role="toolbar" aria-label="Code keys">
           <KeyButton label="Indent" wide onPress={indentKey}>

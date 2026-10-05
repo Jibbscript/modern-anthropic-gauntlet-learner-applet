@@ -54,6 +54,10 @@ export function gradeOutput(input: string, answers: string[]): PredictGrade {
 
 /* ---------------------------------------------------------------- view */
 
+const WORDS = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten']
+/** "three lines" / "two" */
+const count = (n: number, noun?: string) => `${WORDS[n] ?? n}${noun ? ` ${noun}${n === 1 ? '' : 's'}` : ''}`
+
 /** last answer per step, so "Try again" lets the learner edit instead of retyping */
 const memory = new Map<string, string>()
 
@@ -82,20 +86,21 @@ export default function PredictStep({ step, phase, attempt, setController, onHin
   const grade = useMemo(() => gradeOutput(text, step.answers), [text, step.answers])
   const expected = step.answers[0] ?? ''
   const expectedLines = lines(expected).length
+  /** line counts of every accepted answer ("9\n6\n3" and "9 6 3" may both count) */
+  const acceptedLines = useMemo(() => new Set(step.answers.map((a) => lines(a).length)), [step.answers])
 
   useEffect(() => {
     setController({
       ready: text.trim().length > 0,
       check: () => {
         if (grade === 'exact') return { correct: true }
-        if (grade === 'loose') return { correct: true, feedback: 'Close enough. The exact output is below.' }
+        if (grade === 'loose') return { correct: true, feedback: 'Right output. Python formats it slightly differently, shown below.' }
         const got = lines(text).length
-        if (got !== expectedLines)
-          return { correct: false, feedback: `It prints ${expectedLines === 1 ? 'one line' : `${expectedLines} lines`}, not ${got}.` }
+        if (!acceptedLines.has(got)) return { correct: false, feedback: `It prints ${count(expectedLines, 'line')}, not ${count(got)}.` }
         return { correct: false }
       },
     })
-  }, [text, grade, expectedLines, setController])
+  }, [text, grade, expectedLines, acceptedLines, setController])
 
   // grow with content (and re-measure when the width changes, e.g. rotation)
   useLayoutEffect(() => {

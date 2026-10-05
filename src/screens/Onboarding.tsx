@@ -22,6 +22,7 @@ import { useStore, type Profile } from '../core/store'
 import type { AreaId, Course, CourseColor } from '../core/types'
 import { COURSES } from '../content'
 import { addDays, dayKey, daysBetween, parseDayKey } from '../core/dates'
+import { buildCatalog, recommendedLesson } from '../core/adaptive'
 import { useNav } from '../app/nav'
 import { Button, IconButton } from '../ui/Button'
 import { ProgressBar } from '../ui/ProgressBar'
@@ -65,6 +66,27 @@ const GOALS = [
 ]
 
 const COURSE_BY_ID = Object.fromEntries(COURSES.map((c) => [c.id, c])) as Record<AreaId, Course>
+
+/** what "Start here" promises must be what Learn's Up next shows: same function, same playable lessons */
+type FirstPick = { course: Course; v: number | null; tied: boolean }
+function pickFirst(conf: Partial<Record<AreaId, number>>): FirstPick | null {
+  const vals = CONF_AREAS.map((a) => conf[a] ?? 3)
+  const tied = vals.every((v) => v === vals[0])
+  try {
+    const playable = buildCatalog(COURSES.map((c) => ({ ...c, lessons: c.lessons.filter((l) => l.steps.length > 0) })))
+    const st = useStore.getState()
+    const id = recommendedLesson({ ...st, profile: { ...st.profile, confidence: conf } }, playable, Date.now())
+    const course = id ? COURSE_BY_ID[playable.lessons[id]?.courseId] : undefined
+    if (course) return { course, v: conf[course.id] ?? null, tied }
+  } catch {
+    /* fall through to the plain ranking */
+  }
+  // nothing playable yet: lowest rating, ties to path order
+  const ranked = CONF_AREAS.map((a) => ({ a, v: conf[a] ?? 3, order: COURSES.findIndex((c) => c.id === a) }))
+    .filter((x) => COURSE_BY_ID[x.a])
+    .sort((x, y) => x.v - y.v || x.order - y.order)
+  return ranked[0] ? { course: COURSE_BY_ID[ranked[0].a], v: ranked[0].v, tied } : null
+}
 
 function dateFor(choice: DateChoice, today: string): string {
   if (choice === '1w') return addDays(today, 7)
@@ -141,13 +163,8 @@ export default function Onboarding() {
   const pastDate = days != null && days < 0
   const rated = CONF_AREAS.filter((a) => conf[a] != null).length
 
-  const first = useMemo(() => {
-    const ranked = CONF_AREAS.map((a, i) => ({ a, v: conf[a] ?? 3, order: COURSES.findIndex((c) => c.id === a), i }))
-      .filter((x) => COURSE_BY_ID[x.a])
-      .sort((x, y) => x.v - y.v || x.order - y.order)
-    const tied = ranked.length > 1 && ranked.every((x) => x.v === ranked[0].v)
-    return ranked[0] ? { course: COURSE_BY_ID[ranked[0].a], v: ranked[0].v, tied } : null
-  }, [conf])
+  // only the plan step shows it; recompute when ratings change
+  const first = useMemo(() => pickFirst(conf), [conf])
 
   const finish = () => {
     if (finishing) return
@@ -728,17 +745,22 @@ function Plan(p: {
   date: string
   days: number | null
   goal: number
-  first: { course: Course; v: number; tied: boolean } | null
+  first: FirstPick | null
   onEdit: (step: number) => void
 }) {
   const g = GOALS.find((x) => x.xp === p.goal) ?? GOALS[1]
-  const reason = !p.first
+  const f = p.first
+  const reason = !f
     ? ''
-    : p.first.tied
-      ? 'You rated every area the same, so start where the loop starts.'
-      : p.first.v <= 2
-        ? `You rated it ${CONF_LABEL[p.first.v]}, so it comes first.`
-        : 'Your lowest-rated area, so it comes first.'
+    : f.v == null
+      ? f.tied
+        ? 'You rated every area the same, so start where the loop starts.'
+        : 'Nothing rated below Okay, so start with how the loop works.'
+      : f.tied
+        ? 'You rated every area the same, so start here.'
+        : f.v <= 2
+          ? `You rated it ${CONF_LABEL[f.v]}, so it comes first.`
+          : 'Your lowest-rated area, so it comes first.'
   const rows: { icon: LucideIcon; label: string; value: string; step: number }[] = [
     { icon: UserRound, label: 'Role', value: p.name ? `${p.name} · ${ROLE_LABEL[p.role]}` : ROLE_LABEL[p.role], step: 1 },
     {

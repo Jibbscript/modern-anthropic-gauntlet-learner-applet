@@ -71,3 +71,60 @@ describe('pipeline model', () => {
     expect(b).toBeLessThan(a)
   })
 })
+
+describe('pipeline model invariants (QA)', () => {
+  it('every frame places every image exactly once, never over-fills a stage, and time only moves forward', () => {
+    for (const workers of allocations(8).filter((_, i) => i % 7 === 0))
+      for (const queue of [1, 3, 8]) {
+        const run = simulatePipeline({ workers, costs, queue, images: 24 })
+        let t = -1
+        for (const f of run.frames) {
+          expect(f.t).toBeGreaterThanOrEqual(t)
+          t = f.t
+          expect(f.locs.length).toBe(24)
+          const perStage = [0, 0, 0, 0]
+          const slotsSeen = new Set<string>()
+          for (const l of f.locs) {
+            if (l.at === 'work') {
+              perStage[l.stage]++
+              const k = `${l.stage}:${l.worker}`
+              expect(slotsSeen.has(k)).toBe(false)
+              slotsSeen.add(k)
+              expect(l.worker).toBeLessThan(workers[l.stage])
+              expect(l.end - l.start).toBeCloseTo(costs[l.stage])
+            }
+          }
+          perStage.forEach((c, s) => expect(c).toBeLessThanOrEqual(workers[s]))
+        }
+      }
+  })
+
+  it('batch time respects the obvious lower bounds (one image end to end; each stage’s total work)', () => {
+    for (const cs of [costs, [2, 1, 3, 1]])
+      for (const workers of allocations(10))
+        for (const queue of [1, 4]) {
+          const n = 24
+          const total = simulatePipeline({ workers, costs: cs, queue, images: n }, false).total
+          expect(total).toBeGreaterThanOrEqual(cs.reduce((a, b) => a + b, 0) - 1e-9)
+          cs.forEach((c, s) => expect(total).toBeGreaterThanOrEqual(Math.ceil(n / workers[s]) * c - 1e-9))
+        }
+  })
+
+  it('no worker idles while its input has work and it has nowhere blocked to be (work-conserving)', () => {
+    const run = simulatePipeline({ workers: [2, 2, 2, 2], costs, queue: 2, images: 24 })
+    for (const f of run.frames) {
+      for (let s = 1; s < 4; s++) {
+        const waiting = f.locs.filter((l) => l.at === 'queue' && l.q === s - 1).length
+        const busy = f.locs.filter((l) => l.at === 'work' && l.stage === s).length
+        if (waiting > 0) expect(busy).toBe(2)
+      }
+    }
+  })
+
+  it('conc-queues lesson: 2/1/3/1 costs, budget 10 → 1.0 needs filter 3 and load 2', () => {
+    const cs = [2, 1, 3, 1]
+    expect(bestThroughput(10, cs)).toBe(1)
+    for (const w of allocations(10)) if (throughput({ workers: w, costs: cs }) >= 1) expect(w[2] >= 3 && w[0] >= 2).toBe(true)
+    expect(throughput({ workers: defaultAllocation(10), costs: cs })).toBeLessThan(1)
+  })
+})

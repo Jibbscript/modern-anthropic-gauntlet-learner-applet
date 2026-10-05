@@ -70,16 +70,18 @@ export default function PoolWidget({ config, onComplete }: WidgetProps<PoolConfi
     return Math.ceil(m)
   }, [kind, tasks, cores])
 
-  const key = `${executor}-${workers}-${kind}`
+  // async ignores the worker count, so every async setup of a task kind is the same setup
+  const key = `${executor}-${executor === 'async' ? 1 : workers}-${kind}`
   const fastest = result.wall <= best.wall * 1.1 + 1e-9
   useEffect(() => {
-    seenRef.current.add(key)
-    const met = goal === 'fastest' ? fastest : seenRef.current.size >= 3
-    if (!met || doneRef.current) return
-    // let the chart finish drawing before the banner pops (cancelled if the setup changes first)
+    if (doneRef.current) return
+    // a setup counts once it has stayed put for the chart's draw (cancelled if the setup changes first),
+    // so scrubbing the slider past a good value, or through three values, does not complete the goal
     const t = window.setTimeout(
       () => {
-        if (doneRef.current) return
+        seenRef.current.add(key)
+        const met = goal === 'fastest' ? fastest : seenRef.current.size >= 3
+        if (!met || doneRef.current) return
         doneRef.current = true
         setReached(true)
         sfx('correct')
@@ -195,7 +197,7 @@ export default function PoolWidget({ config, onComplete }: WidgetProps<PoolConfi
             min={1}
             max={8}
             step={1}
-            value={workers}
+            value={executor === 'async' ? 1 : workers}
             disabled={locked.has('workers') || executor === 'async'}
             onChange={(e) => setWorkers(Number(e.target.value))}
             aria-label="Workers"
@@ -258,10 +260,15 @@ function insight(ex: Executor, kind: TaskKind, w: number, tasks: number, cores: 
 function Gantt({ result, tMax, drawKey, reduce }: { result: PoolResult; tMax: number; drawKey: string; reduce: boolean }) {
   const uid = useId().replace(/[^a-zA-Z0-9]/g, '')
   const n = result.rows.length
-  const rowH = Math.min(22, ROWS_H / Math.max(n, 5))
+  const rowH = Math.min(24, ROWS_H / n)
   const hasLane = result.executor !== 'process'
-  const laneY = TOP + ROWS_H + LANE_GAP
-  const axisY = laneY + LANE_H + 6
+  // the frame keeps one height for every setup (no layout jump under the controls); the rows and the
+  // GIL / loop lane sit together, centred in it, instead of leaving a hole when there are few rows
+  const AREA_H = ROWS_H + LANE_GAP + LANE_H
+  const blockH = n * rowH + (hasLane ? LANE_GAP + LANE_H : 0)
+  const rowsTop = TOP + Math.max(0, (AREA_H - blockH) / 2)
+  const laneY = rowsTop + n * rowH + LANE_GAP
+  const axisY = TOP + AREA_H + 6
   const H = axisY + AXIS_H
   const x = (t: number) => X0 + (t / tMax) * (X1 - X0)
   const step = tMax > 10 ? 2 : 1
@@ -270,7 +277,7 @@ function Gantt({ result, tMax, drawKey, reduce }: { result: PoolResult; tMax: nu
   const seqX = x(result.sequential)
   const ease = [0.22, 1, 0.36, 1] as const
   const draw = reduce ? { duration: 0 } : { duration: DRAW_S, ease }
-  const barH = Math.max(3, rowH - (rowH > 12 ? 5 : 3))
+  const barH = Math.max(3, Math.min(17, rowH - (rowH > 12 ? 6 : 3)))
   const laneLabel = result.executor === 'thread' ? 'GIL' : 'loop'
 
   return (
@@ -303,7 +310,7 @@ function Gantt({ result, tMax, drawKey, reduce }: { result: PoolResult; tMax: nu
 
         {/* row labels */}
         {result.rows.map((r, i) => (
-          <text key={i} x={LABEL_W - 3} y={TOP + i * rowH + rowH / 2} dy="0.35em" className="pool-rowlabel" style={{ fontSize: Math.min(10, rowH * 0.75) }}>
+          <text key={i} x={LABEL_W - 3} y={rowsTop + i * rowH + rowH / 2} dy="0.35em" className="pool-rowlabel" style={{ fontSize: Math.min(10, rowH * 0.75) }}>
             {r.label}
           </text>
         ))}
@@ -319,7 +326,7 @@ function Gantt({ result, tMax, drawKey, reduce }: { result: PoolResult; tMax: nu
               <rect
                 key={`${i}-${j}`}
                 x={x(b.start) + 0.3}
-                y={TOP + i * rowH + (rowH - barH) / 2}
+                y={rowsTop + i * rowH + (rowH - barH) / 2}
                 width={Math.max(0.8, x(b.end) - x(b.start) - 0.6)}
                 height={barH}
                 rx={Math.min(3, barH / 2)}
@@ -355,9 +362,12 @@ function Gantt({ result, tMax, drawKey, reduce }: { result: PoolResult; tMax: nu
         {Math.abs(seqX - wallX) > 2 && (
           <g className="pool-seq">
             <line x1={seqX} x2={seqX} y1={TOP - 4} y2={axisY - 2} />
-            <text x={seqX - 3} y={TOP - 6} textAnchor="end">
-              1 worker
-            </text>
+            {/* both labels sit left of their lines; drop this one where it would run into the wall-time label */}
+            {Math.abs(seqX - wallX) > 46 && (
+              <text x={seqX - 3} y={TOP - 6} textAnchor="end">
+                1 worker
+              </text>
+            )}
           </g>
         )}
         {/* wall-time cursor sweeps with the drawing */}

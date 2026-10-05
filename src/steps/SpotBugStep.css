@@ -28,8 +28,8 @@
   padding: var(--s-2) 0;
 }
 .spotbug__code .code__line > span {
-  padding-top: 6px;
-  padding-bottom: 6px;
+  padding-top: 8px;
+  padding-bottom: 8px;
   transition:
     background var(--dur-2),
     box-shadow var(--dur-2),
@@ -60,6 +60,10 @@
 @media (hover: hover) {
   .spotbug__line--tap:hover {
     --ln-tint: color-mix(in srgb, var(--select) 6%, transparent);
+  }
+  /* hovering a picked line must not make it look less picked */
+  .spotbug__line--tap.spotbug__line--selected:hover {
+    --ln-tint: color-mix(in srgb, var(--select) 19%, transparent);
   }
 }
 .spotbug__line--tap:active {

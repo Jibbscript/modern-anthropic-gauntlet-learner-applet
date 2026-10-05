@@ -3,18 +3,16 @@ import type { Lab, LabLevel } from '../../core/types'
 /** Python source: raw template (backslashes kept as typed), leading newline dropped. */
 const py = (s: TemplateStringsArray) => s.raw[0].replace(/^\n/, '')
 
-/**
- * learner code first, then the provided executor (identical in starter and every solution).
- * The __future__ line keeps type hints lazy, so `executor: SequentialExecutor` works although it is defined below.
- */
-const withExecutor = (code: string) => `${FUTURE}${code}\n\n${PROVIDED}`
-const FUTURE = '# Lets type hints name the provided classes at the bottom of the file.\nfrom __future__ import annotations\n\n\n'
+/** learner code first, then the provided executor (identical in starter and every solution) */
+const withExecutor = (code: string) => `${code}\n\n${PROVIDED}`
 
 /* --------------------------------------------------------------- provided */
 
 const PROVIDED = py`
 # ---------------------------------------------------------------------------
 # Provided: an executor that works in the browser (used from level 4). Don't edit.
+# It loads after your code: use these names inside your functions, and quote
+# them in type hints (executor: "SequentialExecutor").
 # ---------------------------------------------------------------------------
 
 

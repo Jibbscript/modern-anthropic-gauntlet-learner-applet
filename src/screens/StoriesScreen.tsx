@@ -52,16 +52,25 @@ export function hasAnyText(e: StoryEntry | undefined): boolean {
   return !!e && (Object.values(e.layers).some((v) => v.trim().length > 0) || e.notes.trim().length > 0)
 }
 
+/** something to say out loud: at least one layer with text (notes alone do not count) */
+export function hasLayerText(e: StoryEntry | undefined): boolean {
+  return !!e && Object.values(e.layers).some((v) => v.trim().length > 0)
+}
+
 export function layersWritten(slot: StorySlot, e: StoryEntry | undefined): number {
   return slot.layers.filter((_, i) => layerDone(e?.layers[i])).length
 }
 
 export type StoryStatus = 'new' | 'draft' | 'ready' | 'due'
 
-/** due wins (it matches the tab badge), then drafted, then any text at all */
+/**
+ * due wins (it matches the tab badge), then drafted, then any text at all. A
+ * schedule left behind after the layers were cleared is not "due": there is
+ * nothing to rehearse, and the drill would open empty.
+ */
 export function storyStatus(e: StoryEntry | undefined, now: number): StoryStatus {
   if (!e) return 'new'
-  if (e.rehearsal && e.rehearsal.due <= now) return 'due'
+  if (e.rehearsal && e.rehearsal.due <= now && hasLayerText(e)) return 'due'
   if (isDrafted(e)) return 'ready'
   return hasAnyText(e) ? 'draft' : 'new'
 }
@@ -177,7 +186,7 @@ export default function StoriesScreen() {
   const d = useMemo(() => {
     const drafted = STORY_SLOTS.filter((x) => isDrafted(s.stories[x.id]))
     const due = (dueStories(s, now) as StorySlotId[])
-      .filter((id) => STORY_BY_ID[id])
+      .filter((id) => STORY_BY_ID[id] && hasLayerText(s.stories[id]))
       .sort((a, b) => (s.stories[a]?.rehearsal?.due ?? 0) - (s.stories[b]?.rehearsal?.due ?? 0))
     const upcoming = drafted
       .map((x) => s.stories[x.id]?.rehearsal?.due)
@@ -198,12 +207,14 @@ export default function StoriesScreen() {
     <div className="sto">
       <header className="sto-head safe-top">
         <h1>Story Bank</h1>
-        <span className="sto-head__pill" aria-label={`${d.drafted} of ${total} stories drafted`}>
-          <NotebookPen size={16} strokeWidth={2.6} />
-          <span className="tabular">
-            {d.drafted}/{total}
+        {d.drafted > 0 && (
+          <span className="sto-head__pill" aria-label={`${d.drafted} of ${total} stories drafted`}>
+            <NotebookPen size={16} strokeWidth={2.6} />
+            <span className="tabular">
+              {d.drafted}/{total}
+            </span>
           </span>
-        </span>
+        )}
       </header>
 
       <div className="sto-scroll scroll">

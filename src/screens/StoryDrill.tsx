@@ -13,7 +13,7 @@ import { Ring } from '../ui/Ring'
 import { Ticker } from '../ui/Ticker'
 import { courseStyle } from '../ui/course'
 import { celebrate, haptic, sfx } from '../ui/fx'
-import { SLOT_ICON, dueIn, groupOf, hasAnyText, isDrafted, layerDone } from './StoriesScreen'
+import { SLOT_ICON, dueIn, groupOf, hasLayerText, isDrafted, layerDone } from './StoriesScreen'
 import { clock } from './StoryEditor'
 import './StoryDrill.css'
 
@@ -59,7 +59,7 @@ function buildQueue(slots?: StorySlotId[]): Item[] {
   const s = useStore.getState()
   const now = Date.now()
   let ids: StorySlotId[]
-  if (slots?.length) ids = slots.filter((id, i) => STORY_BY_ID[id] && hasAnyText(s.stories[id]) && slots.indexOf(id) === i)
+  if (slots?.length) ids = slots.filter((id, i) => STORY_BY_ID[id] && hasLayerText(s.stories[id]) && slots.indexOf(id) === i)
   else
     ids = STORY_SLOTS.map((x) => x.id)
       .filter((id) => isDrafted(s.stories[id]))
@@ -140,9 +140,14 @@ export default function StoryDrill({ slots, onExit }: { slots?: StorySlotId[]; o
   }, [timer.elapsed])
 
   const rehearsal = entry?.rehearsal
-  const intervals = useMemo(() => {
+  const { intervals, capped } = useMemo(() => {
     const now = Date.now()
-    return previewIntervals(rehearsal ?? newCard(now, 0), now, scheduleOptions(useStore.getState()))
+    const card = rehearsal ?? newCard(now, 0)
+    const opts = scheduleOptions(useStore.getState())
+    const iv = previewIntervals(card, now, opts)
+    // the note only shows when the interview date actually shortened an interval
+    const raw = opts.interviewAt ? previewIntervals(card, now, { ...opts, interviewAt: null }) : iv
+    return { intervals: iv, capped: ([2, 3, 4] as Grade[]).some((g) => formatInterval(raw[g]) !== formatInterval(iv[g])) }
   }, [rehearsal, retention, interviewDate])
 
   if (!queue.length) return <EmptyDrill onExit={onExit} />
@@ -200,7 +205,6 @@ export default function StoryDrill({ slots, onExit }: { slots?: StorySlotId[]; o
     haptic('light')
   }
 
-  const capped = !!interviewDate && formatInterval(intervals[3]) === formatInterval(intervals[4])
   const remaining = BUDGET_S - timer.elapsed
   const over = remaining < 0
   const timerLabel = over ? 'Over time' : timer.running ? 'Speaking' : timer.elapsed > 0 ? 'Paused' : 'Two minutes'

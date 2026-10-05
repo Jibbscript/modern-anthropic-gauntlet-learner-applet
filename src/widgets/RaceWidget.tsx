@@ -107,6 +107,9 @@ export default function RaceWidget({ config, onComplete }: WidgetProps<RaceConfi
   const regRefs = useRef<(HTMLDivElement | null)[]>([])
   const [memScope, animateMem] = useAnimate<HTMLDivElement>()
   const [lastOp, setLastOp] = useState<{ t: number; op: Op } | null>(null)
+  const revealTimer = useRef(0)
+  useEffect(() => () => window.clearTimeout(revealTimer.current), [])
+  const verdictRef = useRef<HTMLDivElement>(null)
 
   // config changes (gallery / authoring) restart the run
   useEffect(() => {
@@ -121,6 +124,13 @@ export default function RaceWidget({ config, onComplete }: WidgetProps<RaceConfi
   const done = isAllDone(state, program)
   const ows = useMemo(() => (done ? overwrites(state, setup) : []), [done, state, setup])
   const lostCount = expected - state.x
+
+  // bring the verdict on screen once it has landed
+  useEffect(() => {
+    if (!done) return
+    const id = window.setTimeout(() => verdictRef.current?.scrollIntoView({ block: 'nearest', behavior: reduce ? 'auto' : 'smooth' }), reduce ? 0 : FLIGHT * 1000 + 250)
+    return () => window.clearTimeout(id)
+  }, [done, reduce])
   const lostSoFar = state.writes.length - state.x
   const lastWrite = state.writes[state.writes.length - 1]
   const delay = reduce ? 0 : FLIGHT * 0.85
@@ -166,10 +176,15 @@ export default function RaceWidget({ config, onComplete }: WidgetProps<RaceConfi
       if (ok) {
         if (!firedRef.current) {
           firedRef.current = true
-          setReached(true)
-          sfx('correct')
-          haptic('success')
-          onComplete(true)
+          // celebrate once the final STORE has visibly landed in x (the step's own chime lands on the same beat)
+          const reveal = () => {
+            setReached(true)
+            sfx('correct')
+            haptic('success')
+            onComplete(true)
+          }
+          if (reduce) reveal()
+          else revealTimer.current = window.setTimeout(reveal, FLIGHT * 1000)
         }
       } else {
         setFailedRuns((n) => n + 1)
@@ -402,6 +417,7 @@ export default function RaceWidget({ config, onComplete }: WidgetProps<RaceConfi
         {done && (
           <motion.div
             key="verdict"
+            ref={verdictRef}
             className={['race-verdict', state.x < expected ? 'is-bad' : 'is-good'].join(' ')}
             initial={{ opacity: 0, y: 12, scale: 0.96 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}

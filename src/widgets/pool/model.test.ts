@@ -97,3 +97,70 @@ describe('pool model', () => {
         }
   })
 })
+
+describe('pool model invariants (QA)', () => {
+  const all = (['thread', 'process', 'async'] as Executor[]).flatMap((executor) =>
+    (['cpu', 'io'] as const).flatMap((kind) => [1, 2, 3, 4, 5, 6, 7, 8].flatMap((workers) => [1, 2, 4].map((cores) => ({ executor, kind, workers, cores, tasks: 8 })))),
+  )
+  const busyAt = (r: ReturnType<typeof simulatePool>, t: number, kind: string) =>
+    r.rows.filter((row) => row.bars.some((b) => b.kind === kind && b.start <= t + 1e-9 && b.end > t + 1e-9)).length
+
+  it('never runs more CPU at once than the executor has tokens (1 GIL, 1 loop, `cores` cores)', () => {
+    for (const p of all) {
+      const r = simulatePool(p)
+      const cap = p.executor === 'process' ? p.cores : 1
+      for (let t = 0; t < r.wall; t += 0.05) expect(busyAt(r, t + 0.01, 'cpu')).toBeLessThanOrEqual(cap)
+    }
+  })
+
+  it('the GIL / loop lane is held exactly while some row runs CPU', () => {
+    for (const p of all.filter((x) => x.executor !== 'process')) {
+      const r = simulatePool(p)
+      const held = r.token.reduce((a, t) => a + t.end - t.start, 0)
+      const cpu = r.rows.flatMap((row) => row.bars).filter((b) => b.kind === 'cpu').reduce((a, b) => a + b.end - b.start, 0)
+      expect(held).toBeCloseTo(cpu, 6)
+    }
+  })
+
+  it('a row waiting for a token never waits while a token is free (work-conserving)', () => {
+    for (const p of all) {
+      const r = simulatePool(p)
+      const cap = p.executor === 'process' ? p.cores : 1
+      for (let t = 0; t < r.wall; t += 0.05) {
+        if (busyAt(r, t + 0.01, 'ready') > 0) expect(busyAt(r, t + 0.01, 'cpu')).toBe(cap)
+      }
+    }
+  })
+
+  it('threads never beat the sequential loop on CPU work; I/O-bound threads approach one wait', () => {
+    for (let w = 1; w <= 8; w++) expect(simulatePool({ executor: 'thread', kind: 'cpu', workers: w, cores: 4, tasks: 8 }).wall).toBeGreaterThanOrEqual(8 - 1e-9)
+    const t = [1, 2, 4, 8].map((w) => simulatePool({ executor: 'thread', kind: 'io', workers: w, cores: 4, tasks: 8 }).wall)
+    for (let i = 1; i < t.length; i++) expect(t[i]).toBeLessThan(t[i - 1])
+  })
+
+  it('more cores never make processes slower, and the lesson numbers hold', () => {
+    for (let w = 1; w <= 8; w++) {
+      const by = [1, 2, 4, 8].map((cores) => simulatePool({ executor: 'process', kind: 'cpu', workers: w, cores, tasks: 8 }).wall)
+      for (let i = 1; i < by.length; i++) expect(by[i]).toBeLessThanOrEqual(by[i - 1] + 1e-9)
+    }
+    // conc-models / build-image explanations: ~3.3 s CPU (4 procs), 1.9 s I/O (async, 8 threads), ~3.1 s best process I/O
+    expect(simulatePool({ executor: 'process', kind: 'cpu', workers: 4, cores: 4, tasks: 8 }).wall).toBeCloseTo(3.3)
+    expect(simulatePool({ executor: 'async', kind: 'io', workers: 1, cores: 4, tasks: 8 }).wall).toBeCloseTo(1.9)
+    expect(simulatePool({ executor: 'thread', kind: 'io', workers: 8, cores: 4, tasks: 8 }).wall).toBeCloseTo(1.9)
+    const bestProcIo = Math.min(...[1, 2, 3, 4, 5, 6, 7, 8].map((w) => simulatePool({ executor: 'process', kind: 'io', workers: w, cores: 4, tasks: 8 }).wall))
+    expect(bestProcIo).toBeCloseTo(3.1)
+  })
+
+  it('with the kind locked, only processes 4+ (cpu) or async / 8 threads (io) are within 10% of the best', () => {
+    const within = (kind: 'cpu' | 'io') => {
+      const best = bestWall({ executor: 'thread', workers: 2, kind, tasks: 8, cores: 4 }, {}).wall
+      const ok: string[] = []
+      for (const ex of ['thread', 'process', 'async'] as Executor[])
+        for (let w = 1; w <= (ex === 'async' ? 1 : 8); w++)
+          if (simulatePool({ executor: ex, workers: w, kind, tasks: 8, cores: 4 }).wall <= best * 1.1 + 1e-9) ok.push(`${ex}${ex === 'async' ? '' : w}`)
+      return ok
+    }
+    expect(within('cpu')).toEqual(['process4', 'process5', 'process6', 'process7', 'process8'])
+    expect(within('io')).toEqual(['thread8', 'async'])
+  })
+})

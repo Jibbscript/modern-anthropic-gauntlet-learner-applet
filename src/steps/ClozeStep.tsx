@@ -231,7 +231,7 @@ export default function ClozeStep({ step, phase, attempt, setController, onHint,
             className="cloze__bank"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, height: 0, marginTop: 0, transition: { duration: 0.18 } }}
+            exit={{ opacity: 0, y: 6, transition: { duration: 0.15 } }}
           >
             <div className="cloze__bank-head">
               <span className="eyebrow">{active == null ? 'All blanks filled' : `Blank ${activePos + 1} of ${order.length}`}</span>

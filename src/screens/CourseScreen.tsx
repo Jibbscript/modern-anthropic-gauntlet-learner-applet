@@ -457,7 +457,13 @@ export default function CourseScreen({ courseId }: { courseId: AreaId }) {
   const [openId, setOpenId] = useState<string | null>(null)
   const [scrolled, setScrolled] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
+  const rootRef = useRef<HTMLDivElement>(null)
   const currentEl = useRef<HTMLDivElement | null>(null)
+
+  // a pushed page takes keyboard focus, so Tab doesn't wander the Learn tab underneath
+  useEffect(() => {
+    rootRef.current?.querySelector<HTMLElement>('.cs-top__back')?.focus({ preventScroll: true })
+  }, [])
   const [pathRef, width] = useWidth<HTMLDivElement>()
 
   const nodes = useMemo(() => pathNodes(s, course), [s, course])
@@ -516,7 +522,7 @@ export default function CourseScreen({ courseId }: { courseId: AreaId }) {
   }
 
   return (
-    <div className={`cs cs--${course.color}`} style={courseStyle(course.color) as CSSProperties}>
+    <div className={`cs cs--${course.color}`} style={courseStyle(course.color) as CSSProperties} ref={rootRef}>
       <header className={`cs-top safe-top ${scrolled ? 'is-scrolled' : ''}`}>
         <div className="cs-top__row">
           <IconButton label="Back" className="cs-top__back" onClick={() => nav.back()}>

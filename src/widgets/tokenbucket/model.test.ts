@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { bucketMaxIn, bucketTake, burstObserved, burstRate, densest, makeBucket, makeWindow, nextTokenIn, peakSpan, tokensAt, windowTake, type Bucket, type FixedWindow, type ReqEvent } from './model'
+import { MAX_BURST_RATE, bucketMaxIn, bucketTake, burstObserved, burstRate, densest, makeBucket, makeWindow, nextTokenIn, peakSpan, tokensAt, windowTake, type Bucket, type FixedWindow, type ReqEvent } from './model'
 
 function sendBucket(b: Bucket, times: number[]): { b: Bucket; events: ReqEvent[] } {
   const events: ReqEvent[] = []
@@ -38,9 +38,10 @@ describe('token bucket', () => {
   })
 
   it('a hold at burstRate drains the bucket for any rate', () => {
-    for (const rate of [0.5, 1, 2, 5, 10]) {
+    for (const rate of [0.1, 0.5, 1, 2, 5]) {
       const r = burstRate(rate)
-      expect(r).toBeGreaterThan(rate)
+      expect(r).toBeGreaterThanOrEqual(4 * rate)
+      expect(r).toBeLessThanOrEqual(MAX_BURST_RATE)
       const times = Array.from({ length: 200 }, (_, i) => i / r)
       const { events } = sendBucket(makeBucket(5, rate), times)
       expect(burstObserved(events, 5)).toBe(true)
@@ -97,8 +98,10 @@ describe('peak metric', () => {
     [5, 1],
     [10, 1],
     [3, 0.5],
-    [5, 10],
+    [5, 5],
     [20, 2],
+    [1, 0.1],
+    [20, 5],
   ]) {
     it(`a hold across a window edge beats the bucket bound (cap ${capacity}, rate ${rate})`, () => {
       const r = burstRate(rate)
