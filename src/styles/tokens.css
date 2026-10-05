@@ -1,0 +1,265 @@
+/*
+ * Gauntlet design tokens, tuned to the Brilliant iOS language (see
+ * docs/research/brilliant-ux.md): white canvas (#141414 in dark), black text
+ * with alpha tints, a dark #383838 pill CTA on a black 4px edge, one hue per
+ * course from 11-step ramps, green for correct, yellow for "try again",
+ * neutral grey for a final miss, a pear-green lightning-bolt streak.
+ * Theme: bare :root = light; system dark via media query unless the user
+ * forced light; [data-theme="dark"] forces dark.
+ */
+:root {
+  color-scheme: light;
+
+  /* canvas + ink */
+  --bg: #ffffff;
+  --bg-sunken: #f5f3f1;
+  --surface: #ffffff;
+  --surface-2: #f8f8f8;
+  --surface-3: #efefef;
+  --ink: #000000;
+  --ink-2: rgba(0, 0, 0, 0.7);
+  --ink-3: rgba(0, 0, 0, 0.45);
+  --ink-inverse: #ffffff;
+  --line: #e5e5e5;
+  --line-strong: #d6d6d6;
+  --edge: #d9d9d9; /* bottom edge of pressable tiles */
+  --scrim: rgba(0, 0, 0, 0.4);
+
+  /* primary action (Check / Continue) */
+  --action: #383838;
+  --action-edge: #000000;
+  --action-ink: #ffffff;
+
+  /* selection */
+  --select: #456dff;
+  --select-soft: #ecf0ff;
+  --select-edge: #294bc6;
+
+  /* feedback */
+  --good: #29cc57;
+  --good-soft: #d4f5dd;
+  --good-edge: #15b441;
+  --good-ink: #009b2b;
+  --bad: #ff5d5d;
+  --bad-soft: #ffdfdf;
+  --bad-edge: #e14b4b;
+  --bad-ink: #b42323;
+  --warn: #f7c325;
+  --warn-soft: #fff6d6;
+  /* retry: Brilliant answers a wrong attempt with yellow, not red */
+  --retry: #f7c325;
+  --retry-soft: #fce49d;
+  --retry-edge: #b78900;
+  --retry-ink: #5c4400;
+  /* final miss / revealed answer: deliberately neutral */
+  --neutral-fb: #e5e5e5;
+  --neutral-fb-ink: #383838;
+
+  /* gamification */
+  --streak: #d8e82e;
+  --streak-2: #bbcc00;
+  --xp: #009b2b;
+  --freeze: #7491ff;
+  --iridescent: linear-gradient(86deg, #7491ff 0%, #ff90e0 50%, #f9d25c 100%);
+
+  /* course hues: base / soft background / pressed edge / ink-on-soft */
+  --c-violet: #9d62ff;  --c-violet-soft: #f5efff; --c-violet-edge: #7139cc; --c-violet-ink: #7139cc;
+  --c-blue: #456dff;  --c-blue-soft: #ecf0ff; --c-blue-edge: #294bc6; --c-blue-ink: #294bc6;
+  --c-teal: #2cb0a1;  --c-teal-soft: #e3f6f3; --c-teal-edge: #1e8579; --c-teal-ink: #1b7469;
+  --c-green: #29cc57;  --c-green-soft: #eafaee; --c-green-edge: #15b441; --c-green-ink: #00852a;
+  --c-amber: #f7c325;  --c-amber-soft: #fff6d6; --c-amber-edge: #b78900; --c-amber-ink: #5c4400;
+  --c-orange: #ff8d23;  --c-orange-soft: #fff4e9; --c-orange-edge: #ce6809; --c-orange-ink: #ad5404;
+  --c-rose: #ff775c;  --c-rose-soft: #fff0ed; --c-rose-edge: #d9512f; --c-rose-ink: #b33d1f;
+  --c-indigo: #6f7cff;  --c-indigo-soft: #eef0ff; --c-indigo-edge: #4b57d6; --c-indigo-ink: #3c46b3;
+  --c-slate: #5c6370;  --c-slate-soft: #f0f1f3; --c-slate-edge: #3f4550; --c-slate-ink: #353a43;
+  /* small text (badges, avatars, sort labels, under 18px) on a hue-500 face: white on the dark hues,
+     a deep shade on the light ones, where white measures only 1.6-2.7:1 (see DESIGN.md, Contrast) */
+  --c-violet-on: #ffffff; --c-blue-on: #ffffff; --c-indigo-on: #ffffff; --c-slate-on: #ffffff;
+  --c-teal-on: #04312c; --c-green-on: #063d18; --c-amber-on: #3d2e00; --c-orange-on: #432000; --c-rose-on: #4a1206;
+  --good-on: #063d18;
+
+  /* code */
+  --code-bg: #f8f8f8;
+  --code-ink: #1f1f1f;
+  --code-line: #ebebeb;
+  --code-kw: #7c3aed;
+  --code-str: #0b7a53; /* 5:1 on the code background, 4.8:1 on a highlighted line */
+  --code-num: #c2410c;
+  --code-fn: #2563eb;
+  --code-com: #6b6b7e;
+  --code-builtin: #b4236c;
+
+  /* type */
+  --font-ui: 'Figtree', ui-rounded, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-display: 'Figtree', ui-rounded, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  /* Clarendon-style slab serif for rare marketing-style display moments (hero, completion) */
+  --font-serif: 'Besley', Georgia, 'Times New Roman', serif;
+  --font-code: 'Source Code Pro', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  --fs-xs: 0.75rem;
+  --fs-sm: 0.875rem;
+  --fs-md: 1rem;
+  --fs-lg: 1.125rem;
+  --fs-xl: 1.375rem;
+  --fs-2xl: 1.75rem;
+  --fs-3xl: 2.25rem;
+  --lh-tight: 1.15;
+  --lh-body: 1.5;
+
+  /* shape */
+  --r-sm: 8px;
+  --r-md: 12px;
+  --r-lg: 16px;
+  --r-xl: 24px;
+  --r-pill: 999px;
+  --edge-h: 4px; /* height of the 3D bottom edge */
+
+  /* space */
+  --s-1: 4px;
+  --s-2: 8px;
+  --s-3: 12px;
+  --s-4: 16px;
+  --s-5: 20px;
+  --s-6: 24px;
+  --s-8: 32px;
+  --s-10: 40px;
+  --gutter: 20px;
+
+  /* depth */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 0 15px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 0 25px rgba(0, 0, 0, 0.2);
+  --gloss: linear-gradient(180deg, rgba(255, 255, 255, 0.45), rgba(255, 255, 255, 0) 55%);
+
+  /* motion */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --dur-1: 120ms;
+  --dur-2: 220ms;
+  --dur-3: 420ms;
+
+  /* layout */
+  --app-max: 520px;
+  --tabbar-h: 64px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    color-scheme: dark;
+    --bg: #141414;
+    --bg-sunken: #0c0c0c;
+    --surface: #1e1e1e;
+    --surface-2: #1e1e1e;
+    --surface-3: #2a2a2a;
+    --ink: #ffffff;
+    --ink-2: rgba(255, 255, 255, 0.7);
+    --ink-3: rgba(255, 255, 255, 0.45);
+    --ink-inverse: #000000;
+    --line: #333333;
+    --line-strong: #4c4c4c;
+    --edge: #000000;
+    --scrim: rgba(0, 0, 0, 0.6);
+    --action: #e5e5e5;
+    --action-edge: #b3b3b3;
+    --action-ink: #000000;
+    --select: #7491ff;
+    --select-soft: #1b2340;
+    --select-edge: #456dff;
+    --good: #29cc57;
+    --good-soft: #00370f;
+    --good-edge: #15b441;
+    --good-ink: #5ed981;
+    --bad: #ff5d5d;
+    --bad-soft: #3d1414;
+    --bad-edge: #e14b4b;
+    --bad-ink: #ffb1b1;
+    --warn-soft: #403000;
+    --retry-soft: #403000;
+    --retry-ink: #fce49d;
+    --neutral-fb: #383838;
+    --neutral-fb-ink: #e5e5e5;
+    --xp: #5ed981;
+    --c-violet-soft: #2a1d47; --c-violet-ink: #b689ff;
+    --c-blue-soft: #14264a;   --c-blue-ink: #a9c8ff;
+    --c-teal-soft: #0d302f;   --c-teal-ink: #8de8e4;
+    --c-green-soft: #11301e;  --c-green-ink: #8ce8b0;
+    --c-amber-soft: #36290b;  --c-amber-ink: #ffd88a;
+    --c-orange-soft: #3a2208; --c-orange-ink: #ffa95a;
+    --c-rose-soft: #3a1520;   --c-rose-ink: #ffadc2;
+    --c-indigo-soft: #1e2147; --c-indigo-ink: #a5adff;
+    --c-slate-soft: #232836;  --c-slate-ink: #c8cfdc;
+    --c-slate: #8a96ad; --c-slate-edge: #5f6a80;
+    --c-slate-on: #11151c;
+    --code-bg: #1a1a1a;
+    --code-ink: #ececec;
+    --code-line: #2c2c2c;
+    --code-kw: #c4a1ff;
+    --code-str: #6fe0a8;
+    --code-num: #ffb27a;
+    --code-fn: #8ab8ff;
+    --code-com: #8a8aa0; /* comments carry hints: 5:1 on the dark code background */
+    --code-builtin: #ff8fc4;
+    --shadow-md: 0 6px 20px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 18px 50px rgba(0, 0, 0, 0.55);
+    --gloss: linear-gradient(180deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0) 55%);
+  }
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --bg: #141414;
+  --bg-sunken: #0c0c0c;
+  --surface: #1e1e1e;
+  --surface-2: #1e1e1e;
+  --surface-3: #2a2a2a;
+  --ink: #ffffff;
+  --ink-2: rgba(255, 255, 255, 0.7);
+  --ink-3: rgba(255, 255, 255, 0.45);
+  --ink-inverse: #000000;
+  --line: #333333;
+  --line-strong: #4c4c4c;
+  --edge: #000000;
+  --scrim: rgba(0, 0, 0, 0.6);
+  --action: #e5e5e5;
+  --action-edge: #b3b3b3;
+  --action-ink: #000000;
+  --select: #7491ff;
+  --select-soft: #1b2340;
+  --select-edge: #456dff;
+  --good: #29cc57;
+  --good-soft: #00370f;
+  --good-edge: #15b441;
+  --good-ink: #5ed981;
+  --bad: #ff5d5d;
+  --bad-soft: #3d1414;
+  --bad-edge: #e14b4b;
+  --bad-ink: #ffb1b1;
+  --warn-soft: #403000;
+  --retry-soft: #403000;
+  --retry-ink: #fce49d;
+  --neutral-fb: #383838;
+  --neutral-fb-ink: #e5e5e5;
+  --xp: #5ed981;
+  --c-violet-soft: #2a1d47; --c-violet-ink: #b689ff;
+  --c-blue-soft: #14264a;   --c-blue-ink: #a9c8ff;
+  --c-teal-soft: #0d302f;   --c-teal-ink: #8de8e4;
+  --c-green-soft: #11301e;  --c-green-ink: #8ce8b0;
+  --c-amber-soft: #36290b;  --c-amber-ink: #ffd88a;
+  --c-orange-soft: #3a2208; --c-orange-ink: #ffa95a;
+  --c-rose-soft: #3a1520;   --c-rose-ink: #ffadc2;
+  --c-indigo-soft: #1e2147; --c-indigo-ink: #a5adff;
+  --c-slate-soft: #232836;  --c-slate-ink: #c8cfdc;
+  --c-slate: #8a96ad; --c-slate-edge: #5f6a80;
+  --c-slate-on: #11151c;
+  --code-bg: #1a1a1a;
+  --code-ink: #ececec;
+  --code-line: #2c2c2c;
+  --code-kw: #c4a1ff;
+  --code-str: #6fe0a8;
+  --code-num: #ffb27a;
+  --code-fn: #8ab8ff;
+  --code-com: #8a8aa0; /* comments carry hints: 5:1 on the dark code background */
+  --code-builtin: #ff8fc4;
+  --shadow-md: 0 6px 20px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 18px 50px rgba(0, 0, 0, 0.55);
+  --gloss: linear-gradient(180deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0) 55%);
+}

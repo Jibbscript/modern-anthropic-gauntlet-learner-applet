@@ -1,0 +1,391 @@
+/* --------------------------------------------------------- story editor */
+.sed {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  background: var(--bg);
+}
+
+.sed-head {
+  flex: none;
+  display: grid;
+  grid-template-columns: 48px 1fr 48px;
+  align-items: center;
+  padding-left: var(--s-2);
+  padding-right: var(--s-2);
+  border-bottom: 1px solid transparent;
+}
+.sed-head__back {
+  width: 44px;
+  height: 44px;
+  color: var(--ink);
+}
+.sed-head__titles {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 0;
+  padding: var(--s-2) 0;
+}
+.sed-head__titles h1 {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--fs-lg);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+.sed-head__status {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 18px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink-3);
+  transition: color var(--dur-2);
+}
+.sed-head__status--saved {
+  color: var(--good-ink);
+}
+
+.sed-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-6);
+  padding: var(--s-2) var(--gutter) var(--s-8);
+}
+.sed-missing {
+  padding: var(--s-8) var(--gutter);
+  color: var(--ink-2);
+  text-align: center;
+}
+
+/* ------------------------------------------------------------ question */
+.sed-q {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  padding: var(--s-5) var(--s-5) var(--s-4);
+  border-radius: var(--r-lg);
+  background:
+    radial-gradient(90% 80% at 100% 0%, color-mix(in srgb, var(--c) 16%, transparent) 0%, transparent 70%),
+    linear-gradient(170deg, color-mix(in srgb, var(--c) 8%, var(--surface)) 0%, var(--surface) 80%);
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--c) 26%, var(--line));
+}
+.sed-q__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--c-ink);
+}
+.sed-q__text {
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.015em;
+  text-wrap: balance;
+}
+.sed-q__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px var(--s-3);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink-2);
+}
+.sed-q__pips {
+  display: inline-flex;
+  gap: 4px;
+}
+.sed-q__pips i {
+  width: 18px;
+  height: 6px;
+  border-radius: var(--r-pill);
+  background: color-mix(in srgb, var(--ink) 12%, transparent);
+  transition: background var(--dur-2);
+}
+.sed-q__pips i.on {
+  background: var(--c);
+}
+.sed-q__due {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: var(--r-pill);
+  background: var(--c-soft);
+  color: var(--c-ink);
+}
+
+/* -------------------------------------------------------------- layers */
+.sed-layers {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+}
+.sed-layer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  padding: var(--s-4);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  box-shadow: inset 0 0 0 2px var(--line), 0 var(--edge-h) 0 0 var(--edge);
+  margin-bottom: var(--edge-h);
+  transition: box-shadow var(--dur-2);
+}
+.sed-layer:focus-within {
+  box-shadow: inset 0 0 0 2px var(--select), 0 var(--edge-h) 0 0 var(--select-edge);
+}
+.sed-layer__head {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s-3);
+  cursor: text;
+}
+.sed-layer__num {
+  position: relative;
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--surface-3);
+  color: var(--ink-2);
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  overflow: hidden;
+  transition: background var(--dur-2), color var(--dur-2), box-shadow var(--dur-2);
+}
+.sed-layer__num > span {
+  display: grid;
+  place-items: center;
+}
+.sed-layer.is-done .sed-layer__num {
+  color: #fff;
+  background: linear-gradient(160deg, color-mix(in srgb, var(--c) 70%, #fff), var(--c) 55%, var(--c-edge));
+  box-shadow: 0 2px 0 0 var(--c-edge);
+}
+.sed-layer__prompt {
+  flex: 1;
+  min-width: 0;
+  padding-top: 3px;
+  font-size: var(--fs-md);
+  font-weight: 700;
+  line-height: 1.35;
+  text-wrap: pretty;
+}
+
+.sed-input {
+  display: block;
+  width: 100%;
+  min-height: 92px;
+  padding: var(--s-3) var(--s-3);
+  border: 0;
+  border-radius: var(--r-md);
+  /* --surface-2 equals --surface in dark mode; tint from ink so the well shows in both themes */
+  background: color-mix(in srgb, var(--ink) 4%, var(--surface));
+  box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--ink) 6%, transparent);
+  color: var(--ink);
+  font-size: var(--fs-md);
+  line-height: 1.5;
+  resize: none;
+  overflow: hidden;
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+  transition: box-shadow var(--dur-1), background var(--dur-1);
+}
+.sed-input::placeholder {
+  color: var(--ink-3);
+}
+.sed-input:focus {
+  background: color-mix(in srgb, var(--select) 6%, var(--surface));
+  box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--select) 35%, transparent);
+}
+.sed-input--notes {
+  min-height: 80px;
+  background: var(--surface);
+  box-shadow: inset 0 0 0 2px var(--line);
+}
+.sed-input--notes:focus {
+  box-shadow: inset 0 0 0 2px var(--select);
+}
+
+/* ------------------------------------------------------------ sections */
+.sed-sec {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+}
+.sed-sec__title {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  font-size: var(--fs-lg);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+.sed-sec__title svg {
+  color: var(--c);
+}
+.sed-hint {
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--ink-3);
+}
+.sed-hint b {
+  color: var(--ink-2);
+}
+
+.sed-refl {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--s-2);
+  padding: var(--s-3) var(--s-4) var(--s-4);
+  border-radius: var(--r-md);
+  background: var(--c-soft);
+  border-left: 4px solid var(--c);
+}
+.sed-refl__head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--c-ink);
+}
+.sed-refl__head svg {
+  flex: none;
+}
+.sed-refl__lesson {
+  margin-top: -2px;
+  font-size: var(--fs-md);
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--ink);
+}
+.sed-refl__text {
+  font-size: var(--fs-sm);
+  line-height: 1.5;
+  color: var(--ink-2);
+  white-space: pre-wrap;
+}
+.sed-refl__btn {
+  margin-top: 2px;
+}
+
+.sed-follow {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+}
+.sed-follow li {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s-3);
+  padding: var(--s-3) var(--s-4);
+  border-radius: var(--r-md);
+  background: var(--surface-2);
+  box-shadow: inset 0 0 0 1.5px var(--line);
+  font-size: var(--fs-md);
+  font-weight: 600;
+  line-height: 1.4;
+}
+.sed-follow__dot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  margin-top: 8px;
+  border-radius: 50%;
+  background: var(--c);
+}
+
+/* -------------------------------------------------------------- footer */
+.sed-foot {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  padding: var(--s-3) var(--gutter) var(--s-4);
+  border-top: 1px solid var(--line);
+  background: var(--bg);
+}
+.sed-foot > .btn {
+  margin-bottom: var(--s-1);
+}
+.sed-stats {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+}
+.sed-stats__line {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  font-size: var(--fs-sm);
+  color: var(--ink-2);
+  white-space: nowrap;
+}
+.sed-stats__line b {
+  color: var(--ink);
+  font-weight: 700;
+}
+.sed-stats__sep {
+  color: var(--ink-3);
+}
+.sed-stats__meter {
+  position: relative;
+  flex: 1;
+  min-width: 32px;
+  height: 6px;
+  margin-left: var(--s-1);
+  border-radius: var(--r-pill);
+  background: var(--surface-3);
+  overflow: hidden;
+}
+.sed-stats__meter i {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: inherit;
+  background: var(--good);
+}
+.sed-stats.is-long .sed-stats__meter i {
+  background: var(--retry);
+}
+.sed-stats.is-long .sed-stats__line b {
+  color: var(--retry-ink);
+}
+.sed-stats__warn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow: hidden;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--retry-ink);
+}
+.sed-stats__warn svg {
+  flex: none;
+  color: var(--retry-edge);
+}

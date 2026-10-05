@@ -1,0 +1,226 @@
+/* Order step: a vertical stack of pressable cards that can be dragged or nudged. */
+
+.order__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+}
+
+.order__how {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 20px;
+}
+
+.order-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+}
+
+.order-item {
+  position: relative;
+  list-style: none;
+  border-radius: var(--r-md);
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+/* ------------------------------------------------------------------ card */
+
+.order-card {
+  --t-bg: var(--surface);
+  --t-line: var(--line);
+  --t-edge: var(--edge);
+  --t-ink: var(--ink);
+  --t-num-bg: var(--surface-2);
+  --t-num-ink: var(--ink-3);
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--s-1);
+  min-height: 60px;
+  padding-right: 6px;
+  margin-bottom: var(--edge-h);
+  border-radius: var(--r-md);
+  background: var(--t-bg);
+  color: var(--t-ink);
+  box-shadow: inset 0 0 0 2px var(--t-line), 0 var(--edge-h) 0 0 var(--t-edge);
+  transition: background var(--dur-2), box-shadow var(--dur-2), color var(--dur-2);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .order-item:not(.order-item--dragging) .order-card--idle:hover {
+    --t-line: var(--line-strong);
+  }
+  .order-card--idle,
+  .order-card--selected {
+    cursor: grab;
+  }
+}
+
+.order-item--dragging .order-card {
+  --t-line: var(--select);
+  --t-edge: var(--select-edge);
+  cursor: grabbing;
+  box-shadow: inset 0 0 0 2px var(--t-line), 0 var(--edge-h) 0 0 var(--t-edge), var(--shadow-lg);
+}
+
+.order-card--selected {
+  --t-bg: var(--select-soft);
+  --t-line: var(--select);
+  --t-edge: var(--select-edge);
+  --t-num-bg: var(--select);
+  --t-num-ink: #fff;
+}
+.order-card--correct {
+  --t-bg: var(--good-soft);
+  --t-line: var(--good);
+  --t-edge: var(--good-edge);
+  --t-ink: var(--good-ink);
+  --t-num-bg: var(--good);
+  --t-num-ink: #fff;
+}
+.order-card--incorrect {
+  /* a wrong position is a yellow "try again", not red */
+  --t-bg: var(--retry-soft);
+  --t-line: var(--retry);
+  --t-edge: var(--retry-edge);
+  --t-ink: var(--retry-ink);
+  --t-num-bg: var(--retry-edge);
+  --t-mark: var(--retry-edge);
+  --t-num-ink: #fff;
+}
+.order-card--reveal {
+  --t-line: var(--good);
+  --t-edge: var(--good-edge);
+  --t-num-bg: var(--good);
+  --t-num-ink: #fff;
+  background-image: repeating-linear-gradient(-45deg, transparent 0 8px, color-mix(in srgb, var(--good) 9%, transparent) 8px 16px);
+}
+
+.order-card__main {
+  flex: 1;
+  min-width: 0;
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  padding: var(--s-3) var(--s-1) var(--s-3) var(--s-3);
+  border-radius: var(--r-md);
+  text-align: left;
+  font-weight: 600;
+  line-height: 1.35;
+  color: inherit;
+}
+.order-card__main:last-child {
+  padding-right: var(--s-3);
+}
+.order-card__main:disabled {
+  cursor: default;
+}
+/* keyboard focus rings the whole card, not just the button inside it */
+.order-card__main:focus-visible {
+  outline: none;
+}
+.order-card:has(> .order-card__main:focus-visible) {
+  outline: 3px solid var(--select);
+  outline-offset: 2px;
+}
+
+.order-card__num {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  background: var(--t-num-bg);
+  color: var(--t-num-ink);
+  box-shadow: inset 0 0 0 2px var(--t-line);
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  transition: background var(--dur-2), color var(--dur-2), box-shadow var(--dur-2);
+}
+.order-card--selected .order-card__num,
+.order-card--correct .order-card__num,
+.order-card--incorrect .order-card__num,
+.order-card--reveal .order-card__num {
+  box-shadow: none;
+}
+
+.order-card__text {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.order-card__grip {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 48px;
+  margin-right: -2px;
+  border-radius: var(--r-sm);
+  color: var(--ink-3);
+  touch-action: none;
+  cursor: grab;
+}
+.order-card__grip:active {
+  cursor: grabbing;
+  color: var(--ink-2);
+}
+
+.order-card__mark {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  margin: 0 6px;
+  border-radius: var(--r-pill);
+  background: var(--t-mark, var(--t-line));
+  color: #fff;
+}
+
+/* tap fallback: nudge buttons on the selected card */
+.order-card__moves {
+  flex: none;
+  display: flex;
+  gap: 6px;
+  padding: 4px 2px 4px 0;
+}
+.order-move {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--r-pill);
+  background: var(--surface);
+  color: var(--select);
+  box-shadow: inset 0 0 0 2px var(--select), 0 3px 0 0 var(--select-edge);
+  margin-bottom: 3px;
+  transition: opacity var(--dur-1), transform 90ms var(--ease-out), box-shadow 90ms var(--ease-out);
+}
+.order-move:active:not(:disabled) {
+  transform: translateY(2px);
+  box-shadow: inset 0 0 0 2px var(--select), 0 1px 0 0 var(--select-edge);
+}
+.order-move:disabled {
+  opacity: 0.3;
+}
+
+/* press: the card sinks into its edge like a Tile (translate composes with motion's transform) */
+.order-card {
+  transition: background var(--dur-2), box-shadow 90ms var(--ease-out), color var(--dur-2), translate 90ms var(--ease-out);
+}
+.order-item:not(.order-item--dragging) .order-card:has(> .order-card__main:active:not(:disabled)) {
+  translate: 0 2px;
+  box-shadow: inset 0 0 0 2px var(--t-line), 0 2px 0 0 var(--t-edge);
+}
