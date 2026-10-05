@@ -4,7 +4,8 @@ import { createPortal } from 'react-dom'
 import { Battery, BatteryCharging, Brain, CalendarDays, Check, ChevronRight, Clock, NotebookPen, Sparkles, Target, Trophy, Zap } from 'lucide-react'
 import type { Course, Lesson, StorySlotId } from '../core/types'
 import { liveStreak, qualifies, useStore, type GauntletState } from '../core/store'
-import { areaMastery, buildCatalog, buildSession, courseProgress, dueCardIds, dueStories, recommendedLesson } from '../core/adaptive'
+import { areaMastery, buildCatalog, buildSession, courseProgress, dueCardIds, recommendedLesson } from '../core/adaptive'
+import { rehearsalsDue } from './StoriesScreen'
 import { recallNow } from '../core/fsrs'
 import { dayKey, daysBetween, weekOf } from '../core/dates'
 import { CATALOG, COURSES } from '../content'
@@ -545,7 +546,7 @@ export default function LearnScreen() {
   const playable = useMemo(playableCatalog, [])
   const recId = useMemo(() => recommendedLesson(s, playable, now), [s, playable, now])
   const mastery = useMemo(() => areaMastery(s, CATALOG, now), [s, now])
-  const storySlots = useMemo(() => dueStories(s, now) as StorySlotId[], [s, now])
+  const storySlots = useMemo(() => rehearsalsDue(s, now), [s, now])
 
   const live = liveStreak(s.streak, today)
   const goal = Math.max(1, s.settings.dailyXpGoal)

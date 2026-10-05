@@ -247,7 +247,7 @@ export default function CollabWidget({ config, onComplete }: WidgetProps<CollabC
         {STRATS.map((s) => {
           const kept = results[s.id]
           return (
-            <Tile key={s.id} compact role="radio" aria-checked={strategy === s.id} state={strategy === s.id ? 'selected' : 'idle'} className="collab-pick" onClick={() => choose(s.id)}>
+            <Tile key={s.id} compact role="radio" aria-checked={strategy === s.id} aria-pressed={undefined} state={strategy === s.id ? 'selected' : 'idle'} className="collab-pick" onClick={() => choose(s.id)}>
               <span className="collab-pick__title">{s.title}</span>
               <span className="collab-pick__sub">{s.sub}</span>
               {kept !== undefined && (

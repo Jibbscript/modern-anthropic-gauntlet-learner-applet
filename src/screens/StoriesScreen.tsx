@@ -22,7 +22,7 @@ import {
   Users,
   type LucideIcon,
 } from 'lucide-react'
-import { useStore, type StoryEntry } from '../core/store'
+import { useStore, type GauntletState, type StoryEntry } from '../core/store'
 import type { CourseColor, IconName, StorySlot, StorySlotId } from '../core/types'
 import { STORY_BY_ID, STORY_SLOTS } from '../content/skills'
 import { dueStories } from '../core/adaptive'
@@ -60,6 +60,17 @@ export function hasLayerText(e: StoryEntry | undefined): boolean {
 
 export function layersWritten(slot: StorySlot, e: StoryEntry | undefined): number {
   return slot.layers.filter((_, i) => layerDone(e?.layers[i])).length
+}
+
+/**
+ * stories due for rehearsal that have something to say, most overdue first. A
+ * schedule left behind after the layers were cleared does not count: the drill
+ * would open empty.
+ */
+export function rehearsalsDue(s: GauntletState, now: number): StorySlotId[] {
+  return (dueStories(s, now) as StorySlotId[])
+    .filter((id) => STORY_BY_ID[id] && hasLayerText(s.stories[id]))
+    .sort((a, b) => (s.stories[a]?.rehearsal?.due ?? 0) - (s.stories[b]?.rehearsal?.due ?? 0))
 }
 
 export type StoryStatus = 'new' | 'draft' | 'ready' | 'due'
@@ -171,9 +182,7 @@ export default function StoriesScreen() {
 
   const d = useMemo(() => {
     const drafted = STORY_SLOTS.filter((x) => isDrafted(s.stories[x.id]))
-    const due = (dueStories(s, now) as StorySlotId[])
-      .filter((id) => STORY_BY_ID[id] && hasLayerText(s.stories[id]))
-      .sort((a, b) => (s.stories[a]?.rehearsal?.due ?? 0) - (s.stories[b]?.rehearsal?.due ?? 0))
+    const due = rehearsalsDue(s, now)
     const upcoming = drafted
       .map((x) => s.stories[x.id]?.rehearsal?.due)
       .filter((t): t is number => t != null && t > now)

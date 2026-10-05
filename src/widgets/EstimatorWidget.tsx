@@ -56,7 +56,7 @@ function useReduced(): boolean {
   return !!pref || (typeof document !== 'undefined' && document.documentElement.dataset.reduceMotion === 'true')
 }
 
-type Feedback = { tone: 'good' | 'retry' | 'neutral'; text: string } | null
+type Feedback = { tone: 'good' | 'retry' | 'neutral' | 'info'; text: string } | null
 
 export default function EstimatorWidget({ config, onComplete }: WidgetProps<EstimatorConfig>) {
   const reduce = useReduced()
@@ -81,6 +81,8 @@ export default function EstimatorWidget({ config, onComplete }: WidgetProps<Esti
   const [feedback, setFeedback] = useState<Feedback>(null)
   const [misses, setMisses] = useState(0)
   const [revealed, setRevealed] = useState(false)
+  /** the typed answer was right but the sliders were not on the scenario yet */
+  const [pending, setPending] = useState(false)
   const [reached, setReached] = useState(false)
   const [shake, setShake] = useState(0)
   const firedRef = useRef(false)
@@ -93,6 +95,8 @@ export default function EstimatorWidget({ config, onComplete }: WidgetProps<Esti
   const inputs = useMemo(() => Object.fromEntries(KEYS.map((k) => [k, stops[k][idx[k]]])) as unknown as Inputs, [idx, stops])
   const d = useMemo(() => derive(inputs), [inputs])
   const matches = target ? within(d[target.metric], target.value) : false
+  // with a scenario, the goal is "set the sliders, then answer": a right number on wrong sliders waits for the sliders
+  const needsSliders = !!config.scenario
 
   function complete() {
     if (firedRef.current) return
@@ -132,6 +136,11 @@ export default function EstimatorWidget({ config, onComplete }: WidgetProps<Esti
       return
     }
     if (within(p.value, target.value)) {
+      if (needsSliders && !matches) {
+        setPending(true)
+        setFeedback({ tone: 'info', text: 'Right number. Now set the sliders to the scenario so the model agrees.' })
+        return
+      }
       setFeedback({ tone: 'good', text: `Correct. About ${fmtMetric(m)(target.value)} ${QUESTION[m].unit}.` })
       complete()
       return
@@ -150,6 +159,13 @@ export default function EstimatorWidget({ config, onComplete }: WidgetProps<Esti
     setFeedback({ tone: 'retry', text: `Not quite. ${nudge}` })
   }
 
+  // a right answer that was waiting on the sliders completes as soon as they match
+  useEffect(() => {
+    if (!pending || !matches || !target || firedRef.current) return
+    setFeedback({ tone: 'good', text: `Correct. About ${fmtMetric(target.metric)(target.value)} ${QUESTION[target.metric].unit}.` })
+    complete()
+  }, [pending, matches])
+
   function reveal() {
     if (!target) return
     setRevealed(true)
@@ -161,6 +177,7 @@ export default function EstimatorWidget({ config, onComplete }: WidgetProps<Esti
     if (!reached) {
       setAnswer('')
       setFeedback(null)
+      setPending(false)
     }
   }
 
@@ -258,7 +275,7 @@ export default function EstimatorWidget({ config, onComplete }: WidgetProps<Esti
         <div className="est-grid">
           {METRICS.map((m) => {
             // the metric being asked about stays masked until it is answered (only when there is a question)
-            const hidden = goal === 'answer' && target?.metric === m.key && !reached && !revealed
+            const hidden = goal === 'answer' && target?.metric === m.key && !reached
             const isTarget = goal === 'answer' && target?.metric === m.key
             return (
               <div key={m.key} className={['est-card', m.wide ? 'is-wide' : '', isTarget ? 'is-target' : '', isTarget && reached ? 'is-done' : ''].join(' ')}>
@@ -317,7 +334,8 @@ export default function EstimatorWidget({ config, onComplete }: WidgetProps<Esti
                 disabled={reached}
                 onChange={(e) => {
                   setAnswer(e.target.value)
-                  if (feedback?.tone === 'retry') setFeedback(null)
+                  if (feedback?.tone === 'retry' || feedback?.tone === 'info') setFeedback(null)
+                  setPending(false)
                 }}
               />
               <span className="est-ask__unit">{QUESTION[target.metric].unit}</span>

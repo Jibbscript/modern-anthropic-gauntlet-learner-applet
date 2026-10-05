@@ -427,6 +427,11 @@
   background: var(--retry-soft);
   color: var(--retry-ink);
 }
+.est-fb--info {
+  background: var(--c-soft, var(--select-soft));
+  color: var(--c-ink, var(--select-edge));
+  box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--c, var(--select)) 45%, transparent);
+}
 .est-fb--neutral {
   background: var(--neutral-fb);
   color: var(--neutral-fb-ink);
