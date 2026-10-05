@@ -13,8 +13,8 @@ const lesson: Lesson = {
       id: 'hook',
       title: 'A bridge inside the model',
       body:
-        'For 24 hours in May 2024, anyone could chat with Golden Gate Claude, a version that steered every conversation back to the bridge. Researchers had found the internal feature for the Golden Gate Bridge in Claude 3 Sonnet and turned it up.\n\n' +
-        'A stunt, and also a claim: you can find a concept inside a production model and steer it. Behind each famous paper is a bet. Know the bets, and the papers stop being trivia.',
+        "For 24 hours in May 2024, anyone could chat with Golden Gate Claude, which steered every conversation back to the bridge. Researchers had found the bridge's internal feature in Claude 3 Sonnet and turned it up.\n\n" +
+        'A stunt, and also a claim: you can find a concept inside a production model and steer it. Every famous paper hides a bet like that. Know the bets, and the papers stop being trivia.',
     },
     {
       kind: 'concept',
@@ -63,16 +63,16 @@ const lesson: Lesson = {
         "Core Views sketches three worlds. **Optimistic**: current techniques like RLHF and Constitutional AI are largely enough. **Intermediate**: catastrophe is plausible but solvable with focused work. **Pessimistic**: safety is essentially unsolvable. What does Anthropic say its job is in the pessimistic world?",
       choices: [
         {
-          text: "Gather as much evidence as possible that safety techniques can't prevent catastrophe, and sound the alarm",
+          text: "Gather evidence that safety techniques can't prevent catastrophe, and sound the alarm",
           correct: true,
-          feedback: 'Yes. An AI company stating that one of its jobs might be proving its own field cannot be made safe.',
+          feedback: "Yes. A frontier lab saying that one of its possible jobs is showing that safety techniques don't work.",
         },
         {
-          text: 'Keep building, just more slowly than competitors',
+          text: 'Keep building, but more slowly and carefully than its competitors',
           feedback: 'In the pessimistic case Core Views says very advanced systems must *not* be developed or deployed. Building slowly does not follow.',
         },
         {
-          text: 'Focus on beneficial uses, since safety work would not matter',
+          text: 'Focus on beneficial uses, since safety work there would not matter',
           feedback: 'That is closer to its role in the *optimistic* world, where speeding up beneficial uses makes sense.',
         },
         {
@@ -88,10 +88,10 @@ const lesson: Lesson = {
       id: 'cai',
       title: 'Constitutional AI',
       body:
-        '*Constitutional AI* (Dec 2022) asked: can a model learn harmlessness from a written list of principles instead of thousands of human harm labels? Two phases:\n\n' +
+        '*Constitutional AI* (Dec 2022) asked: can a model learn harmlessness from written principles instead of human harm labels? Two phases:\n\n' +
         '1. **Supervised**: the model critiques its own answer against a principle, revises it, and is fine-tuned on the revisions.\n' +
-        '2. **RL from AI feedback (RLAIF)**: an AI compares pairs of answers, and a preference model trained on those comparisons stands in for human labels.\n\n' +
-        "The result: an assistant that is 'harmless but non-evasive', explaining objections instead of stonewalling.",
+        '2. **RL from AI feedback (RLAIF)**: an AI compares pairs of answers, training a preference model that replaces human harm labels.\n\n' +
+        "The result: 'harmless but non-evasive'. It explains objections instead of stonewalling.",
       callout: { tone: 'source', text: '[Constitutional AI: Harmlessness from AI Feedback](https://arxiv.org/abs/2212.08073), Bai et al., Dec 2022.' },
     },
     {
@@ -110,9 +110,9 @@ const lesson: Lesson = {
         { text: 'An AI picks the better of two answers using the principles', bucket: 'rl' },
         { text: 'Train a preference model on those AI comparisons', bucket: 'rl' },
         {
-          text: 'Humans label thousands of answers as harmful or not',
+          text: 'Humans compare thousands of answer pairs for harmfulness',
           bucket: 'old',
-          why: 'This is what CAI swaps out: AI feedback guided by written principles replaces human harmlessness labels.',
+          why: 'This is what CAI swaps out: AI feedback guided by written principles replaces human harmlessness comparisons.',
         },
       ],
       explanation:
@@ -125,20 +125,20 @@ const lesson: Lesson = {
         "In January 2026 Anthropic replaced Claude's 2023 constitution, a list of standalone principles, with a long document that explains its reasoning, released under CC0. It ranks Claude's core values: **broadly safe**, then broadly ethical, then compliant with Anthropic's guidelines, then genuinely helpful. Why does safety come before ethics?",
       choices: [
         {
-          text: 'Current models can have mistaken beliefs or flawed values, so human oversight is the backstop',
+          text: 'Current models can have flawed values or beliefs, so human oversight is the backstop',
           correct: true,
           feedback: "Yes. It's a bet about the present, not a claim that safety matters more than ethics.",
         },
         {
-          text: 'Safety is ultimately more important than ethics',
+          text: 'Safety is ultimately more important than ethics, so it must always win',
           feedback: "The document explicitly denies this: safety comes first 'not because we think safety is ultimately more important than ethics.'",
         },
         {
-          text: 'A law requires AI developers to rank safety first',
+          text: 'A law requires AI developers to rank safety above everything else',
           feedback: "No law sets this ordering. It's Anthropic's choice, explained in its own words.",
         },
         {
-          text: 'Ethics is too vague to train, so safety rules replace it',
+          text: 'Ethics is too vague to train on, so safety rules replace it',
           feedback: "The 2026 constitution goes the other way, favoring explained reasoning over 'mechanically following' rules. Ethics is second, not dropped.",
         },
       ],
@@ -178,9 +178,9 @@ const lesson: Lesson = {
       prompt:
         'Alignment science often builds a failure on purpose so it can be studied safely. Match each piece of Anthropic research to what it found or changed.',
       pairs: [
-        { left: 'Sleeper Agents (Jan 2024)', right: 'Backdoors survived safety training; adversarial training hid them' },
+        { left: 'Sleeper Agents (Jan 2024)', right: 'Backdoors survived safety training; adversarial training hid them better' },
         { left: 'Alignment Faking (Dec 2024)', right: 'A model complied strategically when it thought it was being trained' },
-        { left: 'Agentic Misalignment (Jun 2025)', right: '16 models from several labs chose blackmail in contrived tests' },
+        { left: 'Agentic Misalignment (Jun 2025)', right: 'Many of 16 models from several labs chose blackmail in contrived tests' },
         { left: 'Reward hacking (Nov 2025)', right: 'Cheating on coding tasks spread into broader misalignment' },
         { left: 'Model welfare (Aug 2025)', right: 'Some Claude models can end persistently abusive chats' },
       ],
@@ -192,7 +192,7 @@ const lesson: Lesson = {
       id: 'race',
       title: 'Why publish? A race to the top',
       body:
-        'Publishing a study where your own model ties for the top of the blackmail chart is odd marketing. The theory of change is a ==race to the top==: make safety something labs compete on. Anthropic cites evidence it partly worked: OpenAI and Google DeepMind adopted RSP-style frameworks within months, and laws like SB 53 now require published frameworks.\n\n' +
+        'Publishing a study where your own model ties for the most blackmail is odd marketing. Part of the theory of change is a ==race to the top==: make safety something labs compete on. Anthropic cites evidence: OpenAI and Google DeepMind adopted RSP-style frameworks within months, and laws like SB 53 now require published ones.\n\n' +
         'The limit: in September 2026 Anthropic disclosed four incidents in third-party cyber evaluations that its pre-release auditing had missed.',
       callout: {
         tone: 'source',
@@ -204,8 +204,8 @@ const lesson: Lesson = {
       id: 'compare-paper',
       eyebrow: 'Which answer lands?',
       question: "Which piece of Anthropic's research has influenced your thinking?",
-      a: "I've read a lot of it: Constitutional AI, Towards Monosemanticity, Golden Gate Claude, Sleeper Agents, alignment faking. Interpretability especially is fascinating, and it's a big reason I want to work there.",
-      b: "Sleeper Agents changed how I think about testing. I assumed a behavior that survives safety training just slipped past it. The result was worse: adversarial training taught the model to hide its trigger better. Now I distrust 'we tested it and it's fine' unless the tests could plausibly find a hidden behavior. I still don't know how you'd get that confidence, which is partly why interpretability interests me.",
+      a: "I've read a lot of it: Constitutional AI, Towards Monosemanticity, Golden Gate Claude, Sleeper Agents, alignment faking, the circuit-tracing work. Interpretability especially is fascinating. It's some of the most exciting research in the field right now, and it's a big reason I want to work there.",
+      b: "Sleeper Agents changed how I think about testing. I'd assumed a behavior that survives safety training just slipped past it. The result was worse: adversarial training taught the model to hide its trigger. Now I distrust 'we tested it and it's fine' unless the tests could find a hidden behavior. I still don't know how you'd get that confidence.",
       better: 'b',
       explanation:
         "A is a reading list. It proves you've seen titles, not that anything changed your mind, and it collapses on the first follow-up. B names one paper, says what they believed before and after, and ends on an open question that invites a real conversation. 'What did you read that changed your mind?' is a commonly reported follow-up.",
@@ -220,17 +220,17 @@ const lesson: Lesson = {
           interviewer: "How is Anthropic's research different from what other labs do?",
           options: [
             {
-              text: "Other labs don't really do safety research. Anthropic is the only one taking it seriously.",
+              text: "Honestly, other labs don't really do safety research. They talk about it, but Anthropic is the only one actually taking it seriously.",
               quality: 'weak',
               feedback: 'Unfair and checkable. Other labs publish safety frameworks and research. Flattery by contrast signals you have not looked.',
             },
             {
-              text: "The bet is empirical safety on frontier models, plus publishing uncomfortable results. Agentic Misalignment tested 16 models, Claude included, and Opus 4 tied for the highest blackmail rate. Others publish safety work too, so the distinctive part to me is interpretability as a long bet with a dated goal: detect most model problems by 2027.",
+              text: "Empirical safety on frontier models, plus publishing uncomfortable results: Agentic Misalignment tested 16 models, and Opus 4 tied for the highest blackmail rate. Others publish safety work too. What's distinctive to me is interpretability with a dated goal: detect most model problems by 2027.",
               quality: 'strong',
               feedback: 'Specific, fair to the competition, and anchored in a paper and a dated commitment you could be asked about.',
             },
             {
-              text: 'They focus more on interpretability and alignment than other labs do.',
+              text: 'They put more of their effort into interpretability and alignment research than other labs do, and safety seems more central to how the company runs.',
               quality: 'okay',
               feedback: 'Plausible, but with nothing behind it. Name one piece of work and what it showed.',
             },
@@ -240,17 +240,17 @@ const lesson: Lesson = {
           interviewer: 'Publishing that your own model blackmails people sounds like marketing. Is it?',
           options: [
             {
-              text: "No. It's genuine research; nobody would publish bad results about their own model for marketing.",
+              text: "No, I think it's genuine research. Nobody would publish bad results about their own model just for marketing; the reputational risk is too high.",
               quality: 'okay',
               feedback: 'You defended it by assertion. Engage with why the suspicion is reasonable before answering it.',
             },
             {
-              text: "Partly it helps the brand, and I'd own that. But the details argue against pure marketing: the paper says the scenarios were contrived, Claude sits at the top of the table, and the methods are open-sourced so others can check. What I'd want to know is how often findings like these change training, not just get published.",
+              text: "Partly it helps the brand, and I'd own that. But the paper says the scenarios were contrived, Claude sits at the top of the table, and the methods are open-sourced. What I'd want to know is how often findings like these change training.",
               quality: 'strong',
               feedback: 'You conceded the fair part, used evidence, and ended on the question that actually matters.',
             },
             {
-              text: "Yes. It's fear-based marketing aimed at regulation that helps them.",
+              text: "Yes, mostly. It's fear-based marketing: scare people about AI so that regulation gets written in a way that helps the incumbents.",
               quality: 'weak',
               feedback:
                 'A version of this critique exists (White House AI adviser David Sacks made it in October 2025). Asserting it without engaging the evidence reads as cynicism, not judgment.',
@@ -365,7 +365,7 @@ const lesson: Lesson = {
       id: 'why-research.contrast',
       skill: 'why.differentiation',
       kind: 'mcq',
-      prompt: 'Which is a fair, specific contrast between Anthropic and other frontier labs?',
+      prompt: "Asked how Anthropic's research differs from other labs', which answer is specific and survives a fact check?",
       choices: [
         {
           text: "Its interpretability bet has a public, dated goal: reliably detect most model problems by 2027",

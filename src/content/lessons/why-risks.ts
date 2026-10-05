@@ -73,7 +73,7 @@ const lesson: Lesson = {
       prompt: 'Drop each case into its bucket. Dated items are real cases; undated ones are scenarios.',
       buckets: [
         { id: 'misuse', label: 'Misuse' },
-        { id: 'misalign', label: 'Misalignment' },
+        { id: 'misalign', label: 'Misaligned' },
         { id: 'structural', label: 'Structural' },
       ],
       items: [
@@ -387,7 +387,7 @@ const lesson: Lesson = {
       prompt: 'Sort each hypothetical into its risk bucket.',
       buckets: [
         { id: 'misuse', label: 'Misuse' },
-        { id: 'misalign', label: 'Misalignment' },
+        { id: 'misalign', label: 'Misaligned' },
         { id: 'structural', label: 'Structural' },
       ],
       items: [

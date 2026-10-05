@@ -21,8 +21,7 @@ const lesson: Lesson = {
     {
       kind: 'match',
       id: 'stage-rules',
-      prompt:
-        "Anthropic's candidate guidance, *How to collaborate with Claude during our hiring process* (last updated Jul 10, 2025), sets one rule per stage. Match each stage to its rule.",
+      prompt: "Anthropic's candidate guidance (last updated Jul 10, 2025) sets one rule per stage. Match each stage to its rule.",
       pairs: [
         { left: 'Application: résumé, cover letter', right: '“Please create your first draft yourself, then use Claude to refine it.”' },
         { left: 'Take-home assessments', right: '“Complete these without Claude unless we indicate otherwise.”' },
@@ -30,7 +29,7 @@ const lesson: Lesson = {
         { left: 'Live interviews', right: '“This is all you–no AI assistance unless we indicate otherwise.”' },
       ],
       explanation:
-        'Two stages welcome Claude (application and prep), and two default to no AI (take-homes and live interviews). The phrase that matters in the second pair: *unless we indicate otherwise*.',
+        'The page is titled *How to collaborate with Claude during our hiring process*. Two stages welcome Claude (application and prep), and two default to no AI (take-homes and live interviews). The phrase that matters in the second pair: *unless we indicate otherwise*.',
     },
     {
       kind: 'concept',
@@ -78,7 +77,7 @@ const lesson: Lesson = {
       ],
       items: [
         { text: 'Having Claude play a skeptical interviewer to drill your culture answers', bucket: 'ok', why: 'Prep is explicitly encouraged: *practice your answers*.' },
-        { text: 'Drafting your cover letter yourself, then asking Claude to tighten it', bucket: 'ok', why: 'That is the application rule, word for word.' },
+        { text: 'Drafting your cover letter yourself, then asking Claude to tighten it', bucket: 'ok', why: 'That is the application rule: first draft yours, then Claude refines.' },
         { text: 'Checking the Pillow docs for `Image.resize` during live coding', bucket: 'ok', why: 'Referencing materials is allowed. AI generation is the line.' },
         { text: 'Using Claude to explain the RSP before your recruiter call', bucket: 'ok', why: 'Researching Anthropic is named in the prep rule.' },
         { text: 'AI autocomplete left switched on in your live-coding editor', bucket: 'no', why: 'Guides built on candidate reports say AI autocomplete counts as AI assistance. Turn it off.' },
@@ -120,7 +119,7 @@ const lesson: Lesson = {
         },
         {
           text: 'Only if a recruiter approved it before you applied',
-          feedback: 'There is no approval step. The guidance invites you to refine your own draft with Claude directly.',
+          feedback: 'Nothing in the guidance asks for sign-off. It invites you to refine your own draft with Claude directly.',
         },
       ],
       explanation: "Your draft, your facts, Claude's polish: allowed. Claude's draft or Claude's facts: not.",
@@ -249,12 +248,20 @@ const lesson: Lesson = {
       kind: 'cloze',
       prompt: 'Complete the stage rules from Anthropic\'s candidate AI guidance (Jul 10, 2025).',
       lang: 'text',
-      code: `Applying:    "Please create your first draft {{0}},
-              then use Claude to refine it."
-Take-homes:  "Complete these {{1}} Claude
-              unless we indicate otherwise."
-Live:        "This is {{2}}–no AI assistance
-              unless we indicate otherwise."`,
+      code: `Applying:
+"Please create your first
+draft {{0}}, then use
+Claude to refine it."
+
+Take-homes:
+"Complete these {{1}}
+Claude unless we indicate
+otherwise."
+
+Live interviews:
+"This is {{2}}–no AI
+assistance unless we
+indicate otherwise."`,
       blanks: [
         { options: ['yourself', 'with Claude', 'in outline'], answer: 0 },
         { options: ['without', 'with', 'alongside'], answer: 0 },

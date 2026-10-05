@@ -673,7 +673,7 @@ button.learn-card:active,
   line-height: 1;
   letter-spacing: -0.02em;
 }
-.learn-sheet__big span {
+.learn-sheet__big > span {
   font-size: var(--fs-md);
   font-weight: 700;
   color: var(--ink-2);
@@ -710,13 +710,13 @@ button.learn-card:active,
   text-align: left;
   min-width: 0;
 }
-.learn-stat b {
+.learn-stat > div > b {
   display: block;
   font-size: var(--fs-lg);
   font-weight: 700;
   line-height: 1.2;
 }
-.learn-stat span {
+.learn-stat > div > span {
   display: block;
   font-size: var(--fs-xs);
   font-weight: 500;
@@ -724,7 +724,7 @@ button.learn-card:active,
 }
 .learn-stat__icon {
   flex: none;
-  display: grid !important;
+  display: grid;
   place-items: center;
   width: 34px;
   height: 34px;
@@ -732,15 +732,15 @@ button.learn-card:active,
 }
 .learn-stat__icon--best {
   background: color-mix(in oklab, var(--streak) 40%, var(--surface));
-  color: color-mix(in oklab, var(--streak) 25%, #000) !important;
+  color: color-mix(in oklab, var(--streak) 25%, #000);
 }
 .learn-stat__icon--charge {
   background: color-mix(in oklab, var(--freeze) 18%, var(--surface));
-  color: var(--freeze) !important;
+  color: var(--freeze);
 }
 .learn-stat__icon--xp {
   background: color-mix(in oklab, var(--xp) 16%, var(--surface));
-  color: var(--xp) !important;
+  color: var(--xp);
 }
 .learn-sheet__note {
   max-width: 34ch;

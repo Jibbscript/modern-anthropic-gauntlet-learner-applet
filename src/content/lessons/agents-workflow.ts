@@ -1,42 +1,42 @@
 import type { Lesson } from '../../core/types'
 
-const RETRY = `import pytest
+const RETRY = `from pytest import raises
 
-def fetch(url, transport, sleep, attempts=3, base=0.5):
+def fetch(url, conn, sleep, limit=3):
     tries = 0
     while True:
         tries += 1
         try:
-            return transport.get(url)
+            return conn.get(url)
         except ConnectionError:
-            if tries > attempts:
+            if tries > limit:
                 raise
-            sleep(base * 2 ** (tries - 1))
+            sleep(0.5 * tries)
 
-def test_gives_up_after_three_attempts():
-    t = FakeTransport(fail_times=5)
-    with pytest.raises(ConnectionError):
-        fetch("http://x", t, sleep=lambda s: None)
-    assert t.calls == 4`
+def test_gives_up_after_3_tries():
+    conn = FakeConn(fail_times=5)
+    with raises(ConnectionError):
+        fetch("u", conn, no_sleep)
+    assert conn.calls == 4`
 
-const RETRY_FIXED = `import pytest
+const RETRY_FIXED = `from pytest import raises
 
-def fetch(url, transport, sleep, attempts=3, base=0.5):
+def fetch(url, conn, sleep, limit=3):
     tries = 0
     while True:
         tries += 1
         try:
-            return transport.get(url)
+            return conn.get(url)
         except ConnectionError:
-            if tries >= attempts:
+            if tries >= limit:
                 raise
-            sleep(base * 2 ** (tries - 1))
+            sleep(0.5 * tries)
 
-def test_gives_up_after_three_attempts():
-    t = FakeTransport(fail_times=5)
-    with pytest.raises(ConnectionError):
-        fetch("http://x", t, sleep=lambda s: None)
-    assert t.calls == 3`
+def test_gives_up_after_3_tries():
+    conn = FakeConn(fail_times=5)
+    with raises(ConnectionError):
+        fetch("u", conn, no_sleep)
+    assert conn.calls == 3`
 
 const lesson: Lesson = {
   id: 'agents-workflow',
@@ -115,7 +115,7 @@ const lesson: Lesson = {
     {
       kind: 'compare',
       id: 'two-briefs',
-      question: "You want retries in a crawler's fetcher. Which brief do you send the agent?",
+      question: "Show me how you'd brief the agent to add retries to the crawler's fetcher.",
       a: 'Add retries to the fetcher so it handles flaky networks. Make it robust and production quality.',
       b: 'In `crawler/fetch.py`, make `fetch(url)` retry `ConnectionError` and HTTP 5xx: 3 attempts, sleeping 0.5 s then 1 s. Never retry 4xx. Keep the signature; no new dependencies. Add tests in `tests/test_fetch.py` with a fake transport and an injected `sleep`, run them, and paste the output.',
       better: 'b',
@@ -131,10 +131,10 @@ const lesson: Lesson = {
       kind: 'spotbug',
       id: 'test-edit',
       eyebrow: 'Read the diff',
-      prompt: "Your brief said *up to 3 attempts*. A test failed, so you asked the agent to fix it. It changed one line and reports: *Fixed, all tests pass.* (`FakeTransport` raises `ConnectionError` for its first `fail_times` calls and counts calls.) Tap the line it changed and the line it should have changed.",
+      prompt: "Your brief: *at most 3 tries*. A test failed, so you asked the agent to fix it. It changed one line and reports *Fixed, all tests pass.* Tap the line it changed, and the line it should have changed.",
       code: RETRY,
       bugLines: [10, 18],
-      explanation: "Line 18 is the agent's edit: it made the test agree with the code. The test was right. `tries > attempts` lets a fourth call through, so with `attempts=3` the fetcher tries 4 times. Fix line 10 to `>=` and put the test back to 3. A green run after a test edit is evidence about the new test, not about the code.",
+      explanation: "Line 18 is the agent's edit: it made the test agree with the code. The test was right. `tries > limit` lets a fourth call through, so with `limit=3` the fetcher tries 4 times. Fix line 10 to `>=` and put the test back to 3. A green run after a test edit is evidence about the new test, not about the code.",
       fix: { code: RETRY_FIXED, highlight: [10, 18] },
       hint: 'The test name states the spec. Which side disagrees with it?',
     },
@@ -329,15 +329,18 @@ const lesson: Lesson = {
       kind: 'cloze',
       prompt: 'Complete the brief so every line is checkable.',
       lang: 'text',
-      code: `Context: cache.py holds an LRU cache shared by 8 worker threads.
-Task: make get() and put() {{0}}.
-Constraints: keep the public API; {{1}} new dependencies.
-Done when: pytest tests/test_cache.py passes, incl. a new {{2}} test.
-Then {{3}} the test output here.`,
+      code: `Context: cache.py has an LRU
+cache shared by 8 threads.
+Task: make get/put {{0}}.
+Constraints: keep the API;
+{{1}} new dependencies.
+Done when: test_cache.py passes,
+incl. a new {{2}} test.
+Then {{3}} the test output.`,
       blanks: [
         { options: ['robust', 'thread-safe', 'faster'], answer: 1 },
         { options: ['no', 'minimal', 'any needed'], answer: 0 },
-        { options: ['comprehensive', 'basic', 'multi-threaded stress'], answer: 2 },
+        { options: ['complete', 'basic', 'threaded stress'], answer: 2 },
         { options: ['summarise', 'paste', 'describe'], answer: 1 },
       ],
       explanation: "Each blank swaps a vibe for something checkable. *Thread-safe* is the property the context implies; *no* new dependencies is a hard line; a stress test actually exercises the threads; and pasted output is evidence where a summary is only a claim.",
@@ -361,16 +364,19 @@ Then {{3}} the test output here.`,
       skill: 'agents.review',
       kind: 'spotbug',
       prompt: "An agent says it 'fixed the flaky duplicate-files test'. The new version passes. Which line makes the test useless?",
-      code: `def test_finds_duplicate_pair(tmp_path):
-    (tmp_path / "a.txt").write_text("same")
-    (tmp_path / "b.txt").write_text("same")
-    (tmp_path / "c.txt").write_text("other")
-    groups = find_duplicates(tmp_path)
+      code: `def test_finds_dupe_pair(tmp_path):
+    d = tmp_path
+    (d / "a").write_text("same")
+    (d / "b").write_text("same")
+    (d / "c").write_text("other")
+    groups = find_duplicates(d)
     assert isinstance(groups, list)`,
-      bugLines: [6],
-      explanation: '`isinstance(groups, list)` also passes for `[]`, which is exactly what a broken `find_duplicates` would return. Pin the behaviour: one group holding a.txt and b.txt, with names sorted so file order cannot make it flaky.',
+      bugLines: [7],
+      explanation: '`isinstance(groups, list)` also passes for `[]`, which is exactly what a broken `find_duplicates` would return. Pin the behaviour: one group holding a and b, with names sorted so directory order cannot make it flaky.',
       fix: {
-        code: `    assert [sorted(p.name for p in g) for g in groups] == [["a.txt", "b.txt"]]`,
+        code: `    names = [sorted(p.name for p in g)
+             for g in groups]
+    assert names == [["a", "b"]]`,
       },
     },
     {

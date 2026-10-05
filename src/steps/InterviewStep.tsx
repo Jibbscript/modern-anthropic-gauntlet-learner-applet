@@ -131,7 +131,7 @@ export default function InterviewStep({ step, phase, attempt, complete }: StepPr
     const n = turns.length
     const { strong: s, okay: o, weak: w } = counts
     if (n === 0) return undefined
-    if (w > 0) return `${w} weak ${w === 1 ? 'reply' : 'replies'} out of ${n}. Aim for none: try again, or see the stronger replies.`
+    if (w > 0) return `${w} weak ${w === 1 ? 'reply' : 'replies'} out of ${n}. The bar is no weak replies.`
     if (o === 0) return n === 1 ? 'Your reply was strong.' : `All ${n} replies were strong.`
     return `${s} strong, ${o} okay, no weak replies.`
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -186,28 +186,44 @@ export default function InterviewStep({ step, phase, attempt, complete }: StepPr
     return () => window.removeEventListener('keydown', onKey)
   })
 
-  // keep the newest message in view (without pushing its top out of sight)
+  // keep the newest message in view (without pushing its top out of sight); on reveal, go to the first stronger reply
   const rootRef = useRef<HTMLDivElement>(null)
   const revealed = phase === 'revealed'
+  const followUntil = useRef(0)
+  const follow = useRef<() => void>(() => {})
+  follow.current = () => {
+    const root = rootRef.current
+    const sc = root && scrollParent(root)
+    if (!root || !sc) return
+    const max = sc.scrollHeight - sc.clientHeight
+    if (max <= 0) return
+    const anchors = root.querySelectorAll<HTMLElement>('[data-anchor]')
+    const reveal = revealed ? root.querySelector<HTMLElement>('[data-reveal]') : null
+    const anchor = reveal ?? anchors[anchors.length - 1]
+    let target = max
+    if (anchor) {
+      const top = anchor.getBoundingClientRect().top - sc.getBoundingClientRect().top + sc.scrollTop - 16
+      target = Math.max(0, Math.min(max, top))
+    }
+    // only ever scroll down, except to bring the first revealed answer into view
+    if (target > sc.scrollTop + 2 || (reveal && Math.abs(target - sc.scrollTop) > 2)) sc.scrollTo({ top: target, behavior: reduce ? 'auto' : 'smooth' })
+  }
+  useEffect(() => {
+    followUntil.current = performance.now() + 1200
+    const raf = requestAnimationFrame(() => follow.current())
+    return () => cancelAnimationFrame(raf)
+  }, [asked, current, graded, typing, wrapped, revealed, phase])
+  // the feedback panel below grows after it mounts and shrinks the scroll area; keep following briefly
   useEffect(() => {
     const root = rootRef.current
-    if (!root) return
-    const sc = scrollParent(root)
-    if (!sc) return
-    const raf = requestAnimationFrame(() => {
-      const max = sc.scrollHeight - sc.clientHeight
-      if (max <= 0) return
-      const anchors = root.querySelectorAll<HTMLElement>('[data-anchor]')
-      const anchor = revealed ? root.querySelector<HTMLElement>('[data-reveal]') : anchors[anchors.length - 1]
-      let target = max
-      if (anchor) {
-        const top = anchor.getBoundingClientRect().top - sc.getBoundingClientRect().top + sc.scrollTop - 16
-        target = Math.min(max, top)
-      }
-      if (target > sc.scrollTop + 2) sc.scrollTo({ top: target, behavior: reduce ? 'auto' : 'smooth' })
+    const sc = root && scrollParent(root)
+    if (!sc || typeof ResizeObserver === 'undefined') return
+    const ro = new ResizeObserver(() => {
+      if (performance.now() < followUntil.current) follow.current()
     })
-    return () => cancelAnimationFrame(raf)
-  }, [asked, current, graded, typing, wrapped, revealed, phase, reduce])
+    ro.observe(sc)
+    return () => ro.disconnect()
+  }, [])
 
   return (
     <div className="step interview" ref={rootRef}>

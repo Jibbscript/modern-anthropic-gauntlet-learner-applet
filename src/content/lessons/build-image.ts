@@ -17,33 +17,38 @@ const lesson: Lesson = {
         'Nothing is broken. On standard CPython only one thread runs Python bytecode at a time. This lesson builds the pipeline, then asks where parallelism actually comes from.',
       callout: {
         tone: 'insight',
-        text: 'Candidates report an image-processing question shaped like this: apply transformations to images, then discuss how to parallelize. Expect the second half to be a design conversation, not just code.',
+        text: 'Candidates report an image transform pipeline, often in Pillow with the transforms listed in JSON, that is then parallelized. One reported version ends with a million-image distributed design. Expect the second half to be a conversation, not just code.',
       },
     },
     {
       kind: 'concept',
-      id: 'grid',
-      title: 'An image is a grid; a transform is a function',
+      id: 'pillow',
+      title: 'Know the Pillow calls cold',
       body:
-        'You may get no imaging library at all. A grayscale image is a list of rows: `img[y][x]` is a 0-255 brightness, height is `len(img)`, width is `len(img[0])`.\n\n' +
-        'Write each transform as a ==pure function==: new image out, input untouched. Pure functions compose, test in one line, and are safe to run in parallel.',
+        'Reported versions hand you Pillow and a JSON list of transforms. One candidate reported fighting the library API and never finishing a conversion. Map each op name to a function in a dispatch table: a new op is one line, and an unknown op fails loudly.\n\n' +
+        'Most Pillow methods return a ==new image==, so each transform stays pure. Keep yours that way.',
       code: {
-        code: `Image = list[list[int]]
+        code: `from PIL import Image, ImageFilter
 
-def invert(img: Image) -> Image:
-    return [[255 - p for p in row] for row in img]
+OPS = {
+    "grayscale": lambda im, p: im.convert("L"),
+    "resize": lambda im, p: im.resize((p["w"], p["h"])),
+    "rotate": lambda im, p: im.rotate(p["deg"], expand=True),
+    "blur": lambda im, p: im.filter(ImageFilter.GaussianBlur(p["r"])),
+}
 
-def flip_h(img: Image) -> Image:
-    return [row[::-1] for row in img]
-
-assert flip_h([[1, 2, 3]]) == [[3, 2, 1]]`,
+def apply(spec: list[dict], im: Image.Image) -> Image.Image:
+    for step in spec:
+        im = OPS[step["op"]](im, step)
+    return im`,
+        caption: '`spec` is the parsed JSON, e.g. `[{"op": "grayscale"}, {"op": "rotate", "deg": 90}]`. Pillow rotates counterclockwise.',
       },
     },
     {
       kind: 'spotbug',
       id: 'rotate',
       eyebrow: 'Find the bug',
-      prompt: 'The square test passes. On a tall image (3 rows, 2 columns) this returns scrambled pixels with no error; on a wide one (2 rows, 3 columns) it raises `IndexError`. Tap the bug.',
+      prompt: 'Asked to implement rotate by hand, you treat an image as a list of rows, `img[y][x]`. The square test passes, but a tall image (3 rows, 2 columns) comes out scrambled and a wide one raises `IndexError`. Tap the bug.',
       code: `def rotate_cw(img: Image) -> Image:
     h, w = len(img), len(img[0])
     out = [[0] * h for _ in range(w)]
@@ -215,6 +220,26 @@ thumb = pipeline(gray, blur, rotate)`,
           ],
         },
         {
+          interviewer: 'Now it is a million images a night, more than one machine can finish.',
+          options: [
+            {
+              text: 'Split the image list into N shards by index and run the same script on N machines.',
+              quality: 'okay',
+              feedback: 'Parallel, but a dead machine loses its whole shard, the slowest machine sets the finish time, and a rerun redoes finished work.',
+            },
+            {
+              text: 'Put image keys on a durable queue. Stateless workers on many machines pull a key, process it, write the output under a deterministic name in object storage, then ack. Retries are safe because outputs are idempotent, and fast machines just take more tasks.',
+              quality: 'strong',
+              feedback: 'Failure handling, load balancing, and safe retries all fall out of the design. That is what the distributed follow-up probes.',
+            },
+            {
+              text: 'Rent the biggest machine available and raise the worker count.',
+              quality: 'weak',
+              feedback: 'Vertical scaling has a ceiling, and one failure loses the whole night. They asked how you would distribute it.',
+            },
+          ],
+        },
+        {
           interviewer: 'Now a single 40,000 × 40,000 satellite image, same pipeline, including a 5×5 blur.',
           options: [
             {
@@ -256,7 +281,7 @@ thumb = pipeline(gray, blur, rotate)`,
         },
       ],
       wrapUp:
-        'Strong answers tie the executor to the workload, keep big data off process boundaries, get tile seams right, and bound memory with backpressure.',
+        'Strong answers tie the executor to the workload, keep big data off process boundaries, make distributed work idempotent, get tile seams right, and bound memory with backpressure.',
     },
     {
       kind: 'concept',
@@ -264,7 +289,7 @@ thumb = pipeline(gray, blur, rotate)`,
       eyebrow: 'Recap',
       title: 'Three things to carry in',
       body:
-        '1. **Transforms are pure functions** on `img[y][x]`. Compose them, and test on non-square images.\n' +
+        '1. **Transforms are pure functions**: a dispatch table over Pillow calls, or loops over `img[y][x]`. Test on non-square images.\n' +
         '2. **Parallelize by image with processes** for pure-Python CPU work. Threads only help when the GIL is released: I/O, NumPy, Pillow.\n' +
         '3. **Tiles need a halo** equal to the summed kernel radii, and **bounded queues** keep memory flat.',
     },
@@ -336,6 +361,20 @@ print(up(3), down(3))`,
       tolerance: 0.05,
       unit: '×',
       explanation: 'Amdahl\'s law: speedup ≤ 1 ÷ serial fraction = 1 ÷ 0.05 = 20×. The parallel part shrinks toward zero; the serial 5% never does.',
+    },
+    {
+      id: 'build-image.thumbnail',
+      skill: 'build.image',
+      kind: 'spotbug',
+      prompt: 'This raises `AttributeError: \'NoneType\' object has no attribute \'save\'`. Which line?',
+      code: `from PIL import Image
+
+def make_thumb(path: str, out: str) -> None:
+    im = Image.open(path)
+    im = im.thumbnail((128, 128))
+    im.save(out)`,
+      bugLines: [5],
+      explanation: '`thumbnail` shrinks the image *in place*, keeping its aspect ratio, and returns `None`, unlike `resize`, which returns a new image. Call `im.thumbnail((128, 128))` without assigning it.',
     },
     {
       id: 'build-image.paths',

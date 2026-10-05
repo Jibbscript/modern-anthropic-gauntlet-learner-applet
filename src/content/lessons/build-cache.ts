@@ -17,7 +17,7 @@ const lesson: Lesson = {
         'Every cache answers one question: ==what do I throw away?== Least recently used, expired, or both. The follow-up: what happens when twenty threads ask at once?',
       callout: {
         tone: 'insight',
-        text: 'Caches are among the practical problems candidates report. The commonly reported shape (build it, extend it, make it concurrent, test it) maps neatly onto LRU, then TTL, then thread safety.',
+        text: 'Caches are among the practical problems candidates report: often an LRU or memoization cache keyed on a function\'s arguments, with follow-ups on persistence through pickle or a write-ahead log. Formats vary; the build, extend, make-it-concurrent shape holds.',
       },
     },
     {
@@ -47,6 +47,10 @@ class LRU:
         if len(self.data) > self.capacity:
             self.data.popitem(last=False)`,
         highlight: [11, 16, 18],
+      },
+      callout: {
+        tone: 'tip',
+        text: 'Asked to skip `OrderedDict`? Use a dict of key → node plus a doubly linked list with sentinel `head` and `tail` nodes. The dict finds a node in O(1); unlinking and relinking it is O(1) too.',
       },
     },
     {
@@ -117,44 +121,45 @@ print("".join(c))`,
     },
     {
       kind: 'concept',
-      id: 'linked-list',
-      title: 'No OrderedDict allowed',
+      id: 'memo-keys',
+      title: 'Memoize: the key is the hard part',
       body:
-        'Some interviewers ask you to build the ordering yourself. The standard answer: a dict from key to node, plus a ==doubly linked list== of nodes in recency order. The dict finds a node in O(1); the list unlinks and relinks it in O(1).\n\n' +
-        'Two sentinel nodes, `head` and `tail`, remove every `None` check at the ends.',
+        'Reported variants wrap a function and cache its results keyed on the arguments. The key must be hashable and must not depend on keyword order, so the usual first cut is `(args, tuple(sorted(kwargs.items())))`.\n\n' +
+        'That key describes the *call*, not the *meaning*. Which calls does it treat as the same?',
       code: {
-        code: `class Node:
-    __slots__ = ("key", "val", "prev", "next")
-
-    def __init__(self, key=None, val=None):
-        self.key, self.val = key, val
-        self.prev = self.next = None
-
-# head.next is the most recent; tail.prev is the next to evict
-head, tail = Node(), Node()
-head.next, tail.prev = tail, head`,
+        code: `def memo(fn):
+    cache = {}
+    def wrapper(*args, **kwargs):
+        key = (args, tuple(sorted(kwargs.items())))
+        if key not in cache:
+            cache[key] = fn(*args, **kwargs)
+        return cache[key]
+    return wrapper`,
+        highlight: [4],
       },
     },
     {
-      kind: 'cloze',
-      id: 'dll-moves',
-      prompt: 'Fill in the two O(1) moves every hit needs: unlink a node, then push it right after `head`.',
-      code: `def unlink(node):
-    node.prev.next = {{0}}
-    node.next.prev = {{1}}
+      kind: 'predict',
+      id: 'memo-calls',
+      prompt: 'Using `memo` from the last step, how many times does the real `area` run?',
+      code: `calls = 0
 
-def push_front(head, node):
-    node.prev, node.next = head, head.next
-    head.next.prev = {{2}}
-    head.next = node`,
-      blanks: [
-        { options: ['node.prev', 'node.next', 'None'], answer: 1 },
-        { options: ['node.next', 'node', 'node.prev'], answer: 2 },
-        { options: ['node', 'head', 'node.next'], answer: 0 },
-      ],
+@memo
+def area(w, h=1):
+    global calls
+    calls += 1
+    return w * h
+
+area(2, h=3)
+area(2, h=3)
+area(w=2, h=3)
+area(2, 3)
+area(2.0, h=3)
+print(calls)`,
+      answers: ['3'],
       explanation:
-        'Unlinking points each neighbor past the node. Pushing wires the node between `head` and the old first node, whose `prev` must now point back at the new one. `head.next = node` goes last, because the line above still needs the old `head.next`.',
-      hint: 'Draw three boxes, A ⇄ node ⇄ B, and decide where A\'s forward arrow and B\'s back arrow should point.',
+        'Call 1 misses; call 2 is an exact repeat and hits. `area(w=2, h=3)` moves `w` into kwargs, a different key: miss. `area(2, 3)` passes `h` positionally: miss. `area(2.0, h=3)` hits, because `2.0 == 2` and they hash the same. One distinct computation, three real calls. To collapse them, normalize with `inspect.signature(fn).bind(*args, **kwargs)`.',
+      hint: 'Write out the key tuple for each call. Which ones compare equal?',
     },
     {
       kind: 'concept',
@@ -325,9 +330,29 @@ now = 60.0; assert cache.get("k") is None`,
             },
           ],
         },
+        {
+          interviewer: 'The process restarts nightly and the cache takes an hour to warm. Make it survive a restart, including a crash.',
+          options: [
+            {
+              text: 'Pickle the cache in an `atexit` handler on shutdown, and load it on start.',
+              quality: 'weak',
+              feedback: '`atexit` never runs on a crash or `kill -9`, which is exactly the case they asked about.',
+            },
+            {
+              text: 'Append each `put` to a write-ahead log and flush it; on start, replay the log. Every so often, pickle a snapshot to a temp file, `os.replace` it into place, and truncate the log. I would ask how much loss is acceptable, since fsync per write is the expensive part.',
+              quality: 'strong',
+              feedback: 'Crash-safe, bounded replay time, atomic snapshots, and a question about the real durability requirement.',
+            },
+            {
+              text: 'Pickle the whole cache to disk after every `put`.',
+              quality: 'okay',
+              feedback: 'Survives a crash, but every write costs the size of the whole cache, and a crash mid-write corrupts the file unless you write a temp file and `os.replace` it.',
+            },
+          ],
+        },
       ],
       wrapUp:
-        'Name the structure and its cost, make time a dependency you control, and keep the slow load out of the critical section.',
+        'Name the structure and its cost, make time a dependency you control, keep the slow load out of the critical section, and say what durability you are buying.',
     },
     {
       kind: 'concept',
@@ -336,8 +361,8 @@ now = 60.0; assert cache.get("k") is None`,
       title: 'Three things to carry in',
       body:
         '1. **LRU = order plus O(1) moves.** `move_to_end` on every use, `popitem(last=False)` to evict, or a dict plus a doubly linked list.\n' +
-        '2. **TTL = store the deadline, check it on read.** Inject the clock so tests move time.\n' +
-        '3. **Thread-safe = short lock, slow work outside it.** Dedupe concurrent misses with per-key futures.',
+        '2. **Keys and time are inputs you control.** Build hashable keys from `*args` and `**kwargs`; inject the clock so TTL tests move time.\n' +
+        '3. **Short lock, slow work outside it.** Dedupe concurrent misses with per-key futures, and persist with a log you can replay.',
     },
   ],
   cards: [
@@ -418,6 +443,26 @@ print("".join(d))`,
       explanation: 'Only bookkeeping happens under the lock; the slow call happens outside it, once per key. The owner must also set the exception and clear the in-flight entry if the load fails.',
     },
     {
+      id: 'build-cache.dll-moves',
+      skill: 'build.cache',
+      kind: 'cloze',
+      prompt: 'An LRU without `OrderedDict` keeps nodes in a doubly linked list, most recent right after `head`. Fill in the O(1) unlink and push-to-front.',
+      code: `def unlink(node):
+    node.prev.next = {{0}}
+    node.next.prev = {{1}}
+
+def push_front(head, node):
+    node.prev, node.next = head, head.next
+    head.next.prev = {{2}}
+    head.next = node`,
+      blanks: [
+        { options: ['node.prev', 'node.next', 'None'], answer: 1 },
+        { options: ['node.next', 'node', 'node.prev'], answer: 2 },
+        { options: ['node', 'head', 'node.next'], answer: 0 },
+      ],
+      explanation: 'Unlinking points each neighbor past the node. Pushing wires the node between `head` and the old first node, whose `prev` must point back at it. `head.next = node` goes last, because the line above still needs the old `head.next`.',
+    },
+    {
       id: 'build-cache.tools',
       skill: 'build.cache',
       kind: 'match',
@@ -428,8 +473,9 @@ print("".join(d))`,
         { left: '`time.monotonic`', right: 'A clock that never jumps backwards' },
         { left: '`functools.cache`', right: 'Unbounded memoization, no eviction' },
         { left: 'A per-key `Future`', right: 'One backend call per burst of misses' },
+        { left: 'A write-ahead log', right: 'Replay writes after a crash' },
       ],
-      explanation: 'Recency, eviction, expiry, memoization, and stampede control: the five moving parts of a practical cache.',
+      explanation: 'Recency, eviction, expiry, memoization, stampede control, and durability: the moving parts of a practical cache.',
     },
   ],
 }

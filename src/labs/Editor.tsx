@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState, type Ref } from 'react'
+import { useCallback, useEffect, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode, type Ref, type RefObject } from 'react'
 import { IndentDecrease, IndentIncrease, Undo2 } from 'lucide-react'
 import { tokenLines } from '../ui/code/highlight'
 import { Toks } from '../ui/code/Code'
@@ -79,7 +79,7 @@ const isIOS = () =>
  * the viewport's maximum-scale while the editor is focused (pinch zoom still
  * works on iOS 10+), and restore it afterwards.
  */
-function useIOSNoZoom(ta: React.RefObject<HTMLTextAreaElement | null>) {
+function useIOSNoZoom(ta: RefObject<HTMLTextAreaElement | null>) {
   useEffect(() => {
     const el = ta.current
     const meta = document.querySelector<HTMLMetaElement>('meta[name="viewport"]')
@@ -252,7 +252,7 @@ export function Editor({ value, onChange, onRun, errorLine, label = 'Code editor
 
   useImperativeHandle(ref, () => ({ focus: () => taRef.current?.focus(), gotoLine, insert }), [gotoLine, insert])
 
-  const onKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+  const onKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
     const ta = e.currentTarget
     if (e.nativeEvent.isComposing) return
     const mod = e.metaKey || e.ctrlKey
@@ -320,18 +320,24 @@ export function Editor({ value, onChange, onRun, errorLine, label = 'Code editor
     }
   }
 
-  const keyBtn = (k: string) => (
-    <button
-      key={k}
-      type="button"
-      className="ed-keys__key"
-      tabIndex={-1}
-      onMouseDown={(e) => e.preventDefault()}
-      onClick={() => insert(k)}
-    >
-      {k}
-    </button>
-  )
+  /** touch Tab: in leading whitespace it types an indent; elsewhere it indents the line(s) */
+  const indentKey = () => {
+    const ta = taRef.current
+    if (!ta) return
+    const s = ta.selectionStart
+    const before = ta.value.slice(lineStart(ta.value, s), s)
+    if (s === ta.selectionEnd && /^ *$/.test(before)) insert(' '.repeat(4 - (before.length % 4)))
+    else shiftLines(1)
+  }
+
+  const undoKey = () => {
+    taRef.current?.focus()
+    try {
+      document.execCommand('undo')
+    } catch {
+      /* unsupported */
+    }
+  }
 
   return (
     <div className={['ed', className].filter(Boolean).join(' ')}>
@@ -390,34 +396,39 @@ export function Editor({ value, onChange, onRun, errorLine, label = 'Code editor
       </div>
       {showKeys && (
         <div className="ed-keys" role="toolbar" aria-label="Code keys">
-          <button type="button" className="ed-keys__key ed-keys__key--wide" tabIndex={-1} aria-label="Indent" onMouseDown={(e) => e.preventDefault()} onClick={() => {
-            const ta = taRef.current
-            if (!ta) return
-            const s = ta.selectionStart
-            const before = ta.value.slice(lineStart(ta.value, s), s)
-            // in leading whitespace it types an indent; elsewhere it indents the line(s)
-            if (s === ta.selectionEnd && /^ *$/.test(before)) insert(' '.repeat(4 - (before.length % 4)))
-            else shiftLines(1)
-          }}>
+          <KeyButton label="Indent" wide onPress={indentKey}>
             <IndentIncrease size={17} strokeWidth={2.4} />
-          </button>
-          <button type="button" className="ed-keys__key ed-keys__key--wide" tabIndex={-1} aria-label="Dedent" onMouseDown={(e) => e.preventDefault()} onClick={() => shiftLines(-1)}>
+          </KeyButton>
+          <KeyButton label="Dedent" wide onPress={() => shiftLines(-1)}>
             <IndentDecrease size={17} strokeWidth={2.4} />
-          </button>
-          {KEYS.map(keyBtn)}
-          <button type="button" className="ed-keys__key ed-keys__key--wide" tabIndex={-1} aria-label="Undo" onMouseDown={(e) => e.preventDefault()} onClick={() => {
-            taRef.current?.focus()
-            try {
-              document.execCommand('undo')
-            } catch {
-              /* unsupported */
-            }
-          }}>
+          </KeyButton>
+          {KEYS.map((k) => (
+            <KeyButton key={k} onPress={() => insert(k)}>
+              {k}
+            </KeyButton>
+          ))}
+          <KeyButton label="Undo" wide onPress={undoKey}>
             <Undo2 size={17} strokeWidth={2.4} />
-          </button>
+          </KeyButton>
         </div>
       )}
     </div>
+  )
+}
+
+/** a key on the touch bar; mousedown is cancelled so the textarea keeps focus (and the keyboard stays up) */
+function KeyButton({ label, wide, onPress, children }: { label?: string; wide?: boolean; onPress: () => void; children: ReactNode }) {
+  return (
+    <button
+      type="button"
+      className={['ed-keys__key', wide && 'ed-keys__key--wide'].filter(Boolean).join(' ')}
+      tabIndex={-1}
+      aria-label={label}
+      onMouseDown={(e) => e.preventDefault()}
+      onClick={onPress}
+    >
+      {children}
+    </button>
   )
 }
 

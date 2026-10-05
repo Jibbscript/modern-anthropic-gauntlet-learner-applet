@@ -119,11 +119,11 @@ const lesson: Lesson = {
         },
         {
           text: 'Coding, once the concurrency follow-up arrives',
-          feedback: 'The follow-ups are hard, but strong coders mostly report getting through them. The surprise rejections come later.',
+          feedback: "The follow-ups are hard, and they come up in nearly every coding round. But they aren't what reports single out as the place strong coders get rejected.",
         },
         {
           text: 'Project deep dive',
-          feedback: 'It exposes borrowed or shallow stories, but engineers with a real project they owned usually do fine here.',
+          feedback: "It exposes borrowed or shallow stories, so a project you really owned matters. But it isn't the round reports single out.",
         },
       ],
       explanation:
@@ -307,7 +307,7 @@ const lesson: Lesson = {
           correct: true,
           feedback: 'Yes. Reports are a good prior, and your recruiter has the actual round list.',
         },
-        { text: 'Senior candidates no longer get coding screens at all', feedback: 'That overgeneralises from one report. Many senior candidates report coding screens.' },
+        { text: 'Senior candidates no longer get coding screens at all', feedback: 'That overgeneralizes from one report. Many senior candidates report coding screens.' },
         { text: "Candidate reports are unreliable, so it's best to ignore them", feedback: 'They are noisy, not useless. The stable patterns, like a culture round for every role, recur across many reports.' },
         { text: 'Prepare for system design only and skip coding prep', feedback: 'The onsite still includes coding. One data point about one screen does not reshape the whole loop.' },
       ],
@@ -317,7 +317,7 @@ const lesson: Lesson = {
       id: 'map-loop.recruiter',
       skill: 'map.signals',
       kind: 'flash',
-      front: 'What do 2026 candidates report recruiter screens spending most of their time on?',
+      front: 'What do 2026 candidates report recruiter screens spending a lot of their time on?',
       back: "AI safety and *why Anthropic*: how it differs from other labs, what you agreed or disagreed with in recent posts, the biggest risks. One August 2026 report: 20 of 30 minutes. Bring real opinions.",
     },
   ],

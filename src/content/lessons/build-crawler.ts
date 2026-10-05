@@ -17,7 +17,7 @@ const lesson: Lesson = {
         'That arc is the question. The BFS is the warm-up; the signal is in how you handle shared state. Get level 1 done quickly so the conversation has time to get there.',
       callout: {
         tone: 'insight',
-        text: 'Candidates report the crawler question often starts simple and turns into a concurrency and thread-safety discussion. Formats vary by team and over time, so treat this as a likely shape, not a script.',
+        text: 'Candidates report a same-host crawler that then has to be made concurrent; one public aggregator of candidate reports listed it as the most frequent coding question as of Oct 2026 ([aceoffer](https://aceoffer.app/interviews/anthropic/coding-questions)). Formats vary, so treat this as a likely shape, not a script.',
       },
     },
     {

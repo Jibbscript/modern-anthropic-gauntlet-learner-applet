@@ -17,7 +17,7 @@ const lesson: Lesson = {
         'That is stack-trace processing: parse text into frames, then turn frames into something a person can act on. This lesson does it twice, for crash reports and for profiler samples.',
       callout: {
         tone: 'insight',
-        text: 'Stack-trace processing is among the practical problems candidates report. The exact prompt varies; the parsing, grouping, and diffing skills here carry over to whichever version you get.',
+        text: 'The version candidates report most turns sampled stacks into start/end events, with follow-ups on recursion and debouncing. Parsing and grouping tracebacks is the neighboring skill, and a daily one in production work.',
       },
     },
     {
@@ -189,8 +189,8 @@ t=10  main > render
     {
       kind: 'cloze',
       id: 'prefix-loop',
-      prompt: 'Complete the converter. Events are `("B" or "E", name, time)`, and `end` is when the last sample stops.',
-      code: `def to_events(samples, ts, end):
+      prompt: 'Complete the converter. Each event is `("B" or "E", name, time)`.',
+      code: `def to_events(samples, ts):
     events, prev = [], []
     for t, stack in zip(ts, samples):
         n = min(len(prev), len(stack))
@@ -199,20 +199,18 @@ t=10  main > render
             i += 1
         for name in {{1}}:
             events.append(("E", name, t))
-        for name in stack[i:]:
+        for name in {{2}}:
             events.append(("B", name, t))
         prev = stack
-    for name in {{2}}:
-        events.append(("E", name, end))
     return events`,
       blanks: [
         { options: ['prev[i] in stack', 'prev[i] == stack[i]', 'prev[-1] == stack[-1]'], answer: 1 },
         { options: ['prev[i:]', 'reversed(prev[i:])', 'reversed(stack[i:])'], answer: 1 },
-        { options: ['reversed(prev)', 'prev', 'stack[i:]'], answer: 0 },
+        { options: ['reversed(stack[i:])', 'stack[:i]', 'stack[i:]'], answer: 2 },
       ],
       explanation:
-        'Compare by ==position==, `prev[i] == stack[i]`. Membership is fooled whenever a name sits elsewhere in the new stack: `[main, a, b] → [main, b, a]` would look unchanged. Old frames end innermost first, so walk `prev[i:]` reversed. At the end, everything still open closes at `end`, innermost first, so the events nest like a stack.',
-      hint: 'Ends must come out in the opposite order to how those frames began.',
+        'Compare by ==position==, `prev[i] == stack[i]`. Membership is fooled whenever a name sits elsewhere in the new stack: `[main, a, b] → [main, b, a]` would look unchanged. Old frames end innermost first, so walk `prev[i:]` reversed; new frames begin outermost first, so walk `stack[i:]` forward. That keeps the events nested like a stack.',
+      hint: 'Ends come out in the opposite order to how those frames began. Begins come out in call order.',
     },
     {
       kind: 'predict',
@@ -225,13 +223,13 @@ t=10  main > render
     ["main", "g"],
 ]
 ts = [0, 10, 20, 30]
-ev = to_events(samples, ts, end=40)
+ev = to_events(samples, ts)
 sym = {"B": "+", "E": "-"}
 out = [sym[k] + n for k, n, _ in ev]
 print(" ".join(out))`,
-      answers: ['+main +f +f -f -f +g -g -main'],
+      answers: ['+main +f +f -f -f +g'],
       explanation:
-        't=0 begins `main`; t=10 begins `f`. t=20 is recursion: the prefix is `[main, f]`, so a second `f` begins. t=30 shares only `main`, so both `f`s end, innermost first, and `g` begins. At t=40 the open stack closes: `g`, then `main`.',
+        't=0 begins `main`; t=10 begins `f`. t=20 is recursion: the prefix is `[main, f]`, so a second `f` begins. t=30 shares only `main`, so both `f`s end, innermost first, and `g` begins. Nothing follows the last sample, so `main` and `g` simply stay open.',
       hint: 'At t=20, how long is the common prefix of `[main, f]` and `[main, f, f]`?',
     },
     {
@@ -239,7 +237,7 @@ print(" ".join(out))`,
       id: 'by-name',
       eyebrow: 'Find the bug',
       prompt: 'A teammate skipped the prefix loop. Simple stacks look fine, but `[main, f] → [main, f, f] → [main, g]` produces two `-f` events and only one `+f`. Tap the lines responsible.',
-      code: `def to_events(samples, ts, end):
+      code: `def to_events(samples, ts):
     events, prev = [], []
     for t, stack in zip(ts, samples):
         for name in reversed(prev):
@@ -249,8 +247,6 @@ print(" ".join(out))`,
             if name not in prev:
                 events.append(("B", name, t))
         prev = stack
-    for name in reversed(prev):
-        events.append(("E", name, end))
     return events`,
       bugLines: [5, 8],
       explanation:
@@ -274,9 +270,9 @@ print(" ".join(out))`,
       body:
         '- **Identical samples**: no events; the open frames just get longer.\n' +
         '- **Recursion**: compare by position, so `f > f` is two frames.\n' +
-        '- **The last sample**: close every open frame at a real end time, such as last timestamp plus one interval.\n' +
-        '- **Many threads**: keep a separate `prev` per thread id.\n' +
-        '- **Precision**: a frame seen in 3 samples ran for about 3 intervals, give or take one.',
+        '- **After the last sample**: the commonly reported version emits nothing more; some variants close open frames. Ask.\n' +
+        '- **Debounce** (a reported follow-up): only begin a frame after N consecutive samples at the same position.\n' +
+        '- **Many threads**: keep a separate `prev` per thread id.',
     },
     {
       kind: 'interview',
@@ -293,7 +289,7 @@ print(" ".join(out))`,
               feedback: 'Useful, but examples only cover the cases you thought of. An invariant checks every input you throw at it.',
             },
             {
-              text: 'Check invariants on every output: events nest like a stack, nothing is left open, and replaying the events rebuilds each sample. Then targeted cases: recursion, identical samples, empty input.',
+              text: 'Check invariants on every output: every end matches the most recent open begin, and replaying the events rebuilds each sample\'s stack exactly. Then targeted cases: recursion, identical samples, empty input.',
               quality: 'strong',
               feedback: 'Properties that must hold for any input, plus the specific edge cases. That is testing your own implementation.',
             },
@@ -305,22 +301,22 @@ print(" ".join(out))`,
           ],
         },
         {
-          interviewer: 'Samples now arrive from 8 threads, interleaved in one stream.',
+          interviewer: 'Samples are noisy. Only emit a frame once it has held its position for N consecutive samples.',
           options: [
             {
-              text: 'Sort everything by timestamp and run the same function.',
+              text: 'Only emit anything once the whole stack has been identical for N samples in a row.',
               quality: 'weak',
-              feedback: 'Two threads\' stacks alternating would look like a full unwind and rewind at every switch: nonsense events.',
+              feedback: 'Too coarse: churn deep in the stack would hide stable outer frames, and nothing begins until the entire stack holds still.',
             },
             {
-              text: 'Split the input by thread first, then run the converter once per thread.',
+              text: 'Post-process: run the converter, then delete any begin/end pair that spans fewer than N samples.',
               quality: 'okay',
-              feedback: 'Correct output, but it needs the whole stream in memory before it starts.',
+              feedback: 'It works on a batch, but needs the whole event list and a second pass, and frames still open at the end need special handling.',
             },
             {
-              text: 'Key the state by thread id: a separate `prev` per thread, and events tagged with the thread. The diff logic does not change, and it still works in one streaming pass.',
+              text: 'Count, per depth, how many consecutive samples have had the same frame there, and begin it when the count reaches N. I would ask whether its timestamp should be the first of those samples or the Nth.',
               quality: 'strong',
-              feedback: 'Minimal change, streaming, and it names what is per-thread (the state) versus shared (the logic).',
+              feedback: 'Streams, works per position, and surfaces the one ambiguous choice instead of guessing.',
             },
           ],
         },
@@ -346,7 +342,7 @@ print(" ".join(out))`,
         },
       ],
       wrapUp:
-        'Invariants for testing, state keyed by thread, and diagnosing grouping from the data: each strong answer reasons from the structure of the problem, not from one example.',
+        'Invariants for testing, debouncing per position, and diagnosing grouping from the data: each strong answer reasons from the structure of the problem, not from one example, and asks when the spec is ambiguous.',
     },
     {
       kind: 'concept',
@@ -356,7 +352,7 @@ print(" ".join(out))`,
       body:
         '1. **Tracebacks print most recent call last.** Parse `File` lines into frames; skip source and marker lines.\n' +
         '2. **Signature = exception type + innermost in-app frames.** Drop messages, addresses, anything that varies per occurrence.\n' +
-        '3. **Samples to events = common-prefix diff by position.** End old frames innermost first, begin new ones outermost first, close everything at the end.',
+        '3. **Samples to events = common-prefix diff by position.** End old frames innermost first, begin new ones outermost first, and ask what should happen after the last sample.',
     },
   ],
   cards: [
@@ -371,16 +367,16 @@ print(" ".join(out))`,
       id: 'build-stacktrace.unwind-rewind',
       skill: 'build.stacktrace',
       kind: 'predict',
-      prompt: '`to_events` diffs consecutive stacks by common prefix (compared by position), ends old frames innermost first, begins new ones outermost first, and closes everything at `end`. What does this print?',
+      prompt: '`to_events` diffs consecutive stacks by common prefix (compared by position), ends old frames innermost first, and begins new ones outermost first. What does this print?',
       code: `samples = [
     ["main", "a", "b"],
     ["main", "b"],
 ]
-ev = to_events(samples, [0, 1], end=2)
+ev = to_events(samples, [0, 1])
 sym = {"B": "+", "E": "-"}
 out = [sym[k] + n for k, n, _ in ev]
 print(" ".join(out))`,
-      answers: ['+main +a +b -b -a +b -b -main'],
+      answers: ['+main +a +b -b -a +b'],
       explanation: 'The prefix is only `[main]`, because position 1 holds `a` before and `b` after. So `b` and `a` both end, and a new `b` begins one level higher, even though a `b` was already open.',
     },
     {

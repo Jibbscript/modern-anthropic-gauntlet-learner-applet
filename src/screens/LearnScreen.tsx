@@ -156,7 +156,7 @@ function StreakSheetBody({ s, today, onClose }: { s: GauntletState; today: strin
         animate={{ scale: [0.6, 1.2, 0.9, 1.05, 1], rotate: 0 }}
         transition={{ duration: 0.7, ease: 'easeOut' }}
       >
-        <Zap size={48} strokeWidth={2} fill="currentColor" />
+        <Zap size={56} strokeWidth={1.8} fill="currentColor" />
       </motion.div>
       <div className="learn-sheet__big">
         <b className="tabular">
@@ -362,7 +362,7 @@ function HeroCard({ s, lessonId }: { s: GauntletState; lessonId: string }) {
   )
 }
 
-function EndCard({ kind }: { kind: 'complete' | 'waiting' }) {
+function EndCard({ kind, started }: { kind: 'complete' | 'waiting'; started: boolean }) {
   const setTab = useNav((n) => n.setTab)
   return (
     <motion.section variants={item} className={`learn-end learn-end--${kind}`}>
@@ -377,7 +377,9 @@ function EndCard({ kind }: { kind: 'complete' | 'waiting' }) {
         <p>
           {kind === 'complete'
             ? 'Keep it fresh: short daily reviews hold it in memory until the interview.'
-            : "You've finished everything that's ready. Practice and your Story Bank are open in the meantime."}
+            : started
+              ? "You've finished everything that's ready. Practice and your Story Bank are open in the meantime."
+              : 'The first lessons are being written. Your Story Bank is open in the meantime.'}
         </p>
       </div>
       <Button variant="secondary" size="md" block onClick={() => setTab(kind === 'complete' ? 'practice' : 'stories')}>
@@ -640,7 +642,7 @@ export default function LearnScreen() {
 
           <StreakCard s={s} today={today} onOpen={() => open('streak')} />
 
-          {recId && CATALOG.lessons[recId] ? <HeroCard s={s} lessonId={recId} /> : <EndCard kind={endKind} />}
+          {recId && CATALOG.lessons[recId] ? <HeroCard s={s} lessonId={recId} /> : <EndCard kind={endKind} started={Object.values(s.lessons).some((l) => l.completedAt)} />}
 
           <ReviewCard s={s} now={now} />
           <StoryNudge slots={storySlots} />

@@ -464,17 +464,28 @@ export default function CourseScreen({ courseId }: { courseId: AreaId }) {
   const unlockedCards = Object.keys(s.cards).filter((id) => CATALOG.lessons[CATALOG.cards[id]?.lessonId]?.courseId === course.id)
   const courseIndex = COURSES.indexOf(course)
 
-  // bring the current node into view once the page has slid in
+  // bring the current node into view once the page has slid in, and again
+  // when finishing a lesson moves "current" further down the path
+  const currentId = nodes.find((n) => n.status === 'current')?.lesson.id ?? null
+  const mounted = useRef(false)
   useEffect(() => {
-    const t = setTimeout(() => {
-      const sc = scrollRef.current
-      const el = currentEl.current
-      if (!sc || !el) return
-      const top = el.getBoundingClientRect().top - sc.getBoundingClientRect().top + sc.scrollTop
-      if (top + 120 > sc.clientHeight * 0.85) sc.scrollTo({ top: Math.max(0, top - sc.clientHeight * 0.42), behavior: 'smooth' })
-    }, 480)
+    const first = !mounted.current
+    mounted.current = true
+    const t = setTimeout(
+      () => {
+        const sc = scrollRef.current
+        const el = currentEl.current
+        if (!sc || !el) return
+        const r = el.getBoundingClientRect()
+        const box = sc.getBoundingClientRect()
+        const top = r.top - box.top + sc.scrollTop
+        const visible = r.top - box.top > 90 && r.top - box.top + 120 < sc.clientHeight
+        if (first ? top + 120 > sc.clientHeight * 0.85 : !visible) sc.scrollTo({ top: Math.max(0, top - sc.clientHeight * 0.42), behavior: 'smooth' })
+      },
+      first ? 480 : 700,
+    )
     return () => clearTimeout(t)
-  }, [])
+  }, [currentId])
 
   const practice = () => {
     const st = useStore.getState()

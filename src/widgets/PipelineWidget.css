@@ -248,12 +248,12 @@
 }
 .pipe-stage__flag {
   position: absolute;
-  top: -7px;
-  right: -5px;
+  top: -9px;
+  right: -8px;
   display: grid;
   place-items: center;
-  width: 20px;
-  height: 20px;
+  width: 19px;
+  height: 19px;
   border-radius: 50%;
   background: var(--c-amber);
   color: #1a1a1a;
@@ -289,6 +289,18 @@
 @container (max-width: 300px) {
   .pipe-util .tabular {
     display: none;
+  }
+  .pipe-stage__name {
+    font-size: 9.5px;
+    letter-spacing: 0.01em;
+  }
+  .pipe-stage__flag {
+    width: 17px;
+    height: 17px;
+  }
+  .pipe-stage__flag svg {
+    width: 11px;
+    height: 11px;
   }
 }
 

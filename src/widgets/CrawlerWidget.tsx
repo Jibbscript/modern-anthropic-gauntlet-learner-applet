@@ -129,6 +129,8 @@ export default function CrawlerWidget({ config, onComplete }: WidgetProps<Crawle
   const dupBurst = new Set(sim.events.filter((e) => e.kind === 'start' && e.dup).map((e) => e.page))
   const dropped = new Set(sim.events.flatMap((e) => (e.kind === 'drop' ? [e.entry] : [])))
   const uniqueDone = sim.done.filter(Boolean).length
+  // the dedupe set: filled at enqueue time (atomic) or only after a fetch completes (check-then-add)
+  const visited = sim.visited.flatMap((v, i) => (v ? [i] : []))
   const hostsShown = graph.hosts.filter((_, h) => graph.pages.some((p) => p.host === h))
   const multiHost = hostsShown.length > 1
   const mode = DEDUPE.find((d) => d.id === opts.dedupe)!
@@ -354,6 +356,33 @@ export default function CrawlerWidget({ config, onComplete }: WidgetProps<Crawle
             </AnimatePresence>
             {sim.queue.length > maxChips && <span className="crawl-queue__more">+{sim.queue.length - maxChips}</span>}
             {sim.queue.length === 0 && <span className="crawl-queue__empty">empty</span>}
+          </div>
+        </div>
+
+        <div className="crawl-queue crawl-visited">
+          <span className="w-label">Visited</span>
+          <div className="crawl-visited__chips" aria-label={`Visited set: ${visited.map((p) => graph.pages[p].label).join(', ') || 'empty'}`}>
+            {opts.dedupe === 'none' ? (
+              <span className="crawl-queue__empty">no visited set</span>
+            ) : visited.length === 0 ? (
+              <span className="crawl-queue__empty">empty</span>
+            ) : (
+              <AnimatePresence initial={false}>
+                {visited.map((p) => (
+                  <motion.span
+                    key={p}
+                    className="crawl-chip crawl-chip--sm"
+                    style={hostVar(graph.pages[p].host)}
+                    initial={reduce ? false : { scale: 0, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    exit={{ scale: 0, opacity: 0 }}
+                    transition={{ type: 'spring', stiffness: 560, damping: 26 }}
+                  >
+                    {graph.pages[p].label}
+                  </motion.span>
+                ))}
+              </AnimatePresence>
+            )}
           </div>
         </div>
       </LayoutGroup>

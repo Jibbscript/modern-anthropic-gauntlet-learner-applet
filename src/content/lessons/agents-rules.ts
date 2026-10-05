@@ -109,11 +109,15 @@ const lesson: Lesson = {
       id: 'transparent',
       title: 'Transparent means checkable',
       body: "*Be transparent* sounds simple. In practice it's three things, said without being asked twice:\n\n- **the tool**: Claude, Copilot, an agent\n- **the task**: trimmed wording, generated test fixtures\n- **what stayed yours**: the design, the argument, the story\n\n'I used AI a bit' fails all three. Good disclosure is short: one sentence in an email or a README.",
+      callout: {
+        tone: 'source',
+        text: '*Be transparent* comes from Anthropic\'s [candidate AI guidance](https://www.anthropic.com/candidate-ai-guidance), last updated Jul 10, 2025. Reread it before your loop.',
+      },
     },
     {
       kind: 'compare',
       id: 'readme-note',
-      question: 'A take-home explicitly allows AI and asks you to note how you used it. Which README note is better?',
+      question: 'This take-home allows AI. In your README, tell us how you used it.',
       a: 'AI tools were used during development to improve productivity and code quality.',
       b: 'I used Claude Code to scaffold the CLI and write test fixtures. The scheduling algorithm and locking design are mine; I rejected its first version, which held one global lock and serialised every worker. I read every diff and ran the suite after each change.',
       better: 'b',
@@ -149,6 +153,28 @@ const lesson: Lesson = {
         },
       ],
       explanation: 'Ask before you start, in writing, naming the tool categories. Because the default is AI-free, ambiguity resolves to asking, not to the most convenient reading.',
+    },
+    {
+      kind: 'spotbug',
+      id: 'email-bug',
+      prompt: 'Your email to the recruiter is mostly good. Which line undoes it?',
+      lang: 'text',
+      code: `Hi Sam,
+Quick question before I start
+the take-home. It says "use
+whatever tools you'd normally
+use." Does that include AI:
+chat, Claude Code, autocomplete?
+I'm starting tonight.
+If no reply, I'll assume AI's fine.
+Thanks, Priya`,
+      bugLines: [8],
+      explanation: "Line 8 flips the default. No reply from the recruiter is no more a permission than silence in the instructions. If you have to start before they answer, start without AI; you can always add it if they say yes.",
+      fix: {
+        lang: 'text',
+        code: `If no reply, I'll work without it.`,
+      },
+      hint: 'Which line decides what happens if nobody replies?',
     },
     {
       kind: 'concept',
@@ -201,7 +227,7 @@ const lesson: Lesson = {
         },
         {
           text: "AI-written solutions tend to score worse than a strong candidate's own work",
-          feedback: "Not reliably. On Anthropic's own performance take-home, Claude Opus 4 beat almost every human. Quality isn't the issue; honesty is.",
+          feedback: "Not reliably. Anthropic wrote in Jan 2026 that Claude Opus 4 beat almost every human on its own performance take-home. Quality isn't the issue; honesty is.",
         },
       ],
       explanation: "*Be helpful, honest, and harmless* is one of Anthropic's seven published values (as of Oct 2026). The good reasons hold even if nobody ever finds out. The bad reasons only work as long as you might get caught.",
@@ -375,7 +401,7 @@ const lesson: Lesson = {
         },
         {
           text: 'Models make more mistakes than candidates do, so the score drops',
-          feedback: "On Anthropic's own performance take-home the model beat most candidates. Quality isn't what breaks; attribution is.",
+          feedback: "Per Anthropic's Jan 2026 write-up, Claude beat most humans on its performance take-home. Quality isn't what breaks; attribution is.",
         },
         {
           text: "It doesn't damage anything; it only breaks the rules",

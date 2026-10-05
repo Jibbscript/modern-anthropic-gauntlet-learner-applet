@@ -162,17 +162,21 @@
 
 .interview-note {
   display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 6px;
+  align-items: flex-start;
+  gap: 8px;
   max-width: 100%;
-  padding-right: 2px;
+  padding: 0 2px 0 0;
+}
+.interview-note .interview-chip {
+  flex: none;
+  margin-top: 1px;
 }
 .interview-note__text {
+  min-width: 0;
   font-size: var(--fs-sm);
   line-height: 1.45;
   color: var(--ink-2);
-  text-align: right;
+  padding-top: 2px;
 }
 .interview-chip {
   padding: 3px 9px 3px 8px;

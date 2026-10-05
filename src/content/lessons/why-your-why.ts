@@ -159,7 +159,7 @@ const lesson: Lesson = {
       kind: 'match',
       id: 'steelman-match',
       eyebrow: 'Steelman first',
-      prompt: 'Five tensions candidates raise. Before disagreeing with one, you need Anthropic\'s best argument for it. Match each tension to the reasoning Anthropic has given.',
+      prompt: 'Before you disagree, know their best argument. Match each tension candidates raise to the reasoning Anthropic has given.',
       pairs: [
         { left: 'Building frontier models while warning about them', right: 'Safety research needs frontier-scale models' },
         { left: 'RSP v3 dropping the 2023 pause pledge', right: 'A lone pause could leave the world less safe' },

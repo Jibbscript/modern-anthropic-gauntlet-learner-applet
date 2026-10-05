@@ -189,7 +189,7 @@ const lesson: Lesson = {
             {
               text: 'Hmm, crawlers. Let me think about this from scratch. Maybe some kind of search?',
               quality: 'weak',
-              feedback: 'Staged discovery is the worst of both: it is dishonest, and a derivation that arrives suspiciously fast is exactly what interviewers learn to notice.',
+              feedback: "Staged discovery is the worst of both: it's dishonest, and if the act slips, you've lost the interviewer's trust for the rest of the hour.",
             },
           ],
         },
@@ -342,7 +342,7 @@ const lesson: Lesson = {
       prompt: 'Your onsite is in 10 days. You can study 3 hours a day and plan to give 30% of it to culture and *why Anthropic* prep. How many hours is that?',
       answer: 9,
       unit: 'hours',
-      explanation: '10 × 3 = 30 hours, and 30% of 30 is 9. Real hours, for the round reports say rejects the most strong engineers.',
+      explanation: '10 × 3 = 30 hours, and 30% of 30 is 9. Real hours, for the round that reports say rejects the most strong engineers.',
     },
   ],
 }

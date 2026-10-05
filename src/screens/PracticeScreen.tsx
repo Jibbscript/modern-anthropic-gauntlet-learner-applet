@@ -416,9 +416,9 @@ function ForecastChart({ data }: { data: { day: string; count: number }[] }) {
   const bw = Math.min(24, band * 0.58)
   const baseY = top + plotH
   // "Today" in a pill when there is room, else the weekday in the pill
-  const roomy = band >= 50
+  const roomy = band >= 44
   const todayLabel = roomy ? 'Today' : weekday(data[0]?.day ?? '')
-  const pillW = roomy ? 52 : Math.min(band - 2, 40)
+  const pillW = roomy ? 50 : Math.min(band - 2, 40)
   return (
     <div ref={ref} className="prac-fc">
       {width > 0 && (

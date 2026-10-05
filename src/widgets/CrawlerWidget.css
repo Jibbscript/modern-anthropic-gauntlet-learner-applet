@@ -319,6 +319,33 @@
 }
 .crawl-queue .w-label {
   flex: none;
+  width: 62px;
+}
+.crawl-visited {
+  align-items: flex-start;
+  min-height: 24px;
+  margin-top: -6px;
+}
+.crawl-visited .w-label {
+  padding-top: 3px;
+}
+.crawl-visited__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  min-width: 0;
+  flex: 1;
+  padding: 2px;
+}
+.crawl-chip.crawl-chip--sm {
+  min-width: 18px;
+  height: 18px;
+  padding: 0 3px;
+  border-radius: 5px;
+  font-size: 10.5px;
+  background: var(--host);
+  box-shadow: none;
+  color: #fff;
 }
 .crawl-queue__chips {
   display: flex;

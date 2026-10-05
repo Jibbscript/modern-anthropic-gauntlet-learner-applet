@@ -14,7 +14,7 @@ const lesson: Lesson = {
       title: 'Who picks the board?',
       body:
         'Investors have put tens of billions of dollars into Anthropic. Yet since April 2026, a majority of its board has been appointed by a trust whose members hold no financial stake in the company.\n\n' +
-        "That is unusual. It is also the kind of specific fact that separates 'I like the mission' from an answer a recruiter remembers. This lesson covers what the mission says, what the structure does, and what it can't do.",
+        "That is unusual, and it is the kind of specific fact that separates 'I like the mission' from an answer a recruiter remembers. Here: what the mission says, what the structure does, and what it can't do.",
     },
     {
       kind: 'mcq',
@@ -31,7 +31,7 @@ const lesson: Lesson = {
         {
           text: 'The responsible development and maintenance of advanced AI for the long-term benefit of humanity',
           feedback:
-            'Close, and real: this is Anthropic\'s legal *public benefit purpose* as a Public Benefit Corporation. Charter language, not the mission statement.',
+            "Close, and real: this is the purpose Anthropic states *as a Public Benefit Corporation*, the legal-structure side. Not the mission statement.",
         },
         {
           text: 'An AI safety and research company building reliable, interpretable, and steerable AI systems',
@@ -45,8 +45,8 @@ const lesson: Lesson = {
         },
       ],
       explanation:
-        "All four sound similar, which is the trap. Anthropic's mission is about the *transition* going safely. The PBC purpose is the legal version, and 'reliable, interpretable, and steerable' is the product description. Knowing which is which lets you quote precisely instead of paraphrasing into mush.",
-      hint: 'One is product description, one is legal charter language, one belongs to another lab.',
+        "All four sound similar, which is the trap. Anthropic's mission is about the *transition* going safely. The PBC purpose belongs to the legal structure, and 'reliable, interpretable, and steerable' is the product description. Knowing which is which lets you quote precisely instead of paraphrasing into mush.",
+      hint: 'One describes the product, one is the PBC purpose, one belongs to another lab.',
     },
     {
       kind: 'concept',
@@ -55,7 +55,7 @@ const lesson: Lesson = {
       body:
         'Anthropic was founded in 2021 by former OpenAI staff, including Dario Amodei (CEO) and Daniela Amodei (President). Its 2023 essay *Core Views on AI Safety* gives the reason:\n\n' +
         "> We founded Anthropic because we believe the impact of AI might be comparable to that of the industrial and scientific revolutions, but we aren't confident it will go well.\n\n" +
-        'The mission follows from that last clause: ==make the transition go safely==, not just build the technology.',
+        'The mission follows from that last clause: ==make the transition go safely==.',
       callout: {
         tone: 'source',
         text: "[Core Views on AI Safety](https://www.anthropic.com/news/core-views-on-ai-safety) (Mar 2023). Mission wording from [Claude's constitution](https://www.anthropic.com/constitution).",
@@ -162,8 +162,8 @@ const lesson: Lesson = {
       title: 'Structure is not a guarantee',
       body:
         "A fair critique: structure gives people the power to choose the mission. It doesn't make them use it.\n\n" +
-        '- The commercial pull is enormous: a $65B raise at a $965B valuation (May 2026) and a confirmed confidential IPO filing (June 2026).\n' +
-        "- In a leaked July 2025 memo on seeking Gulf investment, Dario Amodei wrote that 'No bad person should ever benefit from our success' is 'a pretty difficult principle to run a business on.'\n" +
+        '- The money is huge: $65B raised at a $965B valuation (May 2026), and a draft IPO filing (June 2026).\n' +
+        "- Dario Amodei, in a leaked July 2025 memo on Gulf investment: 'No bad person should ever benefit from our success' is 'a pretty difficult principle to run a business on.'\n" +
         '- Policies can be rewritten. The RSP was, in 2026.',
       callout: {
         tone: 'insight',
@@ -208,8 +208,8 @@ const lesson: Lesson = {
       id: 'compare-mission',
       eyebrow: 'Which answer lands?',
       question: 'Why does Anthropic\'s mission matter to you?',
-      a: "I'm really aligned with the mission. Safety is the most important problem in AI, Anthropic is the lab that takes it most seriously, and I want my work to go toward making AI safe and beneficial for everyone.",
-      b: "What makes the mission credible to me is the structure behind it: a PBC, plus a trust with no financial stake that now appoints a board majority. What I watch is whether it holds when it's expensive. The 2025 Gulf memo is a case where commercial logic clearly weighed heavily, and I'd want to hear how people inside thought about it.",
+      a: "I'm really aligned with the mission. I've followed Anthropic for a while, and I think safety is the most important problem in AI. Anthropic is the lab that takes it most seriously, the culture seems great, and I want my work to go toward making AI safe and beneficial for everyone.",
+      b: "The mission is credible to me because of the structure behind it: a PBC, plus a trust with no financial stake that now appoints a board majority. What I watch is whether it holds when it's expensive. The 2025 Gulf memo is a case where commercial logic weighed heavily, and I'd want to hear how people inside thought about it.",
       better: 'b',
       explanation:
         "A could be pasted into any lab's application, and 'takes it most seriously' invites 'compared to whom?' B names the mechanism, a real tradeoff and an open question. That shows judgment rather than agreement, which is what candidates report interviewers probing for: your view, not a recital of theirs.",
@@ -224,17 +224,17 @@ const lesson: Lesson = {
           interviewer: 'A lot of people say that. What about the mission is actually different from other labs?',
           options: [
             {
-              text: 'Anthropic was built around safety from day one, and you can see it in the RSP and the research it publishes.',
+              text: 'Anthropic was built around safety from day one. You can see it in the Responsible Scaling Policy, in the research it publishes, and in how leadership talks about risk.',
               quality: 'okay',
               feedback: 'True enough, but generic. Nothing here would surprise the recruiter or survive "how, specifically?"',
             },
             {
-              text: "The mission has structure behind it. Anthropic has been a PBC since founding, and since April 2026 a trust with no financial stake appoints a board majority. 'PBC' alone isn't unique anymore, since OpenAI's for-profit became one in October 2025. The Trust is the distinctive part.",
+              text: "There's structure behind it. Anthropic has been a PBC since founding, and since April 2026 a trust with no financial stake appoints a board majority. OpenAI's for-profit also became a PBC in October 2025, so the Trust is the distinctive part.",
               quality: 'strong',
               feedback: 'Specific, dated and fair to the competition. Conceding that PBC status is no longer unique makes the rest more credible.',
             },
             {
-              text: 'Other labs only care about profit. Anthropic is the one that actually cares about safety.',
+              text: 'Honestly, other labs mostly care about profit and shipping fast. Anthropic is the one lab that actually cares about getting safety right.',
               quality: 'weak',
               feedback: 'Unfair and checkable: other labs publish safety frameworks too. Flattery by contrast reads as not having done the reading.',
             },
@@ -244,17 +244,17 @@ const lesson: Lesson = {
           interviewer: 'Could the board still pick revenue over the mission if it wanted to?',
           options: [
             {
-              text: "Yes. The PBC lets directors weigh the mission; it doesn't force a decision. The Trust changes who decides, not what they decide. So I judge it by decisions that cost money. Some of those convince me and some don't.",
+              text: "Yes. A PBC lets directors weigh the mission; it doesn't force a decision. The Trust changes who decides, not what they decide. So I judge it by decisions that cost money, and some convince me more than others.",
               quality: 'strong',
               feedback: 'You conceded the true point and said how you would evaluate it. That is the opposite of blind agreement.',
             },
             {
-              text: 'In theory, but the Trust exists to stop exactly that.',
+              text: "In theory, maybe. But the Long-Term Benefit Trust exists to stop exactly that, so I don't think it would happen in practice.",
               quality: 'okay',
               feedback: 'Half right. The Trust shapes the board; it does not veto individual decisions. Be precise about the lever.',
             },
             {
-              text: "No. The mission is legally binding as a PBC, so they can't.",
+              text: "No. As a public benefit corporation, the mission is legally binding, so the board can't put revenue ahead of it.",
               quality: 'weak',
               feedback: 'Wrong on the law. A PBC permits mission-first choices; it does not compel them.',
             },
@@ -264,12 +264,12 @@ const lesson: Lesson = {
           interviewer: 'Then why join, instead of watching from outside?',
           options: [
             {
-              text: "I'm sure once I'm inside I'll see that the concerns are overblown.",
+              text: "I'd trust that the people inside have thought about it more than I have. I'm sure the concerns would look overblown once I'm there.",
               quality: 'weak',
               feedback: 'This pre-commits you to agreeing. They are hiring judgment, not loyalty.',
             },
             {
-              text: 'Because I believe in the mission and I want to contribute to it.',
+              text: "Because I believe in the mission, I think the work matters, and I'd rather contribute to it directly than comment from the sidelines.",
               quality: 'okay',
               feedback: 'Sincere, but it restates the question. What would you do that someone else would not?',
             },
@@ -315,7 +315,7 @@ const lesson: Lesson = {
         { text: 'The Long-Term Benefit Trust', correct: true, feedback: 'Yes. Anthropic announced the majority in April 2026.' },
         { text: "Anthropic's largest investors", feedback: 'Investors elect directors too, but the majority milestone belongs to the Trust.' },
         { text: 'The founders, as a block', feedback: 'Dario and Daniela Amodei sit on the board, but the Trust appoints the majority.' },
-        { text: 'Public shareholders after the IPO', feedback: 'A confidential draft filing was confirmed in June 2026, but the Trust majority came first and does not depend on it.' },
+        { text: 'Public shareholders, via the planned IPO', feedback: 'Anthropic confirmed a confidential draft filing in June 2026, but listing timing is unconfirmed, and the Trust majority came first.' },
       ],
       explanation: "With Vas Narasimhan's appointment in April 2026, Anthropic said Trust-appointed directors now make up a majority of the board.",
     },
@@ -333,7 +333,7 @@ const lesson: Lesson = {
         { options: ['Long-Term Benefit Trust', 'Safety Advisory Board', 'Responsible Scaling Officer'], answer: 0 },
       ],
       explanation:
-        "The PBC sets the legal purpose; the Trust elects directors alongside stockholders. 'Safe transition' is the mission's wording, not the charter's.",
+        "The PBC carries the stated public-benefit purpose; the Trust elects directors alongside stockholders. 'Safe transition' is the mission's wording, not this line's.",
     },
     {
       id: 'why-mission.permission',

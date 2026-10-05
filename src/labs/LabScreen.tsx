@@ -360,6 +360,7 @@ function LabView({ lab, onExit }: { lab: Lab; onExit: () => void }) {
   codeRef.current = code
 
   const timer = useLabTimer(labId, progress?.startedAt ?? null, !complete)
+  const timerElapsed = timer.elapsed
   const kb = useKeyboardInset()
   const color = COURSES.find((c) => c.id === lab.area)?.color ?? 'blue'
   const style = useMemo(() => ({ ...courseStyle(color), ['--kb' as string]: `${kb}px` }), [color, kb])
@@ -394,15 +395,20 @@ function LabView({ lab, onExit }: { lab: Lab; onExit: () => void }) {
     [labId],
   )
 
-  const switchTab = (t: Tab) => {
-    if (t === tab) return
-    setDir(TABS.findIndex((x) => x.id === t) > TABS.findIndex((x) => x.id === tab) ? 1 : -1)
+  const tabRef = useRef(tab)
+  tabRef.current = tab
+  /** change tab, sliding in the direction of travel */
+  const switchTab = useCallback((t: Tab) => {
+    const from = tabRef.current
+    if (t === from) return
+    setDir(TABS.findIndex((x) => x.id === t) > TABS.findIndex((x) => x.id === from) ? 1 : -1)
+    tabRef.current = t
     setTab(t)
-  }
+  }, [])
 
   const passLevel = useCallback(
     (level: number) => {
-      const ms = Math.max(1000, timer.elapsed())
+      const ms = Math.max(1000, timerElapsed())
       useStore.getState().passLabLevel(labId, level, ms)
       setCleared({ level, ms })
       haptic('success')
@@ -414,7 +420,7 @@ function LabView({ lab, onExit }: { lab: Lab; onExit: () => void }) {
         celebrate('small')
       }
     },
-    [labId, n, timer],
+    [labId, n, timerElapsed],
   )
 
   const run = useCallback(async () => {
@@ -428,7 +434,7 @@ function LabView({ lab, onExit }: { lab: Lab; onExit: () => void }) {
     setRunning(true)
     setCleared(null)
     // first run: show the Tests tab right away, where the download is explained
-    if (runner.status !== 'ready') setTab('tests')
+    if (runner.status !== 'ready') switchTab('tests')
     const t0 = performance.now()
     try {
       const r = await runner.run(
@@ -446,16 +452,16 @@ function LabView({ lab, onExit }: { lab: Lab; onExit: () => void }) {
         sfx('correct')
         haptic('success')
       } else haptic('error')
-      setTab('tests')
+      switchTab('tests')
     } catch (err) {
       if (!(err instanceof RunnerUnavailableError)) {
         setLast({ r: { results: [], stdout: '', error: String((err as Error)?.message ?? err) }, levels, code: src, wallMs: 0 })
       }
-      setTab('tests')
+      switchTab('tests')
     } finally {
       setRunning(false)
     }
-  }, [running, current, labId, lab, runner, n, passLevel])
+  }, [running, current, labId, lab, runner, n, passLevel, switchTab])
 
   useEffect(() => {
     if (cleared) testsRef.current?.scrollTo({ top: 0, behavior: 'smooth' })
@@ -464,21 +470,21 @@ function LabView({ lab, onExit }: { lab: Lab; onExit: () => void }) {
   const nextLevel = () => {
     setCleared(null)
     setLast(null)
-    setDir(1)
     setView(Math.min(passed, n - 1))
-    setTab('spec')
+    switchTab('spec')
+    setDir(1) // the next level always arrives from the right
   }
 
   const gotoLine = (line: number) => {
-    setTab('code')
+    switchTab('code')
     requestAnimationFrame(() => requestAnimationFrame(() => editorRef.current?.gotoLine(line)))
   }
 
   const pickLevel = (i: number) => {
     if (i > passed) return
-    setDir(i >= view ? 1 : -1)
+    if (tabRef.current === 'spec') setDir(i >= view ? 1 : -1)
     setView(i)
-    setTab('spec')
+    switchTab('spec')
   }
 
   const ranLevels = last?.levels ?? current + 1
@@ -602,6 +608,8 @@ function LabView({ lab, onExit }: { lab: Lab; onExit: () => void }) {
                     void runner.retry()
                   }}
                   reason={runner.reason}
+                  manual={status !== 'unavailable'}
+                  ready={status === 'ready'}
                   cleared={cleared}
                   onNext={nextLevel}
                   onExit={onExit}
@@ -1310,6 +1318,8 @@ function SelfCheckPanel({
   onCompare,
   onRetry,
   reason,
+  manual,
+  ready,
   cleared,
   onNext,
   onExit,
@@ -1323,6 +1333,9 @@ function SelfCheckPanel({
   onCompare: () => void
   onRetry: () => void
   reason: string
+  /** the learner chose self-check while Python was still downloading */
+  manual: boolean
+  ready: boolean
   cleared: { level: number; ms: number } | null
   onNext: () => void
   onExit: () => void
@@ -1345,11 +1358,16 @@ function SelfCheckPanel({
       <div className="lab-note">
         <WifiOff size={18} strokeWidth={2.6} />
         <div>
-          <b>Self-check mode.</b> The in-browser Python runtime isn't available here, so tests can't run. Read each test as a checklist, trace your code against it, then compare with the reference and mark the level done.
-          {reason && <span className="lab-note__why">{reason}</span>}
-          <button type="button" className="lab-link lab-note__retry" onClick={onRetry}>
-            <RotateCcw size={13} strokeWidth={2.6} /> Try loading Python again
-          </button>
+          <b>Self-check mode.</b>{' '}
+          {manual
+            ? 'Python is still downloading, so check this level by hand: read each test as a checklist, trace your code against it, then compare with the reference and mark the level done.'
+            : "The in-browser Python runtime isn't available here, so tests can't run. Read each test as a checklist, trace your code against it, then compare with the reference and mark the level done."}
+          {reason && !manual && <span className="lab-note__why">{reason}</span>}
+          {(!manual || ready) && (
+            <button type="button" className="lab-link lab-note__retry" onClick={onRetry}>
+              {ready ? <Play size={13} strokeWidth={2.6} /> : <RotateCcw size={13} strokeWidth={2.6} />} {ready ? 'Python is ready: run the tests instead' : 'Try loading Python again'}
+            </button>
+          )}
         </div>
       </div>
 

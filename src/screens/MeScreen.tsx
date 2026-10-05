@@ -428,13 +428,14 @@ function AreaGroup({ course, area, skills }: { course: Course; area?: Mastery; s
             <ul className="me-skills">
               {list.map((k) => {
                 const sm = skills[k.id]
-                const has = !!sm && sm.total > 0
+                const has = !!sm && sm.unlocked > 0
+                const status = has ? `${Math.round(sm.mastery * 100)}%` : sm && sm.total > 0 ? 'Not started' : 'No cards yet'
                 return (
                   <li key={k.id} className="me-skill">
                     <div className="me-skill__line">
                       <span className="me-skill__name">{k.name}</span>
                       {sm && sm.due > 0 && <span className="chip chip--course me-skill__due">{sm.due} due</span>}
-                      <span className={`me-skill__pct tabular ${has ? '' : 'is-none'}`}>{has ? `${Math.round(sm.mastery * 100)}%` : 'No cards yet'}</span>
+                      <span className={`me-skill__pct tabular ${has ? '' : 'is-none'}`}>{status}</span>
                     </div>
                     <ProgressBar value={has ? sm.mastery : 0} tone="course" height={8} label={`${k.name} mastery`} />
                     <div className="me-skill__blurb">{k.blurb}</div>
