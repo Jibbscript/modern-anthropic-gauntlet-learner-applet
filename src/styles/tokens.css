@@ -1,0 +1,236 @@
+/*
+ * Gauntlet design tokens.
+ * Language: bright white canvas, near-black ink, one bold action colour,
+ * chunky pressable controls with a darker bottom edge, generous radii,
+ * saturated per-course hues, springy motion. Dark mode is a deep ink canvas.
+ * Theme: bare :root = light; system dark via media query unless the user
+ * forced light; [data-theme="dark"] forces dark.
+ */
+:root {
+  color-scheme: light;
+
+  /* canvas + ink */
+  --bg: #ffffff;
+  --bg-sunken: #f4f4f6;
+  --surface: #ffffff;
+  --surface-2: #f7f7f9;
+  --surface-3: #eeeef2;
+  --ink: #16161d;
+  --ink-2: #4a4a57;
+  --ink-3: #7d7d8c;
+  --ink-inverse: #ffffff;
+  --line: #e3e3ea;
+  --line-strong: #cfcfda;
+  --edge: #d6d6e0; /* bottom edge of pressable tiles */
+  --scrim: rgba(12, 12, 20, 0.42);
+
+  /* primary action (Check / Continue) */
+  --action: #16161d;
+  --action-edge: #000000;
+  --action-ink: #ffffff;
+
+  /* selection */
+  --select: #2f6bff;
+  --select-soft: #eaf1ff;
+  --select-edge: #1d4fd6;
+
+  /* feedback */
+  --good: #1fb46a;
+  --good-soft: #e5f8ee;
+  --good-edge: #138a50;
+  --good-ink: #0d6b3d;
+  --bad: #f0444f;
+  --bad-soft: #ffeced;
+  --bad-edge: #c4252f;
+  --bad-ink: #a5141e;
+  --warn: #ffb020;
+  --warn-soft: #fff5df;
+
+  /* gamification */
+  --streak: #ff8a00;
+  --streak-2: #ffd02b;
+  --xp: #7c4dff;
+  --freeze: #45b5ff;
+
+  /* course hues: base / soft background / pressed edge / ink-on-soft */
+  --c-violet: #7c5cff;  --c-violet-soft: #f0ecff; --c-violet-edge: #5a3ee0; --c-violet-ink: #4a2fc2;
+  --c-blue: #2f80ff;    --c-blue-soft: #e8f1ff;   --c-blue-edge: #1c5fd1;   --c-blue-ink: #174fae;
+  --c-teal: #12b5b0;    --c-teal-soft: #e2f8f7;   --c-teal-edge: #0b8984;   --c-teal-ink: #08726e;
+  --c-green: #22b45f;   --c-green-soft: #e4f7eb;  --c-green-edge: #158646;  --c-green-ink: #0f6e38;
+  --c-amber: #ffad1f;   --c-amber-soft: #fff4dc;  --c-amber-edge: #d68700;  --c-amber-ink: #8a5600;
+  --c-orange: #ff6b2c;  --c-orange-soft: #fff0e8; --c-orange-edge: #d64a10; --c-orange-ink: #a83a0b;
+  --c-rose: #ff4f7b;    --c-rose-soft: #ffebf0;   --c-rose-edge: #d62c58;   --c-rose-ink: #a8183f;
+  --c-indigo: #4b5bff;  --c-indigo-soft: #eceeff; --c-indigo-edge: #3240d6; --c-indigo-ink: #2531a8;
+  --c-slate: #4b5568;   --c-slate-soft: #eef0f4;  --c-slate-edge: #333b4c;  --c-slate-ink: #2a3140;
+
+  /* code */
+  --code-bg: #f6f6fa;
+  --code-ink: #24243a;
+  --code-line: #ebebf2;
+  --code-kw: #7c3aed;
+  --code-str: #0f8a5f;
+  --code-num: #c2410c;
+  --code-fn: #2563eb;
+  --code-com: #8a8aa0;
+  --code-builtin: #b4236c;
+
+  /* type */
+  --font-ui: 'Figtree', ui-rounded, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-display: 'Figtree', ui-rounded, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-code: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  --fs-xs: 0.75rem;
+  --fs-sm: 0.875rem;
+  --fs-md: 1rem;
+  --fs-lg: 1.125rem;
+  --fs-xl: 1.375rem;
+  --fs-2xl: 1.75rem;
+  --fs-3xl: 2.25rem;
+  --lh-tight: 1.15;
+  --lh-body: 1.5;
+
+  /* shape */
+  --r-sm: 10px;
+  --r-md: 14px;
+  --r-lg: 18px;
+  --r-xl: 24px;
+  --r-pill: 999px;
+  --edge-h: 4px; /* height of the 3D bottom edge */
+
+  /* space */
+  --s-1: 4px;
+  --s-2: 8px;
+  --s-3: 12px;
+  --s-4: 16px;
+  --s-5: 20px;
+  --s-6: 24px;
+  --s-8: 32px;
+  --s-10: 40px;
+  --gutter: 20px;
+
+  /* depth */
+  --shadow-sm: 0 1px 2px rgba(20, 20, 40, 0.06);
+  --shadow-md: 0 6px 20px rgba(20, 20, 40, 0.08), 0 1px 3px rgba(20, 20, 40, 0.06);
+  --shadow-lg: 0 18px 50px rgba(20, 20, 40, 0.16), 0 4px 12px rgba(20, 20, 40, 0.08);
+  --gloss: linear-gradient(180deg, rgba(255, 255, 255, 0.45), rgba(255, 255, 255, 0) 55%);
+
+  /* motion */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --dur-1: 120ms;
+  --dur-2: 220ms;
+  --dur-3: 420ms;
+
+  /* layout */
+  --app-max: 520px;
+  --tabbar-h: 64px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    color-scheme: dark;
+    --bg: #0f0f15;
+    --bg-sunken: #0a0a0f;
+    --surface: #1a1a23;
+    --surface-2: #20202b;
+    --surface-3: #2a2a37;
+    --ink: #f4f4f8;
+    --ink-2: #c3c3cf;
+    --ink-3: #8e8e9e;
+    --ink-inverse: #16161d;
+    --line: #2c2c39;
+    --line-strong: #3b3b4b;
+    --edge: #0a0a10;
+    --scrim: rgba(0, 0, 0, 0.6);
+    --action: #f4f4f8;
+    --action-edge: #a9a9b8;
+    --action-ink: #16161d;
+    --select: #5b8cff;
+    --select-soft: #1c2742;
+    --select-edge: #3a63d6;
+    --good: #2fd17e;
+    --good-soft: #12301f;
+    --good-edge: #1a9a59;
+    --good-ink: #7ef0b2;
+    --bad: #ff5c66;
+    --bad-soft: #3a1418;
+    --bad-edge: #c4303a;
+    --bad-ink: #ffb1b6;
+    --warn-soft: #3a2c0c;
+    --c-violet-soft: #241d45; --c-violet-ink: #c9bcff;
+    --c-blue-soft: #14264a;   --c-blue-ink: #a9c8ff;
+    --c-teal-soft: #0d302f;   --c-teal-ink: #8de8e4;
+    --c-green-soft: #11301e;  --c-green-ink: #8ce8b0;
+    --c-amber-soft: #36290b;  --c-amber-ink: #ffd88a;
+    --c-orange-soft: #3a1f12; --c-orange-ink: #ffb894;
+    --c-rose-soft: #3a1520;   --c-rose-ink: #ffadc2;
+    --c-indigo-soft: #1c1f47; --c-indigo-ink: #b9c0ff;
+    --c-slate-soft: #232836;  --c-slate-ink: #c8cfdc;
+    --c-slate: #8a96ad; --c-slate-edge: #5f6a80;
+    --code-bg: #15151d;
+    --code-ink: #e6e6f0;
+    --code-line: #22222d;
+    --code-kw: #c4a1ff;
+    --code-str: #6fe0a8;
+    --code-num: #ffb27a;
+    --code-fn: #8ab8ff;
+    --code-com: #6f6f84;
+    --code-builtin: #ff8fc4;
+    --shadow-md: 0 6px 20px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 18px 50px rgba(0, 0, 0, 0.55);
+    --gloss: linear-gradient(180deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0) 55%);
+  }
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --bg: #0f0f15;
+  --bg-sunken: #0a0a0f;
+  --surface: #1a1a23;
+  --surface-2: #20202b;
+  --surface-3: #2a2a37;
+  --ink: #f4f4f8;
+  --ink-2: #c3c3cf;
+  --ink-3: #8e8e9e;
+  --ink-inverse: #16161d;
+  --line: #2c2c39;
+  --line-strong: #3b3b4b;
+  --edge: #0a0a10;
+  --scrim: rgba(0, 0, 0, 0.6);
+  --action: #f4f4f8;
+  --action-edge: #a9a9b8;
+  --action-ink: #16161d;
+  --select: #5b8cff;
+  --select-soft: #1c2742;
+  --select-edge: #3a63d6;
+  --good: #2fd17e;
+  --good-soft: #12301f;
+  --good-edge: #1a9a59;
+  --good-ink: #7ef0b2;
+  --bad: #ff5c66;
+  --bad-soft: #3a1418;
+  --bad-edge: #c4303a;
+  --bad-ink: #ffb1b6;
+  --warn-soft: #3a2c0c;
+  --c-violet-soft: #241d45; --c-violet-ink: #c9bcff;
+  --c-blue-soft: #14264a;   --c-blue-ink: #a9c8ff;
+  --c-teal-soft: #0d302f;   --c-teal-ink: #8de8e4;
+  --c-green-soft: #11301e;  --c-green-ink: #8ce8b0;
+  --c-amber-soft: #36290b;  --c-amber-ink: #ffd88a;
+  --c-orange-soft: #3a1f12; --c-orange-ink: #ffb894;
+  --c-rose-soft: #3a1520;   --c-rose-ink: #ffadc2;
+  --c-indigo-soft: #1c1f47; --c-indigo-ink: #b9c0ff;
+  --c-slate-soft: #232836;  --c-slate-ink: #c8cfdc;
+  --c-slate: #8a96ad; --c-slate-edge: #5f6a80;
+  --code-bg: #15151d;
+  --code-ink: #e6e6f0;
+  --code-line: #22222d;
+  --code-kw: #c4a1ff;
+  --code-str: #6fe0a8;
+  --code-num: #ffb27a;
+  --code-fn: #8ab8ff;
+  --code-com: #6f6f84;
+  --code-builtin: #ff8fc4;
+  --shadow-md: 0 6px 20px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 18px 50px rgba(0, 0, 0, 0.55);
+  --gloss: linear-gradient(180deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0) 55%);
+}

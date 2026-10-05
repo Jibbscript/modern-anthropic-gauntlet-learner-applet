@@ -1,0 +1,60 @@
+.app-main {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+}
+.tab-screen {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+}
+.overlay {
+  position: absolute;
+  inset: 0;
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+}
+.overlay--page {
+  box-shadow: -20px 0 40px rgba(0, 0, 0, 0.08);
+}
+.toast {
+  position: absolute;
+  z-index: 90;
+  top: calc(env(safe-area-inset-top, 0px) + 12px);
+  left: 50%;
+  translate: -50% 0;
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  max-width: calc(100% - 32px);
+  padding: var(--s-2) var(--s-4) var(--s-2) var(--s-2);
+  border-radius: var(--r-pill);
+  background: var(--ink);
+  color: var(--ink-inverse);
+  box-shadow: var(--shadow-lg);
+  text-align: left;
+}
+.toast__icon {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: linear-gradient(160deg, var(--streak-2), var(--streak));
+  color: #fff;
+  flex: none;
+}
+.toast__text {
+  display: flex;
+  flex-direction: column;
+  font-size: var(--fs-sm);
+  line-height: 1.25;
+}
+.toast__text b {
+  font-size: var(--fs-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  opacity: 0.7;
+}
