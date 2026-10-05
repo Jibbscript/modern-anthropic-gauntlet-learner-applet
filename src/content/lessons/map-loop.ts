@@ -12,7 +12,7 @@ const lesson: Lesson = {
       id: 'hook',
       eyebrow: 'The map',
       title: 'Which round rejects the strong engineers?',
-      body: "Candidates describe Anthropic's hiring loop as five stages that take anywhere from about three weeks to four months. On paper it looks like any big-tech loop: a recruiter call, an assessment, live coding, an onsite.\n\nBy recruiters' and candidates' own accounts, though, one round is where most technically strong people wash out. Make a guess now. You'll test it in a few minutes.",
+      body: "Candidate reports describe Anthropic's hiring loop as five stages that take anywhere from about three weeks to four months. On paper it looks like any big-tech loop: a recruiter call, an assessment, live coding, an onsite.\n\nBy recruiters' and candidates' own accounts, though, one round is where most technically strong people wash out. Make a guess now. You'll test it in a few minutes.",
       callout: {
         tone: 'warn',
         text: 'Everything in this unit comes from public candidate reports and press coverage, as of October 2026. None of it is official, and formats vary by role and change over time.',
@@ -28,7 +28,7 @@ const lesson: Lesson = {
         'A 90-minute project whose levels unlock as tests pass',
         '50-60 minutes of live, practical coding',
         'Four or five hours: coding, design, hiring manager, deep dive, culture',
-        'Reference calls, then matching to a team',
+        'Reference checks and matching to a team',
       ],
       explanation:
         'Recruiter screen, online assessment, technical screen, virtual onsite, then references and team matching, which can go quiet for weeks. Variations are common: guides say referrals may skip the assessment, some paths add a hiring-manager screen, and one August 2026 Senior+ path had a design phone screen instead of coding.',
@@ -66,7 +66,8 @@ const lesson: Lesson = {
             "Honest, which counts for something, but it tells them you didn't prepare for a question candidates report being asked. An evening with primary sources fixes it.",
         },
       ],
-      explanation: 'The question checks two things at once: that you read primary sources, and that you think for yourself. A specific, two-sided answer does both.',
+      explanation:
+        "The question checks two things at once: that you read primary sources, and that you think for yourself. Agreeing is fine when it's specific and reasoned. What scores nothing is agreement, or criticism, with no post behind it.",
       hint: 'Which answer could only come from someone who read something and thought about it?',
     },
     {
@@ -83,7 +84,7 @@ const lesson: Lesson = {
       kind: 'numeric',
       id: 'time-budget',
       prompt:
-        'A widely used CodeSignal practice repo estimates the levels at: L1 10-15 min, L2 20-30, L3 30-60, L4 30-60. If you hit the **fastest** end of every range, how many minutes does a full solve take?',
+        'A public CodeSignal practice repo (third-party, not official) estimates the levels at: L1 10-15 min, L2 20-30, L3 30-60, L4 30-60. If you hit the **fastest** end of every range, how many minutes does a full solve take?',
       answer: 90,
       unit: 'min',
       explanation:
@@ -134,12 +135,12 @@ const lesson: Lesson = {
       id: 'signals',
       prompt: 'Each round is scoring something different. Match the round to its main signal.',
       pairs: [
-        { left: 'Recruiter screen', right: 'Informed reasons and real opinions' },
+        { left: 'Recruiter screen', right: 'Specific reasons for this lab, from what you read' },
         { left: 'Online assessment', right: 'Code that survives new levels against the clock' },
         { left: 'Coding rounds', right: 'Working code that holds up when made concurrent' },
         { left: 'System design', right: 'Clear written tradeoffs in a shared doc' },
-        { left: 'Project deep dive', right: 'Your own decisions, alternatives and numbers' },
-        { left: 'Culture / values', right: 'Your judgment, told honestly, and updating' },
+        { left: 'Project deep dive', right: 'Technical calls you owned, with alternatives and numbers' },
+        { left: 'Culture / values', right: 'Hard calls on values, told honestly, and updating' },
       ],
       explanation:
         "One skill rarely carries two rounds. LeetCode speed doesn't write a design doc, and a polished design doc doesn't help in the culture round. That's why prep has to be spread across all of them.",
@@ -148,7 +149,7 @@ const lesson: Lesson = {
       kind: 'concept',
       id: 'variance',
       title: 'Your loop is not the average loop',
-      body: "Reports vary by role, level and month. Some 2026 examples:\n\n- Infra candidates got distributed-systems coding and hardware cost reasoning.\n- One candidate's design round switched from Product to Data Infra the evening before.\n- An August 2026 report describes an onsite round with Claude Code provided.\n- Timelines ran from about three weeks to four months.\n\nTreat this map as a prior. Your recruiter has the real one.",
+      body: "Reports vary by role, level and month. Some 2026 examples:\n\n- Some infra candidates got distributed-systems coding and hardware cost reasoning.\n- One candidate's design round switched from Product to Data Infra the evening before.\n- An August 2026 report describes an onsite round with Claude Code provided.\n- Timelines ran from about three weeks to four months.\n\nTreat this map as a prior. Your recruiter has the real one.",
     },
     {
       kind: 'sort',
@@ -206,13 +207,13 @@ const lesson: Lesson = {
               feedback: 'Polite and fine. It hands the work back to the recruiter, though, and shows nothing about your own preparation.',
             },
             {
-              text: 'Could you tell me what kind of answers the culture interviewer is looking for?',
+              text: 'Could you tell me what kind of answers the culture interviewer is hoping to hear from me?',
               quality: 'weak',
               feedback:
-                "It reads as asking for a script. Interviewers reportedly improvise from suggested questions, and Anthropic says it isn't looking for a specific belief. There's no answer key to hand over.",
+                "It reads as asking for a script. Interviewers reportedly improvise from suggested questions, and Daniela Amodei has said they aren't looking for a specific belief. There's no answer key to hand over.",
             },
             {
-              text: "Thanks. I've read Core Views and the RSP v3 post and have questions about the pause change. Anything beyond those?",
+              text: "I've read Core Views and the RSP v3 post, and have questions on why v3 dropped the pause pledge. Anything else?",
               quality: 'strong',
               feedback: 'Strong. It shows you already went to primary sources, formed questions of your own, and want more. That is the habit the later rounds probe.',
             },
@@ -222,17 +223,17 @@ const lesson: Lesson = {
           interviewer: 'After the onsite, references and team matching can take a few weeks, and you may not hear much.',
           options: [
             {
-              text: "If I don't hear back within a week, I'll assume it's a no.",
+              text: "Got it. If I don't hear back within a week or so, I'll assume it's a no.",
               quality: 'weak',
               feedback: "Candidates report team matching taking weeks, often with little word from the recruiter. Silence there is normal, and reading it as a verdict leads to bad decisions about your other processes.",
             },
             {
-              text: 'Understood. Can I check in every couple of weeks, and will I meet more than one team?',
+              text: 'Understood. Can I check in every couple of weeks, and how does team matching work here?',
               quality: 'strong',
               feedback: 'Strong. It sets a reasonable cadence and asks how matching works for you, instead of guessing.',
             },
             {
-              text: "Okay, that sounds fine. I'll wait to hear from you then.",
+              text: "Okay, that sounds fine. I'll just wait to hear from you then, whenever it is.",
               quality: 'okay',
               feedback: 'Fine. You just missed the chance to agree on how you will stay in touch.',
             },
@@ -294,7 +295,7 @@ const lesson: Lesson = {
       skill: 'map.signals',
       kind: 'flash',
       front: 'Which round do recruiters say most strong candidates wash out in, and what does a low rating there usually mean?',
-      back: 'The culture / values interview, which every role has. Per Bloomberg Businessweek (May 2026), a low rating there usually means no offer, however well the coding went.',
+      back: 'The culture / values interview, which every role has. Per press coverage of a May 2026 Bloomberg Businessweek feature, a low rating there usually means no offer, however well the coding went.',
     },
     {
       id: 'map-loop.variance',

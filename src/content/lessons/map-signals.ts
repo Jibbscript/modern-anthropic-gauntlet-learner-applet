@@ -11,8 +11,8 @@ const lesson: Lesson = {
       kind: 'concept',
       id: 'hook',
       eyebrow: 'A different kind of high',
-      title: 'Failed without a hard algorithm',
-      body: "A Staff-level engineer, by their own account, failed an Anthropic coding round without meeting a single hard algorithm. The task was an image-processing pipeline. They didn't know the image library's API, spent the hour looking things up, and never converted one image end to end.\n\nThe bar here is high. It's a different kind of high.",
+      title: 'Sunk without a hard algorithm',
+      body: "A Staff-level engineer describes an Anthropic onsite coding round that went wrong with no hard algorithm in sight. The task was an image-processing pipeline. They didn't know the image library's API, had to look it up live, and never finished converting a single image end to end. They were rejected without feedback.\n\nThe bar here is high. It's a different kind of high.",
       callout: {
         tone: 'source',
         text: 'Candidate report on [Aced](https://www.aced.io/experiences/anthropic-staff-software-engineer-interview-6ecf1d), from an interview around 2025.',
@@ -53,17 +53,17 @@ const lesson: Lesson = {
     {
       kind: 'order',
       id: 'round-arc',
-      prompt: 'Candidates describe coding rounds following the same arc. Put it in order.',
+      prompt: 'Candidates describe coding rounds following a common arc. Put it in order.',
       items: [
         'Build a first version of the core feature',
         'Get it working end to end on the examples',
         'Extend it for a new requirement, without a rewrite',
         'Make it concurrent or scale it, and discuss the tradeoffs',
-        'Test it yourself, beyond the cases you were given',
+        'Prove the final version correct with tests you design yourself',
       ],
       explanation:
         "Build, make it work, extend, make it concurrent, test it. You should run small checks at every stage; the last step is the deliberate hunt for cases nobody handed you, like the crawler's cycles or file dedup's empty files. Each stage reuses the last one's code, so early structure pays off late.",
-      hint: "You can't make something concurrent before it works, and you can't extend what doesn't exist yet.",
+      hint: "You can't make something concurrent before it works, and you can't extend what doesn't exist yet. Proving the *final* version correct comes after it exists.",
     },
     {
       kind: 'concept',
@@ -111,7 +111,7 @@ const lesson: Lesson = {
       kind: 'concept',
       id: 'culture-signal',
       title: 'Culture: your judgment, not theirs',
-      body: "In a May 2026 Bloomberg Businessweek feature, Daniela Amodei gave a sample culture question: *What are some of the slightly unusual beliefs you hold, and how have you defended them in uncomfortable situations because you felt they were right?* She added: *We're not looking for a specific belief.*\n\nCandidates and coaches report what scores: real reasoning, admitting what you don't know, honest critique of Anthropic, and visibly updating on a better argument.",
+      body: "In a May 2026 Bloomberg Businessweek feature, Daniela Amodei gave a sample culture question: *What are some of the slightly unusual beliefs you hold, and how have you defended them in uncomfortable situations because you felt they were right?* She also said: *We're not looking for a specific belief.*\n\nWhat reportedly scores: real reasoning, admitting what you don't know, honest critique of Anthropic, and visibly updating on a better argument.",
       callout: {
         tone: 'source',
         text: "[GIGAZINE's summary of the Bloomberg feature](https://gigazine.net/gsc_news/en/20260601-anthropic-recruiting), June 2026.",
@@ -122,10 +122,10 @@ const lesson: Lesson = {
       id: 'why-anthropic',
       question: 'Recruiter screen: *Why Anthropic?*',
       a: "Anthropic is the leader in AI safety, and I deeply believe in the mission of ensuring the world safely makes the transition through transformative AI. I've followed the company for years, I admire everything it stands for, and a culture that puts safety first is exactly where I want to do the most meaningful work of my career.",
-      b: "Two reasons. I've spent three years on evaluation tooling, and your interpretability work is the first I've seen that treats model internals as something you can measure. And I'm unsettled in a useful way: I get the RSP v3 argument that one lab pausing alone could leave the world less safe, but I'm not convinced a conditional pause pledge was worth nothing. I'd rather argue that from inside.",
+      b: "Two reasons. I've spent three years on evaluation tooling, and your interpretability work is what made model internals feel measurable to me. And I'm unsettled in a useful way: I follow the RSP v3 argument that one lab pausing alone could leave the world less safe, but I'm not sure dropping the pause pledge was the right trade. I'd like to work through that from inside.",
       better: 'b',
       explanation:
-        "A flatters, quotes the mission back, and could be pasted into any application. B is tied to the candidate's own history, engages with Anthropic's actual work, and names a real disagreement with the strongest counterargument in view. An interviewer can push on B. There's nothing in A to push on.",
+        "A flatters, quotes the mission back, and could be pasted into any application. B is tied to the candidate's own history, engages with Anthropic's actual work, and states a real reservation with the other side's best argument in view. B's view isn't the right one; agreeing with v3 for stated reasons would score as well. An interviewer can push on B. There's nothing in A to push on.",
     },
     {
       kind: 'sort',
@@ -141,7 +141,7 @@ const lesson: Lesson = {
         { text: 'Writes a quick test for an empty directory before anyone asks', bucket: 'signal', why: 'Testing your own code unprompted is part of the bar.' },
         { text: 'Explains why threads suit an IO-bound crawler despite the GIL', bucket: 'signal', why: 'Concurrency reasoning is the near-universal follow-up.' },
         { text: "Says *I'd do exactly the same again* about every past decision", bucket: 'noise', why: 'No updating, no self-knowledge. Interviewers ask how you feel about decisions now, not just then.' },
-        { text: 'Volunteers the optimal Big-O of a problem nobody asked about', bucket: 'noise', why: 'A puzzle reflex. Practical rounds score working code.' },
+        { text: 'Spends ten minutes proving an optimal Big-O before anything runs', bucket: 'noise', why: 'A puzzle reflex. Practical rounds score working code first; complexity talk lands better once something runs.' },
         { text: 'Changes the design after a good objection, and says what changed', bucket: 'signal', why: 'Updating visibly on a better argument scores in design and in culture.' },
         { text: 'Agrees with every Anthropic position the interviewer raises', bucket: 'noise', why: 'Blind agreement reads as either not thinking or performing.' },
       ],
@@ -162,7 +162,7 @@ const lesson: Lesson = {
       answer: 7,
       unit: 'hours',
       explanation:
-        "14 × 2 = 28 hours, and a quarter is 7. That's enough to read the primary sources (about two hours), draft a handful of real stories with the layers interviewers probe (about three), and rehearse them out loud against follow-ups (about two). Many strong engineers give this round zero hours, and it's the round reports say rejects them.",
+        "14 × 2 = 28 hours, and a quarter is 7. That's enough to read the primary sources (about two hours), draft a handful of real stories with the layers interviewers probe (about three), and rehearse them out loud against follow-ups (about two). It's tempting for an engineer to give this round zero hours, and it's the round reports say rejects strong engineers.",
       hint: 'Total hours first, then a quarter of that.',
     },
     {
@@ -184,7 +184,7 @@ const lesson: Lesson = {
               text: "To be upfront, I've practiced this one. Happy to do it, or take a variation if that's better signal.",
               quality: 'strong',
               feedback:
-                'Strong. One candidate reported saying exactly this; an extra round with a fresh problem was added, and they still got an offer, though at a lower level than they applied for. Saying so costs time; hiding it gives the interviewer no real signal and puts their trust at risk.',
+                "Strong. One candidate reported admitting they'd seen the crawler before. An extra round with a fresh problem was added, and they got an offer, though a level below the one they applied for (the report doesn't say why). Saying so can cost you a round; hiding it gives no real signal and puts trust at risk.",
             },
             {
               text: 'Hmm, crawlers. Let me think about this from scratch. Maybe some kind of search?',
@@ -197,17 +197,17 @@ const lesson: Lesson = {
           interviewer: 'Works. Now make it concurrent.',
           options: [
             {
-              text: "I'll use multiprocessing, so the GIL doesn't serialize the fetches and slow everything down.",
+              text: "I'll use multiprocessing with a process per core, so the GIL can't serialize the fetches and slow it all down.",
               quality: 'weak',
               feedback: 'Processes help CPU-bound work. Crawling is IO-bound, so threads already overlap the waits, and processes make the shared visited set much harder.',
             },
             {
-              text: "I'll switch it to asyncio, since that's the modern way to do concurrent IO in Python.",
+              text: "I'll rewrite it with asyncio and gather, since that's the modern way to do concurrent IO in Python.",
               quality: 'okay',
               feedback: 'It could work, but there is no reasoning, and the provided link fetcher in reported versions is a blocking call, so you would still need threads underneath.',
             },
             {
-              text: "It's IO-bound, so threads work despite the GIL: a pool, a locked check-and-add on visited, and an in-flight count to know when we're done.",
+              text: "IO-bound, and blocking IO releases the GIL, so threads: a pool, a locked check-and-add on visited, an in-flight count.",
               quality: 'strong',
               feedback: 'Strong: the choice, the reason, and the two classic bugs (a racy check-then-add and stopping too early) named before you write them.',
             },
@@ -217,17 +217,17 @@ const lesson: Lesson = {
           interviewer: "How would you convince yourself it's correct?",
           options: [
             {
-              text: 'A fake link provider with a cycle, a cross-host link, a #fragment and a slow page; assert each page is fetched once and the crawl ends.',
+              text: 'A fake provider with a cycle, a cross-host link, a #fragment and a slow page; assert one fetch per page and that it ends.',
               quality: 'strong',
               feedback: 'Strong: a deterministic test double aimed at the known failure modes, with assertions that would catch a race.',
             },
             {
-              text: "It returned the right URLs on the example input, so I'm fairly confident it's correct.",
+              text: "It returned the right URLs on the example input and the output looked clean, so I'm fairly confident.",
               quality: 'weak',
               feedback: "One happy-path run can't expose a race or a hang. Concurrency bugs need inputs designed to trigger them.",
             },
             {
-              text: "I'd add logging around each fetch and run it against a real site a few times.",
+              text: "I'd add logging around each fetch, then run it against a couple of real sites a few times.",
               quality: 'okay',
               feedback: 'Better than nothing, but real sites are slow and nondeterministic, and logs need a human to notice the bug.',
             },
@@ -271,7 +271,7 @@ const lesson: Lesson = {
         'Strip #fragments and handle cycles so each page is fetched once',
         'Add a new requirement, say a maximum crawl depth',
         'Fetch with a thread pool and a locked visited set',
-        'Write a fake link provider to test cycles and termination',
+        'Test the threaded version with a fake link provider: cycles, termination',
       ],
       explanation: 'Build, make it work, extend, make it concurrent, test it yourself. The same arc applies to dedup, caches and pipelines.',
     },
@@ -323,7 +323,7 @@ const lesson: Lesson = {
           feedback: 'Right. The bank is small and widely shared, interviewers notice memorized answers, and saying so up front is the honest move.',
         },
         { text: 'Memorized solutions are usually wrong in subtle ways', feedback: "Often they're fine. The problem is the missing signal, not the code." },
-        { text: "Interviewers must fail anyone who's seen the problem before", feedback: 'No such rule is reported. One candidate who said so got a fresh problem in an extra round, and an offer.' },
+        { text: "Interviewers must fail anyone who's seen the problem before", feedback: 'No such rule is reported. One candidate who said so got a fresh problem in an extra round, and an offer, a level below the one they applied for.' },
         { text: 'It breaks the rule against AI assistance in live rounds', feedback: 'Practicing a problem is not AI assistance. The issue is honesty and signal.' },
       ],
       explanation: 'Know the patterns deeply, not the scripts. If you have seen the exact problem, say so.',
@@ -336,13 +336,30 @@ const lesson: Lesson = {
       back: 'How you hold beliefs: your own reasoning, told honestly, defended when it is uncomfortable, and changed when someone gives you a better argument. Blind agreement scores badly.',
     },
     {
-      id: 'map-signals.plan-hours',
+      id: 'map-signals.prep-split',
       skill: 'map.signals',
-      kind: 'numeric',
-      prompt: 'Your onsite is in 10 days. You can study 3 hours a day and plan to give 30% of it to culture and *why Anthropic* prep. How many hours is that?',
-      answer: 9,
-      unit: 'hours',
-      explanation: '10 × 3 = 30 hours, and 30% of 30 is 9. Real hours, for the round that reports say rejects the most strong engineers.',
+      kind: 'mcq',
+      prompt: 'You have about 20 prep hours before an Anthropic onsite. Which plan best matches what candidates report the loop scores?',
+      choices: [
+        {
+          text: 'Builds with concurrency, design writing, deep-dive practice, a quarter on culture',
+          correct: true,
+          feedback: 'Yes. It covers every round, and gives the round that reportedly rejects strong engineers real hours.',
+        },
+        {
+          text: 'Mostly timed LeetCode hards, because the coding bar is reportedly very high',
+          feedback: 'High, but practical: reported problems are builds like crawlers, dedup and image pipelines, not puzzles.',
+        },
+        {
+          text: 'Mostly memorizing solutions to the widely leaked bank of coding questions',
+          feedback: "The bank is small and widely shared, and interviewers reportedly notice memorized answers. Learn the patterns, not the scripts.",
+        },
+        {
+          text: "All technical prep; the culture round is just a conversation, so wing it",
+          feedback: 'Culture is the round reports say strong engineers most often fail, and follow-ups go several levels deep. A conversation still needs prep.',
+        },
+      ],
+      explanation: 'Spread hours over what is scored: practical code, concurrency, written design, your own project and your own views. Culture deserves real hours.',
     },
   ],
 }

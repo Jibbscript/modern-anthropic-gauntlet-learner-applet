@@ -128,7 +128,7 @@ with ThreadPoolExecutor(max_workers=3) as pool:
 from pathlib import Path
 
 def resize_one(src: Path, out_dir: Path) -> Path:
-    img = load_image(src)           # raises on a corrupt file
+    img = load_image(src)  # raises if corrupt
     dst = out_dir / src.name
     save_image(resize(img, 256), dst)
     return dst
@@ -258,19 +258,19 @@ print("finished")`,
           interviewer: 'How would you parallelize it?',
           options: [
             {
-              text: 'The transform is CPU-bound Python, so threads would take turns on the GIL. `ProcessPoolExecutor` with 8 workers, mapping over *paths* so little data gets pickled, with a `chunksize` so 10,000 small tasks do not each pay a round trip.',
+              text: 'CPU-bound Python means threads take turns on the GIL, so `ProcessPoolExecutor` with 8 workers. I map over paths, not pixels, to keep pickling cheap, with a `chunksize` to batch the round trips.',
               quality: 'strong',
               feedback: 'Picks the executor from the workload, keeps the pickled payload small, and knows the per-task overhead.',
             },
             {
-              text: '`ThreadPoolExecutor` with 64 threads. More workers, more throughput.',
+              text: '`ThreadPoolExecutor` with 64 threads. Threads are cheaper than processes, and more workers means more throughput on a big batch like this.',
               quality: 'weak',
               feedback: 'Pure-Python CPU work serializes on the GIL in standard CPython. 64 threads add switching overhead and little else.',
             },
             {
-              text: '`ProcessPoolExecutor`, one task per image.',
+              text: '`ProcessPoolExecutor` with one task per image, since processes get around the GIL. Then measure it against the single-threaded version.',
               quality: 'okay',
-              feedback: 'The right executor, but no reason given, and no thought about what gets pickled or the cost of 10,000 tiny round trips.',
+              feedback: 'The right executor for the right reason, but no thought about what gets pickled or the cost of 10,000 tiny round trips.',
             },
           ],
         },
@@ -278,17 +278,17 @@ print("finished")`,
           interviewer: 'Three files in the batch are corrupt. What does your code do?',
           options: [
             {
-              text: 'Catch the exception inside the worker and return `None` for bad files.',
+              text: 'Catch the exception inside the worker function and return `None` for bad files, then filter the `None`s out before saving.',
               quality: 'okay',
               feedback: 'The batch survives, but `None` hides which file failed and why, and callers must remember to filter it.',
             },
             {
-              text: 'With `map`, the first bad file raises when I iterate to it and the results after it are lost. I would `submit` each path, loop over `as_completed`, catch per future, and return the successes plus a list of `(path, error)` failures.',
+              text: '`map` raises at the first bad file and I lose everything after it. So: `submit` each path, loop over `as_completed`, catch per future, and return successes plus `(path, error)` failures.',
               quality: 'strong',
               feedback: 'Knows exactly how `map` fails, isolates errors per item, and keeps them visible.',
             },
             {
-              text: 'Wrap the whole `map` loop in one try/except and log that the batch failed.',
+              text: 'Wrap the whole `map` loop in a single try/except, log that the batch failed, and rerun it once the bad files are cleaned up.',
               quality: 'weak',
               feedback: 'One corrupt file then sinks 9,997 good ones, and the log does not say which file.',
             },
@@ -298,17 +298,17 @@ print("finished")`,
           interviewer: 'How would you test it?',
           options: [
             {
-              text: 'Concurrency is hard to test, so I would rely on careful review.',
+              text: 'Concurrency bugs are nondeterministic and hard to reproduce, so I would rely on careful code review rather than tests here.',
               quality: 'weak',
               feedback: 'Testing your own implementation is part of what this round looks for. Most of this is easy to test.',
             },
             {
-              text: 'Run it on the real folder and check the output count.',
+              text: 'Run it against the real folder of 10,000 images and check the output folder ends up with the same number of files.',
               quality: 'okay',
               feedback: 'Catches gross failures, but slowly, and a missing thumbnail tells you nothing about why.',
             },
             {
-              text: 'Unit-test the transform as a pure function. Then run the batch on a tiny folder with one corrupt file and assert the success count and the failure list, with `max_workers=1` and with 4, expecting identical output.',
+              text: 'Unit-test the transform as a pure function. Then run a tiny batch with one planted corrupt file, with 1 worker and with 4: same outputs, same failure list.',
               quality: 'strong',
               feedback: 'A planted failure, an oracle (the single-worker run), and assertions on exactly what you claimed.',
             },
@@ -411,15 +411,19 @@ def fetch_or_none(url: str, timeout: float = 2.0):
       id: 'conc-executors.partial',
       skill: 'conc.executors',
       kind: 'cloze',
-      prompt: '`thumbnail(path, size)` is a CPU-heavy, pure-Python, top-level function. Complete the parallel call.',
-      code: `if __name__ == "__main__":
-    with {{0}}() as pool:
-        thumbs = list(pool.map({{1}}, paths, chunksize=64))`,
+      prompt: '`thumbnail(path, size)` is a CPU-heavy, pure-Python, top-level function. Complete the parallel version.',
+      code: `from functools import partial
+
+fn = {{0}}
+
+if __name__ == "__main__":
+    with {{1}}() as pool:
+        thumbs = list(pool.map(fn, paths, chunksize=64))`,
       blanks: [
+        { options: ['lambda p: thumbnail(p, 256)', 'thumbnail(paths, 256)', 'partial(thumbnail, size=256)'], answer: 2 },
         { options: ['ThreadPoolExecutor', 'ProcessPoolExecutor'], answer: 1 },
-        { options: ['lambda p: thumbnail(p, 256)', 'thumbnail(paths, 256)', 'functools.partial(thumbnail, size=256)'], answer: 2 },
       ],
-      explanation: 'CPU-bound Python needs processes to escape the GIL. Processes pickle the callable: a lambda cannot be pickled, while `functools.partial` over a top-level function can. `thumbnail(paths, 256)` calls the function once, right here, instead of passing it.',
+      explanation: 'Processes pickle the callable: a lambda cannot be pickled, while `partial` over a top-level function can. `thumbnail(paths, 256)` calls the function once, right here, instead of passing it. And CPU-bound Python needs processes to escape the GIL.',
     },
     {
       id: 'conc-executors.why-completed',

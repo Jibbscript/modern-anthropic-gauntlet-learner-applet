@@ -36,7 +36,7 @@ const lesson: Lesson = {
             "Tempting, because it looks like progress. But boxes drawn before scope are guesses, and you'll redraw them once the interviewer answers the questions you skipped.",
         },
         {
-          text: 'The database schema, since candidates say missing low-level detail is what sinks people',
+          text: 'The database schema, since one rejected candidate blamed missing low-level detail',
           feedback:
             'Detail does matter, later. A schema written before you know what the system must do is detail about the wrong thing.',
         },
@@ -75,10 +75,10 @@ const lesson: Lesson = {
     {
       kind: 'sort',
       id: 'sort-sections',
-      prompt: 'Lines from your prompt playground doc. Which section does each belong in?',
+      prompt: 'Lines from your prompt playground doc. Is each one a non-goal, a must-have requirement, or an open question?',
       buckets: [
         { id: 'non', label: 'Non-goals' },
-        { id: 'req', label: 'Requirements' },
+        { id: 'req', label: 'Must-haves' },
         { id: 'open', label: 'Open questions' },
       ],
       items: [
@@ -113,7 +113,7 @@ const lesson: Lesson = {
       kind: 'spotbug',
       id: 'hidden-decisions',
       eyebrow: 'Review a flawed doc',
-      prompt: 'Some candidates get a flawed design doc to critique. Two lines here sound like decisions but hide one. Tap both.',
+      prompt: 'Some candidates get a flawed design doc to critique. Two lines here sound like decisions but dodge one. Tap both.',
       code: 'Storage and runs\n- Metadata lives in Postgres.\n- Bodies go to S3, keyed by hash.\n- Each save adds a version row.\n- Conflicts are handled gracefully.\n- Run output streams over SSE.\n- Runs are cached where it helps.\n- Over-quota runs get a 429.',
       lang: 'text',
       bugLines: [5, 7],
@@ -158,7 +158,7 @@ const lesson: Lesson = {
       kind: 'concept',
       id: 'narrate',
       title: 'The doc is silent. You are not.',
-      body: "Type for four minutes without talking and the interviewer watches text appear with no idea why. Narrate the decision, not the keystrokes: *full copies, not diffs, because restore becomes one read.*\n\nEvery ten minutes or so, check in: *I could go deep on versioning or on runs next. Which is more useful to you?* Candidates report that prompts lean toward the interviewer's real problems, so they often know which part matters.",
+      body: "Type for four minutes without talking and the interviewer watches text appear with no idea why. Narrate the decision, not the keystrokes: *full copies, not diffs, because restore becomes one read.*\n\nEvery ten minutes or so, check in: *I could go deep on versioning or on runs next. Which is more useful to you?* Prep guides note that prompts lean toward the interviewer team's real problems, so they often know which part matters.",
     },
     {
       kind: 'interview',
@@ -304,10 +304,10 @@ const lesson: Lesson = {
       id: 'design-doc.sort-lines',
       skill: 'design.doc',
       kind: 'sort',
-      prompt: 'Which section does each line belong in?',
+      prompt: 'Design doc lines: non-goal, must-have requirement, or open question?',
       buckets: [
         { id: 'non', label: 'Non-goals' },
-        { id: 'req', label: 'Requirements' },
+        { id: 'req', label: 'Must-haves' },
         { id: 'open', label: 'Open questions' },
       ],
       items: [

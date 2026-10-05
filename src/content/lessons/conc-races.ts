@@ -126,7 +126,7 @@ class Stats:
       kind: 'spotbug',
       id: 'thumbnail-cache',
       eyebrow: 'Find the race',
-      prompt: 'Ten requests for the same new image arrive together, and the server renders it ten times. There is a lock right there. Tap the line that lets the duplicates through.',
+      prompt: 'Ten requests for the same new image arrive together, and the server runs the slow render ten times. There is a lock right there. Tap the line that lets the duplicates through.',
       code: `import threading
 
 _cache: dict[str, bytes] = {}
@@ -134,7 +134,7 @@ _lock = threading.Lock()
 
 def get_thumbnail(path: str) -> bytes:
     if path not in _cache:
-        data = render_thumbnail(path)   # ~2 s of work
+        data = render_thumbnail(path)
         with _lock:
             _cache[path] = data
     return _cache[path]`,

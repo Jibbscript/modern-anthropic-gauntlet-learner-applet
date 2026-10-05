@@ -145,7 +145,7 @@ thumb = pipeline(gray, blur, rotate)`,
         { text: 'Downloading 10,000 images from object storage', bucket: 'threads', why: 'Threads blocked on the network release the GIL.' },
         { text: 'A nested `for` loop blurring a list-of-lists image', bucket: 'procs', why: 'Pure bytecode: one thread holds the GIL the whole time.' },
         { text: 'Pillow `Image.resize` on large photos', bucket: 'threads', why: 'The resampling runs in C, which releases the GIL.' },
-        { text: 'NumPy arithmetic on big float arrays, like `a * 0.5 + b`', bucket: 'threads', why: 'NumPy\'s numeric C loops release the GIL.' },
+        { text: 'NumPy math on big float arrays, like `np.exp(np.sin(a))`', bucket: 'threads', why: 'NumPy\'s numeric C loops release the GIL. (Very cheap ops like `a + b` may still not scale: memory bandwidth runs out first.)' },
         { text: 'A Python loop building a brightness histogram in a dict', bucket: 'procs', why: 'Every iteration is interpreter work.' },
       ],
       explanation:

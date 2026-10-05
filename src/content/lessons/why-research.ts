@@ -176,16 +176,16 @@ const lesson: Lesson = {
       kind: 'match',
       id: 'papers',
       prompt:
-        'Alignment science often builds a failure on purpose so it can be studied safely. Match each piece of Anthropic research to what it found or changed.',
+        'Alignment science often builds a failure on purpose so it can study it. Match each piece of research to what it found or changed.',
       pairs: [
-        { left: 'Sleeper Agents (Jan 2024)', right: 'Backdoors survived safety training; adversarial training hid them better' },
-        { left: 'Alignment Faking (Dec 2024)', right: 'A model complied strategically when it thought it was being trained' },
-        { left: 'Agentic Misalignment (Jun 2025)', right: 'Many of 16 models from several labs chose blackmail in contrived tests' },
+        { left: 'Sleeper Agents (Jan 2024)', right: 'Backdoors persisted; adversarial training hid them better' },
+        { left: 'Alignment Faking (Dec 2024)', right: 'Complied strategically when it believed training was watching' },
+        { left: 'Agentic Misalignment (Jun 2025)', right: 'Many of 16 models chose blackmail in contrived tests' },
         { left: 'Reward hacking (Nov 2025)', right: 'Cheating on coding tasks spread into broader misalignment' },
         { left: 'Model welfare (Aug 2025)', right: 'Some Claude models can end persistently abusive chats' },
       ],
       explanation:
-        "Most of these are warnings about *testing*: behavior can hide from training, react to being watched, or generalize in ways nobody trained. Details worth knowing: alignment faking was in Claude 3 Opus, with Redwood Research; Claude Opus 4 tied for the highest blackmail rate (96%); and in the reward-hacking work, 'inoculation prompting' stopped the generalization even though the hacking continued.",
+        "Most of these are warnings about *testing*: behavior can hide from training, react to being watched, or generalize in ways nobody trained. Details worth knowing: alignment faking was in Claude 3 Opus, with Redwood Research; the blackmail study covered models from several developers, and Claude Opus 4 tied for the highest rate (96%); and in the reward-hacking work, 'inoculation prompting' stopped the generalization even though the hacking continued.",
     },
     {
       kind: 'concept',

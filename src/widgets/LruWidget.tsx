@@ -64,8 +64,12 @@ function describe(f: Flash): { text: string; tone: 'good' | 'bad' | 'plain' } {
 export default function LruWidget({ config, onComplete }: WidgetProps<LruConfig>) {
   const capacity = clampCapacity(config.capacity)
   const rawGoal = config.goal
-  const configured = useMemo(() => parseSequence(config.sequence), [config.sequence])
-  const ops: Op[] = useMemo(() => (configured.length ? configured : rawGoal === 'predict' ? parseSequence(DEFAULT_SEQ) : []), [configured, rawGoal])
+  // keyed by content, not identity: a parent re-render with an equal config must not restart the run
+  const seqKey = (Array.isArray(config.sequence) ? config.sequence : []).join('|')
+  const ops: Op[] = useMemo(() => {
+    const configured = parseSequence(seqKey ? seqKey.split('|') : [])
+    return configured.length ? configured : rawGoal === 'predict' ? parseSequence(DEFAULT_SEQ) : []
+  }, [seqKey, rawGoal])
   const seqMode = ops.length > 0
   const goal = rawGoal ?? (seqMode && config.predict !== false ? 'predict' : config.targetHits ? 'hits' : 'explore')
   const predict = seqMode && (config.predict ?? goal === 'predict')
@@ -92,6 +96,8 @@ export default function LruWidget({ config, onComplete }: WidgetProps<LruConfig>
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [reached, setReached] = useState(false)
   const firedRef = useRef(false)
+  /** bumped on reset so the card row remounts instead of flying every card off */
+  const [epoch, setEpoch] = useState(0)
 
   useEffect(
     () => () => {
@@ -195,6 +201,7 @@ export default function LruWidget({ config, onComplete }: WidgetProps<LruConfig>
     setFlash(null)
     setEvictLog([])
     setPredMisses(0)
+    setEpoch((e) => e + 1)
   }
 
   const ev = flash ? describe(flash) : null
@@ -274,7 +281,7 @@ export default function LruWidget({ config, onComplete }: WidgetProps<LruConfig>
 
         <div className="lru-track">
           <LayoutGroup id={uid}>
-            <div className="lru-row" style={{ ['--cap' as string]: capacity }}>
+            <div key={epoch} className="lru-row">
               <AnimatePresence mode="popLayout" initial={false}>
                 {s.entries.map((e, i) => {
                   const isLast = i === s.entries.length - 1
@@ -296,7 +303,7 @@ export default function LruWidget({ config, onComplete }: WidgetProps<LruConfig>
                       animate={{ opacity: 1, y: 0, scale: 1, x: 0, rotate: 0 }}
                       exit={reduce ? { opacity: 0, transition: { duration: 0.15 } } : 'gone'}
                       variants={{
-                        gone: { x: 46, y: 58, rotate: 22, opacity: 0, scale: 0.7, transition: { duration: 0.6, ease: [0.4, 0, 0.7, 0.2] } },
+                        gone: { x: 74, y: 34, rotate: 24, opacity: 0, scale: 0.72, transition: { duration: 0.6, ease: [0.4, 0, 0.7, 0.2] } },
                       }}
                       transition={SPRING}
                     >
@@ -345,7 +352,15 @@ export default function LruWidget({ config, onComplete }: WidgetProps<LruConfig>
                       </AnimatePresence>
                       <AnimatePresence>
                         {nextOut && (
-                          <motion.span key="out" className="lru-card__next" initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.18 }}>
+                          <motion.span
+                            key="out"
+                            className="lru-card__next"
+                            initial={{ opacity: 0, y: -4 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0 }}
+                            variants={{ gone: { opacity: 0, transition: { duration: 0.08 } } }}
+                            transition={{ duration: 0.18 }}
+                          >
                             <span className="lru-pill">next out</span>
                           </motion.span>
                         )}
@@ -477,13 +492,13 @@ export default function LruWidget({ config, onComplete }: WidgetProps<LruConfig>
       <div className="lru-stats">
         <div className="w-stat lru-stat">
           <span className="w-stat__label">Hits</span>
-          <span className="w-stat__value lru-stat__hits">
+          <span className={['w-stat__value', s.hits > 0 ? 'lru-stat__hits' : ''].join(' ')}>
             <Ticker value={s.hits} duration={0.4} />
           </span>
         </div>
         <div className="w-stat lru-stat">
           <span className="w-stat__label">Misses</span>
-          <span className="w-stat__value lru-stat__misses">
+          <span className={['w-stat__value', s.misses > 0 ? 'lru-stat__misses' : ''].join(' ')}>
             <Ticker value={s.misses} duration={0.4} />
           </span>
         </div>
@@ -505,7 +520,7 @@ export default function LruWidget({ config, onComplete }: WidgetProps<LruConfig>
       </AnimatePresence>
 
       <div className="lru-foot">
-        <span className="lru-foot__note">capacity {capacity} · evicts the least recently used</span>
+        <span className="lru-foot__note">capacity {capacity} · LRU eviction</span>
         <Button size="sm" variant="ghost" icon={<RotateCcw size={14} strokeWidth={2.6} />} onClick={hardReset} disabled={s.tick === 0 && !pick}>
           Reset
         </Button>

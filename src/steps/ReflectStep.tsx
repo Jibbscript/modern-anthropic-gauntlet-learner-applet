@@ -11,7 +11,6 @@ import './steps.css'
 import './ReflectStep.css'
 
 const DRAFT_MS = 600
-const SPRING = { type: 'spring', stiffness: 520, damping: 32 } as const
 
 const countWords = (s: string) => (s.trim() ? s.trim().split(/\s+/).length : 0)
 
@@ -58,7 +57,14 @@ export default function ReflectStep({ step, setController, lessonId }: StepProps
       saveDraft(latest.current)
     }
   }, [saveDraft])
-  useEffect(() => flush, [flush])
+  useEffect(() => {
+    // leaving the lesson unmounts the step; closing the tab does not, so flush on pagehide too
+    window.addEventListener('pagehide', flush)
+    return () => {
+      window.removeEventListener('pagehide', flush)
+      flush()
+    }
+  }, [flush])
 
   const onChange = (value: string) => {
     setText(value)
@@ -202,15 +208,7 @@ function RubricRow({ text, on, onToggle }: { text: string; on: boolean; onToggle
   }, [])
   const pop = useMemo(() => (first.current ? false : { scale: [1, 1.18, 1] }), [on]) // eslint-disable-line react-hooks/exhaustive-deps
   return (
-    <motion.button
-      type="button"
-      role="checkbox"
-      aria-checked={on}
-      className={`reflect-check${on ? ' reflect-check--on' : ''}`}
-      onClick={onToggle}
-      whileTap={{ y: 2 }}
-      transition={SPRING}
-    >
+    <button type="button" role="checkbox" aria-checked={on} className={`reflect-check${on ? ' reflect-check--on' : ''}`} onClick={onToggle}>
       <motion.span className="reflect-check__box" aria-hidden animate={pop || undefined} transition={{ duration: 0.28 }}>
         <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
           <motion.path
@@ -226,6 +224,6 @@ function RubricRow({ text, on, onToggle }: { text: string; on: boolean; onToggle
         </svg>
       </motion.span>
       <span className="reflect-check__text">{text}</span>
-    </motion.button>
+    </button>
   )
 }

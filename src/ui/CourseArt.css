@@ -38,8 +38,8 @@
 }
 .ca-paper {
   --t: #fff;
-  --l: color-mix(in oklab, var(--c) 10%, #eceef4);
-  --r: color-mix(in oklab, var(--c) 22%, #d4d6e2);
+  --l: color-mix(in oklab, var(--c) 10%, var(--surface-3));
+  --r: color-mix(in oklab, var(--c) 22%, var(--line-strong));
 }
 .ca-gold {
   --t: color-mix(in oklab, var(--c-amber) 40%, #fff);
@@ -210,7 +210,7 @@
   stroke-linejoin: round;
 }
 .ca-prose rect {
-  fill: color-mix(in oklab, var(--c) 22%, #cfd1dc);
+  fill: color-mix(in oklab, var(--c) 22%, color-mix(in oklab, #fff 80%, #000));
 }
 .ca-tip {
   fill: color-mix(in oklab, var(--c-amber) 28%, #fff);
@@ -218,7 +218,7 @@
 
 /* agents */
 .ca-visor {
-  fill: color-mix(in oklab, var(--c-edge) 42%, #0b0b14);
+  fill: color-mix(in oklab, var(--c-edge) 40%, #000);
 }
 .ca-visor-gloss {
   fill: #fff;
@@ -235,7 +235,7 @@
 }
 .ca-pointer {
   fill: #fff;
-  stroke: color-mix(in oklab, var(--c-edge) 45%, #0b0b14);
+  stroke: color-mix(in oklab, var(--c-edge) 45%, #000);
   stroke-width: 2.2;
   stroke-linejoin: round;
 }
@@ -267,7 +267,7 @@
   stroke-width: 5;
 }
 .ca-handle {
-  fill: color-mix(in oklab, var(--c-edge) 50%, #14141c);
+  fill: color-mix(in oklab, var(--c-edge) 50%, #000);
 }
 
 /* ------------------------------------------------------------- dark */
@@ -282,9 +282,9 @@
     --r: color-mix(in oklab, var(--c) 22%, var(--bg));
   }
   :root:not([data-theme='light']) .ca-paper {
-    --t: color-mix(in oklab, var(--c) 6%, #f2f2f8);
-    --l: color-mix(in oklab, var(--c) 16%, #c4c6d4);
-    --r: color-mix(in oklab, var(--c) 26%, #9c9eb0);
+    --t: color-mix(in oklab, var(--c) 6%, #fff);
+    --l: color-mix(in oklab, var(--c) 16%, color-mix(in oklab, #fff 80%, #000));
+    --r: color-mix(in oklab, var(--c) 26%, color-mix(in oklab, #fff 64%, #000));
   }
 }
 :root[data-theme='dark'] .ca {
@@ -297,9 +297,9 @@
   --r: color-mix(in oklab, var(--c) 22%, var(--bg));
 }
 :root[data-theme='dark'] .ca-paper {
-  --t: color-mix(in oklab, var(--c) 6%, #f2f2f8);
-  --l: color-mix(in oklab, var(--c) 16%, #c4c6d4);
-  --r: color-mix(in oklab, var(--c) 26%, #9c9eb0);
+  --t: color-mix(in oklab, var(--c) 6%, #fff);
+  --l: color-mix(in oklab, var(--c) 16%, color-mix(in oklab, #fff 80%, #000));
+  --r: color-mix(in oklab, var(--c) 26%, color-mix(in oklab, #fff 64%, #000));
 }
 
 /* -------------------------------------------------------- animation */

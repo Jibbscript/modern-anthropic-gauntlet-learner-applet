@@ -143,7 +143,7 @@ const lesson: Lesson = {
       kind: 'concept',
       id: 'numbers-to-decisions',
       title: 'Read the numbers back as decisions',
-      body: '- **70 runs a second is small.** One Postgres handles the metadata writes; no sharding in v1.\n- **200,000 tokens a second is the real load.** Quotas and provider rate limits matter more than your database.\n- **Runs stream for seconds.** In-flight runs = arrival rate × duration (Little\'s law). At 15 s a run, 70/s × 15 s is about 1,000 open streams to hold.\n- **Big prompts set storage.** Put bodies in object storage, deduplicated by hash.',
+      body: "- **70 runs a second is small.** One Postgres handles the metadata; no sharding in v1.\n- **200,000 tokens a second is the real load.** Quotas and provider rate limits matter more than the database.\n- **Runs stream for seconds.** In flight = arrival rate × duration (Little's law). With 15-second runs, that's 70 × 15 ≈ 1,000 open streams.\n- **Big prompts set storage.** Bodies go to object storage, deduplicated by hash.",
     },
     {
       kind: 'interview',
@@ -295,7 +295,7 @@ const lesson: Lesson = {
         { text: 'The list of who is viewing a prompt', correct: true, feedback: 'Yes. Presence that is a few seconds stale harms nobody.' },
         { text: 'The run-history list on a dashboard', correct: true, feedback: 'Yes. A finished run showing up a second late is fine.' },
         { text: 'A weekly usage analytics chart', correct: true, feedback: 'Yes. Aggregates can lag minutes or more.' },
-        { text: 'Which version is the head of a prompt', feedback: 'No. Saves compare against the head; a stale head lets one save overwrite another.' },
+        { text: 'Which version is the head of a prompt', feedback: 'No. Compare-and-set on the head only works if every writer sees the latest head; on a lagging replica, two saves can both win.' },
         { text: 'Whether a revoked share link still works', feedback: 'No. Revocation is a security promise; a lagging check leaks data after the owner cut access.' },
       ],
       explanation: 'Spend strong consistency where a stale read breaks correctness or security, and let everything else lag.',

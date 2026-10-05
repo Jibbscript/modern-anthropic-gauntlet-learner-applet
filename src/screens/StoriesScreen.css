@@ -1,0 +1,634 @@
+/* ----------------------------------------------------------- story bank */
+.sto {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  background: var(--bg);
+}
+
+.sto-head {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3);
+  padding-left: var(--gutter);
+  padding-right: var(--gutter);
+}
+.sto-head h1 {
+  padding: var(--s-4) 0 var(--s-3);
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+}
+.sto-head__pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: var(--r-pill);
+  background: var(--surface-2);
+  box-shadow: inset 0 0 0 2px var(--line);
+  color: var(--ink-2);
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.sto-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-6);
+  padding: 0 var(--gutter) var(--s-10);
+}
+
+/* --------------------------------------------------------------- intro */
+.sto-intro {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+}
+.sto-intro__lead {
+  font-size: var(--fs-md);
+  line-height: 1.5;
+  color: var(--ink-2);
+  text-wrap: pretty;
+}
+.sto-progress {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+}
+.sto-progress__line {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-3);
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  color: var(--ink-2);
+}
+.sto-progress__line b {
+  color: var(--ink);
+  font-size: var(--fs-md);
+}
+.sto-progress__pct {
+  color: var(--ink-3);
+}
+
+/* ------------------------------------------------------- rehearse hero */
+.sto-hero {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+  padding: var(--s-5) var(--s-5) calc(var(--s-5) + 2px);
+  border-radius: var(--r-lg);
+  background:
+    radial-gradient(90% 70% at 100% 0%, color-mix(in srgb, var(--c) 20%, transparent) 0%, transparent 70%),
+    linear-gradient(170deg, color-mix(in srgb, var(--c) 10%, var(--surface)) 0%, var(--surface) 75%);
+  box-shadow:
+    inset 0 0 0 2px color-mix(in srgb, var(--c) 30%, var(--line)),
+    0 var(--edge-h) 0 0 color-mix(in srgb, var(--c) 42%, var(--edge));
+  margin-bottom: var(--edge-h);
+}
+.sto-hero__top {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+}
+.sto-hero__main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.sto-hero__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: var(--s-1);
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+}
+.sto-hero__eyebrow svg {
+  color: var(--c);
+}
+.sto-hero__count {
+  font-family: var(--font-display);
+  font-size: 60px;
+  font-weight: 700;
+  line-height: 0.95;
+  letter-spacing: -0.015em;
+}
+.sto-hero__sub {
+  font-size: var(--fs-md);
+  font-weight: 700;
+  color: var(--ink-2);
+}
+.sto-hero__text {
+  margin-top: calc(-1 * var(--s-1));
+  font-size: var(--fs-md);
+  color: var(--ink-2);
+  text-wrap: pretty;
+}
+.sto-hero__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+  margin-top: calc(-1 * var(--s-1));
+}
+.sto-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 11px;
+  border-radius: var(--r-pill);
+  background: color-mix(in srgb, var(--c) 10%, var(--surface));
+  box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--c) 24%, var(--line));
+  color: var(--ink-2);
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* the glossy microphone with ambient ripples */
+.sto-mic {
+  position: relative;
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 96px;
+  height: 96px;
+}
+.sto-mic__face {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 72px;
+  height: 72px;
+  border-radius: 24px;
+  color: #fff;
+  background: linear-gradient(160deg, color-mix(in srgb, var(--c) 68%, #fff), var(--c) 55%, var(--c-edge));
+  box-shadow: 0 5px 0 0 var(--c-edge), 0 14px 26px color-mix(in srgb, var(--c) 35%, transparent);
+  overflow: hidden;
+}
+.sto-mic__face svg {
+  position: relative;
+  z-index: 1;
+}
+.sto-mic__face::after {
+  content: '';
+  position: absolute;
+  inset: 3px 7px 56% 7px;
+  border-radius: 18px 18px 28px 28px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0));
+}
+.sto-mic__ripple {
+  position: absolute;
+  inset: 12px;
+  border-radius: 30px;
+  border: 2px solid color-mix(in srgb, var(--c) 45%, transparent);
+  animation: sto-ripple 2.4s var(--ease-out) infinite;
+}
+.sto-mic__ripple--2 {
+  animation-delay: 1.2s;
+}
+@keyframes sto-ripple {
+  0% {
+    transform: scale(0.85);
+    opacity: 0.9;
+  }
+  100% {
+    transform: scale(1.35);
+    opacity: 0;
+  }
+}
+
+/* ----------------------------------------------------------- caught up */
+.sto-done {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+  padding: var(--s-4);
+  border-radius: var(--r-lg);
+  background: linear-gradient(170deg, color-mix(in srgb, var(--good) 8%, var(--surface)) 0%, var(--surface) 75%);
+  box-shadow:
+    inset 0 0 0 2px color-mix(in srgb, var(--good) 26%, var(--line)),
+    0 var(--edge-h) 0 0 color-mix(in srgb, var(--good) 36%, var(--edge));
+  margin-bottom: var(--edge-h);
+}
+.sto-done__top {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+}
+.sto-done__check {
+  position: relative;
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 16px;
+  color: #fff;
+  background: linear-gradient(160deg, color-mix(in srgb, var(--good) 70%, #fff), var(--good) 55%, var(--good-edge));
+  box-shadow: 0 4px 0 0 var(--good-edge);
+  overflow: hidden;
+}
+.sto-done__check svg {
+  position: relative;
+  z-index: 1;
+}
+.sto-done__check::after {
+  content: '';
+  position: absolute;
+  inset: 3px 6px 55% 6px;
+  border-radius: 12px 12px 20px 20px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0));
+}
+.sto-done__main {
+  min-width: 0;
+}
+.sto-done__main h2 {
+  font-size: var(--fs-xl);
+  font-weight: 700;
+}
+.sto-done__main p {
+  color: var(--ink-2);
+  font-size: var(--fs-sm);
+  font-weight: 500;
+}
+
+/* ---------------------------------------------------------- first story */
+.sto-start {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s-3);
+  padding: var(--s-5) var(--s-5) var(--s-5);
+  border-radius: var(--r-lg);
+  text-align: center;
+  background: radial-gradient(120% 70% at 50% 0%, color-mix(in srgb, var(--c) 13%, var(--surface)) 0%, var(--surface) 70%);
+  box-shadow: inset 0 0 0 2px var(--line);
+}
+.sto-start h2 {
+  font-size: var(--fs-2xl);
+  font-weight: 700;
+  letter-spacing: -0.015em;
+}
+.sto-start__lead {
+  color: var(--ink-2);
+  font-size: var(--fs-md);
+  max-width: 34ch;
+  text-wrap: pretty;
+}
+.sto-start__art {
+  position: relative;
+  width: 210px;
+  height: 132px;
+  margin-bottom: var(--s-1);
+}
+/* index cards: paper with a coloured header band and ruled lines */
+.sto-start__card {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 86px;
+  height: 108px;
+  margin: -54px 0 0 -43px;
+  border-radius: 14px;
+  background:
+    linear-gradient(var(--band) 0 22px, transparent 22px),
+    repeating-linear-gradient(180deg, transparent 0 13px, var(--line) 13px 15px) 0 30px / 100% calc(100% - 40px) no-repeat,
+    var(--surface);
+  box-shadow: inset 0 0 0 2px var(--line), 0 4px 0 0 var(--edge);
+}
+.sto-start__card--a {
+  --band: var(--c-violet);
+}
+.sto-start__card--b {
+  --band: var(--c-orange);
+}
+.sto-start__card--c {
+  --band: var(--c);
+  display: grid;
+  place-items: center;
+  width: 96px;
+  height: 118px;
+  margin: -60px 0 0 -48px;
+  padding-top: 18px;
+  color: var(--c-ink);
+  box-shadow:
+    inset 0 0 0 2px var(--line),
+    0 5px 0 0 var(--edge),
+    0 16px 30px color-mix(in srgb, var(--c) 28%, transparent);
+}
+.sto-start__card--c svg {
+  padding: 8px;
+  width: 50px;
+  height: 50px;
+  border-radius: 14px;
+  background: var(--surface);
+  box-shadow: 0 0 0 2px var(--line);
+}
+.sto-start__steps {
+  list-style: none;
+  margin: var(--s-2) 0 var(--s-3);
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  width: 100%;
+  text-align: left;
+}
+.sto-start__steps li {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  padding: var(--s-2) var(--s-3);
+  border-radius: var(--r-md);
+  background: color-mix(in srgb, var(--ink) 5%, transparent);
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  color: var(--ink-2);
+}
+.sto-start__steps li span {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--ink);
+  color: var(--ink-inverse);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+/* ------------------------------------------------------------ sections */
+.sto-sec {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+}
+.sto-sec__head {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s-3);
+}
+.sto-sec__icon {
+  position: relative;
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  margin-top: 1px;
+  border-radius: 10px;
+  color: #fff;
+  background: linear-gradient(160deg, color-mix(in srgb, var(--c) 70%, #fff), var(--c) 55%, var(--c-edge));
+  box-shadow: 0 2px 0 0 var(--c-edge);
+}
+.sto-sec__titles {
+  flex: 1;
+  min-width: 0;
+}
+.sto-sec__titles h2 {
+  font-size: var(--fs-xl);
+  font-weight: 700;
+  letter-spacing: -0.015em;
+}
+.sto-sec__titles p {
+  margin-top: 2px;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--ink-3);
+}
+.sto-sec__count {
+  flex: none;
+  margin-top: 4px;
+  padding: 2px 9px;
+  border-radius: var(--r-pill);
+  background: var(--c-soft);
+  color: var(--c-ink);
+  font-size: 13px;
+  font-weight: 700;
+}
+.sto-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+}
+
+/* ---------------------------------------------------------------- card */
+.sto-card {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s-3);
+  width: 100%;
+  padding: var(--s-4) var(--s-3) var(--s-4) var(--s-4);
+  text-align: left;
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  box-shadow: inset 0 0 0 2px var(--line), 0 var(--edge-h) 0 0 var(--edge);
+  margin-bottom: var(--edge-h);
+  transition: box-shadow var(--dur-1), background var(--dur-1);
+}
+.sto-card:active {
+  box-shadow: inset 0 0 0 2px var(--line), 0 2px 0 0 var(--edge);
+}
+@media (hover: hover) {
+  .sto-card:hover {
+    background: color-mix(in srgb, var(--ink) 2%, var(--surface));
+  }
+}
+.sto-card--due {
+  background: linear-gradient(170deg, color-mix(in srgb, var(--c) 7%, var(--surface)) 0%, var(--surface) 70%);
+  box-shadow:
+    inset 0 0 0 2px color-mix(in srgb, var(--c) 45%, var(--line)),
+    0 var(--edge-h) 0 0 color-mix(in srgb, var(--c) 55%, var(--edge));
+}
+.sto-card--due:active {
+  box-shadow:
+    inset 0 0 0 2px color-mix(in srgb, var(--c) 45%, var(--line)),
+    0 2px 0 0 color-mix(in srgb, var(--c) 55%, var(--edge));
+}
+
+/* grey tile until there is a draft, course hue after (like path nodes) */
+.sto-card__icon {
+  position: relative;
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  color: var(--ink-3);
+  background: var(--surface-3);
+  box-shadow: 0 3px 0 0 var(--line-strong);
+}
+.sto-card--draft .sto-card__icon {
+  color: var(--c-ink);
+  background: var(--c-soft);
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--c) 35%, transparent), 0 3px 0 0 color-mix(in srgb, var(--c) 35%, var(--line-strong));
+}
+.sto-card--ready .sto-card__icon,
+.sto-card--due .sto-card__icon {
+  color: #fff;
+  background: linear-gradient(160deg, color-mix(in srgb, var(--c) 70%, #fff), var(--c) 55%, var(--c-edge));
+  box-shadow: 0 3px 0 0 var(--c-edge);
+}
+.sto-card--ready .sto-card__icon::after,
+.sto-card--due .sto-card__icon::after {
+  content: '';
+  position: absolute;
+  inset: 2px 5px 56% 5px;
+  border-radius: 11px 11px 16px 16px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.45), rgba(255, 255, 255, 0));
+}
+.sto-card__icon svg {
+  position: relative;
+  z-index: 1;
+}
+.sto-card__ping {
+  position: absolute;
+  z-index: 2;
+  top: -4px;
+  right: -4px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--c);
+  box-shadow: 0 0 0 3px var(--surface);
+}
+.sto-card__ping::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: var(--c);
+  animation: sto-ping 1.8s var(--ease-out) infinite;
+}
+@keyframes sto-ping {
+  0% {
+    transform: scale(1);
+    opacity: 0.7;
+  }
+  100% {
+    transform: scale(2.4);
+    opacity: 0;
+  }
+}
+
+.sto-card__main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.sto-card__title {
+  font-size: var(--fs-lg);
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+}
+.sto-card__q {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-size: var(--fs-sm);
+  line-height: 1.4;
+  color: var(--ink-2);
+}
+.sto-card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px var(--s-3);
+  margin-top: var(--s-2);
+}
+.sto-card__time {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-3);
+}
+.sto-card__chev {
+  flex: none;
+  align-self: center;
+  color: var(--ink-3);
+}
+
+.sto-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 9px;
+  border-radius: var(--r-pill);
+  background: var(--surface-3);
+  color: var(--ink-2);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+.sto-status--draft {
+  background: var(--warn-soft);
+  color: var(--retry-ink);
+}
+.sto-status--ready {
+  background: var(--good-soft);
+  color: var(--good-ink);
+}
+.sto-status--due {
+  background: var(--c);
+  color: #fff;
+}
+
+.sto-dots {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.sto-dots i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--surface-3);
+  box-shadow: inset 0 0 0 1.5px var(--line-strong);
+}
+.sto-dots i.half {
+  background: linear-gradient(90deg, var(--c) 50%, var(--surface-3) 50%);
+  box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--c) 60%, transparent);
+}
+.sto-dots i.on {
+  background: var(--c);
+  box-shadow: none;
+}
+.sto-dots b {
+  margin-left: 3px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink-3);
+}
+
+/* -------------------------------------------------------------- footer */
+.sto-foot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-3);
+}

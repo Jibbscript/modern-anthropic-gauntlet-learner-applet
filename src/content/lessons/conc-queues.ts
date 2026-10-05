@@ -191,13 +191,16 @@ for t in threads:
     {
       kind: 'cloze',
       id: 'safe-worker',
-      prompt: 'Make this worker survive bad inputs and keep `q.join()` honest: every `get` of a real item must be matched by a `task_done()`.',
+      prompt: 'Make this worker survive bad inputs, and make sure a bad input can never leave `q.join()` waiting forever.',
       code: `STOP = object()
 
 def worker():
-    while (item := q.get()) is not {{0}}:
+    while True:
+        item = q.get()
+        if item is {{0}}:
+            return
         try:
-            results.put((item, transform(item)))
+            out.put(transform(item))
         except Exception as exc:
             errors.put((item, exc))
         {{1}}:
@@ -221,17 +224,17 @@ def worker():
           interviewer: 'Your loader is ten times faster than your resizer. What happens over a 100,000-image run?',
           options: [
             {
-              text: 'It finishes faster overall, because the loader gets its part done early.',
+              text: 'It finishes faster overall, because the loader gets its share of the work done early and then just waits for the resizer.',
               quality: 'weak',
               feedback: 'Throughput is set by the resizer whatever the loader does. Finishing early just means tens of thousands of decoded images sitting in memory.',
             },
             {
-              text: 'With an unbounded queue, decoded images pile up until memory runs out. I bound the queue, so the loader blocks once it is 100 ahead and memory is capped. Total time is set by the resizer either way, so the speedup comes from more resize workers.',
+              text: 'Decoded images pile up in an unbounded queue until memory runs out. A bounded queue makes the loader wait, capping memory. Total time is the resizer\'s either way, so speed comes from more resizers.',
               quality: 'strong',
               feedback: 'Names the failure, the mechanism, the memory bound, and where real speed comes from.',
             },
             {
-              text: 'The queue grows, so I would add a `maxsize` to it.',
+              text: 'The queue between them grows without limit, so I would add a `maxsize` to it and keep everything else the same.',
               quality: 'okay',
               feedback: 'Right fix, but you did not say what it buys (bounded memory) or what it does not (any extra throughput).',
             },
@@ -241,17 +244,17 @@ def worker():
           interviewer: 'How does the program end?',
           options: [
             {
-              text: 'When the loader finishes, I set a global `done` flag that workers check between items.',
+              text: 'When the loader finishes, I set a global `done` flag, and each worker checks the flag before taking its next item.',
               quality: 'okay',
               feedback: 'A worker blocked in `get()` never reaches the check. It only works with polling or timeouts, which add latency and edge cases.',
             },
             {
-              text: 'Stage by stage. The loader finishes; I put one sentinel per resize worker and join them; then one per save worker and join those. FIFO order keeps every real item ahead of the sentinels.',
+              text: 'Stage by stage: after the last item, one sentinel per resize worker, then join them; then one per save worker, and join those. FIFO keeps every real item ahead of the sentinels.',
               quality: 'strong',
               feedback: 'Correct count, correct order, and the reason it is safe.',
             },
             {
-              text: 'I make the workers daemon threads, so they die when the main thread exits.',
+              text: 'I make all the workers daemon threads, so they are cleaned up automatically when the main thread reaches the end.',
               quality: 'weak',
               feedback: 'Daemon threads are killed mid-item at exit: half-written files and lost results. That abandons work rather than shutting down.',
             },
@@ -261,17 +264,17 @@ def worker():
           interviewer: 'One image in 10,000 is corrupt, and `resize` raises on it. What happens?',
           options: [
             {
-              text: 'The exception propagates to the main thread, which logs it and exits.',
+              text: 'The exception propagates up to the main thread, which logs it, stops the pipeline cleanly and exits with an error.',
               quality: 'weak',
               feedback: 'Exceptions do not cross threads. The main thread never sees it; a traceback goes to stderr while the pipeline quietly loses a worker.',
             },
             {
-              text: 'As written, the worker that hits it dies. Enough bad files and no resizers are left, so the loader blocks on a full queue forever. I catch per item, push `(path, error)` to an errors queue, report failures at the end, and test it with a planted corrupt file.',
+              text: 'That worker dies, and once enough have died, the loader blocks on a full queue forever. I catch per item, queue `(path, error)` for a final report, and test with a planted corrupt file.',
               quality: 'strong',
               feedback: 'Traces the crash through to the hang, isolates failures per item, keeps them visible, and proves it.',
             },
             {
-              text: 'Wrap `resize` in try/except and skip the bad image.',
+              text: 'Wrap the `resize` call in a try/except inside the worker, skip the bad image, and carry on with the rest.',
               quality: 'okay',
               feedback: 'Keeps the worker alive, but a silent skip means nobody learns which images are missing or why.',
             },
@@ -342,7 +345,7 @@ print(q.qsize(), q.get())`,
       code: `def worker():
     while True:
         item = q.get()
-        result = transform(item)   # raises on a corrupt file
+        result = transform(item)  # may raise
         out.put(result)
         q.task_done()
 
