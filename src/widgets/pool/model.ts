@@ -97,7 +97,8 @@ export function simulatePool(p: PoolParams): PoolResult {
   const isAsync = p.executor === 'async'
   const nRows = isAsync ? tasks : clampWorkers(p.workers)
   const capacity = p.executor === 'process' ? cores : 1
-  const quantum = isAsync ? Infinity : COST.quantum
+  // only the GIL is time-sliced in this model; a process keeps its core until its CPU burst ends
+  const quantum = p.executor === 'thread' ? COST.quantum : Infinity
 
   interface Row {
     segs: Seg[]
@@ -142,7 +143,8 @@ export function simulatePool(p: PoolParams): PoolResult {
       r.segs = taskSegs(p.kind, p.executor)
       r.task = next++
     })
-    if (next >= tasks && rows.every((r) => !busy(r))) break
+    // done once every task has finished (spare processes still spawning don't count)
+    if (next >= tasks && rows.every((r) => r.task < 0)) break
 
     // 2. token scheduling: pre-empt holders past their quantum, then grant FIFO
     rows.forEach((r, i) => {
