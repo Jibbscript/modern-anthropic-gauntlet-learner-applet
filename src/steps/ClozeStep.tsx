@@ -249,7 +249,7 @@ export default function ClozeStep({ step, phase, attempt, setController, onHint,
         renderLine={(n) => {
           const segs = lines[n - 1]
           if (!segs?.length) return undefined
-          return segs.map((s, k) => (s.t === 'code' ? <Toks key={k} toks={k === 0 ? glueIndent(s.toks) : s.toks} /> : renderSlot(s.i, k)))
+          return segs.map((s, k) => (s.t === 'code' ? <Toks key={k} toks={k === 0 ? glueIndent(s.toks) : s.toks} wrap /> : renderSlot(s.i, k)))
         }}
       />
 

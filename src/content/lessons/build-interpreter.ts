@@ -86,7 +86,8 @@ HALT`,
         id: 'vm',
         config: {
           program: ['PUSH 10', 'PUSH 4', 'SUB', 'DUP', 'DUP', 'MUL', 'MUL', 'PRINT', 'HALT'],
-          predict: { line: 4, options: [6, -6, 14, 216], answer: 6 },
+          // pause at SUB (line 3), while 10 and 4 are still on the stack: asking at a later line would show the answer
+          predict: { line: 3, options: [6, -6, 14, 216], answer: 6 },
           goal: 'predict',
         },
       },

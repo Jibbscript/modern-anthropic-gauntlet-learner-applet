@@ -11,6 +11,26 @@ import './ui.css'
 // a highlight may hold a lone '=' ("==throughput = min(...)=="), just not '=='
 const INLINE_SRC = /(`[^`\n]+`)|(\*\*[^*]+?\*\*)|(==(?:[^=\n]|=(?!=))+?==)|(\[[^\]]+\]\([^)\s]+\))|(\*[^*\n]+?\*)/.source
 
+/**
+ * Inline code may wrap (narrow tiles, 320px screens). Offer break points at the
+ * seams of an identifier (after `.` `(` `,` `/`, between snake_case words), so
+ * `defaultdict(list)` wraps as `defaultdict(` + `list)` rather than mid-word.
+ */
+// no lookbehind: it is a parse error on iOS Safari before 16.4. Match the char before the seam instead.
+const SEAM = /[.](?=[A-Za-z_])|[(](?=[^)\s])|[,/](?=\S)|[A-Za-z0-9]_(?=[A-Za-z0-9])/g
+function seams(code: string): ReactNode {
+  const out: ReactNode[] = []
+  let from = 0
+  for (const m of code.matchAll(SEAM)) {
+    const at = m.index + m[0].length
+    out.push(code.slice(from, at), <wbr key={at} />)
+    from = at
+  }
+  if (!out.length) return code
+  out.push(code.slice(from))
+  return out
+}
+
 export function renderInline(text: string, keyBase = 'i'): ReactNode[] {
   const out: ReactNode[] = []
   let last = 0
@@ -22,7 +42,7 @@ export function renderInline(text: string, keyBase = 'i'): ReactNode[] {
     if (m.index > last) out.push(text.slice(last, m.index))
     const tok = m[0]
     const key = `${keyBase}${n++}`
-    if (m[1]) out.push(<code key={key} className="rich-code">{tok.slice(1, -1)}</code>)
+    if (m[1]) out.push(<code key={key} className="rich-code">{seams(tok.slice(1, -1))}</code>)
     else if (m[2]) out.push(<strong key={key}>{renderInline(tok.slice(2, -2), key)}</strong>)
     else if (m[3]) out.push(<mark key={key} className="rich-mark">{renderInline(tok.slice(2, -2), key)}</mark>)
     else if (m[4]) {

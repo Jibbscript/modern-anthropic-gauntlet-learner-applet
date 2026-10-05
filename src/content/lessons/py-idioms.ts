@@ -194,9 +194,11 @@ with working_dir("/tmp") as p:
     for o in orders:
         totals = groups.{{0}}(o.name, [])
         totals.append(o.total)
-    ranked = sorted(groups.items(),
-                    key={{1}},
-                    reverse=True)
+    ranked = sorted(
+        groups.items(),
+        key={{1}},
+        reverse=True,
+    )
     out = [f"{n}: {sum(t):.2f}"
            for n, t in ranked]
     if {{2}}(o.days > 7 for o in orders):

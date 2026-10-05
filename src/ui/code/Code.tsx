@@ -4,18 +4,45 @@ import { Rich } from '../Rich'
 import { tokenLines, type Tok } from './highlight'
 import '../ui.css'
 
-export function Toks({ toks }: { toks: Tok[] }) {
+/**
+ * Where soft-wrapped code may break besides spaces: after a call's `(` (or a
+ * comma with no space) with more code behind it, so a long call wraps as
+ * `im.filter(` + `ImageFilter.GaussianBlur(` rather than mid-name.
+ */
+const SEAM = /[(,](?=[^\s)\]}])/g
+
+function withSeams(v: string, cuts: Set<number>, start: number): ReactNode {
+  let out: ReactNode[] | null = null
+  let from = 0
+  // j = 0: a seam right at this token's start (after a `(` token, say)
+  for (let j = start ? 0 : 1; j < v.length; j++) {
+    if (!cuts.has(start + j)) continue
+    ;(out ??= []).push(v.slice(from, j), <wbr key={j} />)
+    from = j
+  }
+  if (!out) return v
+  out.push(v.slice(from))
+  return out
+}
+
+export function Toks({ toks, wrap = false }: { toks: Tok[]; wrap?: boolean }) {
+  const cuts = new Set<number>()
+  if (wrap) for (const m of toks.map((t) => t.v).join('').matchAll(SEAM)) cuts.add(m.index + 1)
+  let at = 0
   return (
     <>
-      {toks.map((t, i) =>
-        t.k === 'plain' || t.k === 'op' ? (
-          <span key={i}>{t.v}</span>
+      {toks.map((t, i) => {
+        const start = at
+        at += t.v.length
+        const v = cuts.size ? withSeams(t.v, cuts, start) : t.v
+        return t.k === 'plain' || t.k === 'op' ? (
+          <span key={i}>{v}</span>
         ) : (
           <span key={i} className={`tk-${t.k}`}>
-            {t.v}
+            {v}
           </span>
-        ),
-      )}
+        )
+      })}
     </>
   )
 }
@@ -82,7 +109,7 @@ export function Code({
               <div key={i} className={['code__line', highlight?.includes(n) && 'code__line--hl', lc].filter(Boolean).join(' ')} {...rest}>
                 {numbers && <span className="code__no">{n}</span>}
                 <span className="code__src" style={{ '--hang': indentOf(raw[i] ?? '') } as CSSProperties}>
-                  {renderLine?.(n, toks, raw[i] ?? '') ?? (toks.length ? <Toks toks={glueIndent(toks)} /> : ' ')}
+                  {renderLine?.(n, toks, raw[i] ?? '') ?? (toks.length ? <Toks toks={glueIndent(toks)} wrap /> : ' ')}
                 </span>
               </div>
             )
