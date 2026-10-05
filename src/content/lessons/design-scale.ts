@@ -11,8 +11,8 @@ const lesson: Lesson = {
       kind: 'concept',
       id: 'hook',
       eyebrow: 'Storage',
-      title: 'Which table grows fastest?',
-      body: "In a prompt playground with 100,000 daily users, saved versions add about 2 GB a day. Cheap. Nobody worries about them.\n\nBut every run stores something too: what went in and what came out. At 2 million runs a day, the `runs` table quietly becomes the biggest thing you own.\n\nWhen an interviewer asks *what breaks at 10x?*, they want you to find that table with arithmetic, not instinct.",
+      title: 'What grows fastest?',
+      body: "In a prompt playground with 100,000 daily users, saved versions add about 2 GB a day. Cheap. Nobody worries about them.\n\nBut every run stores something too: what went in and what came out. At 2 million runs a day, run data quietly becomes the biggest thing you own.\n\nWhen an interviewer asks *what breaks at 10x?*, they want you to find that growth with arithmetic, not instinct.",
     },
     {
       kind: 'numeric',
@@ -23,7 +23,7 @@ const lesson: Lesson = {
       tolerance: 0.25,
       unit: 'TB/year',
       explanation:
-        '2M × 12 KB = 24 GB a day, about **8.8 TB a year**: twelve times the versions. Now a cheaper design: store `version_id` plus the run\'s variables (say 0.5 KB) instead of the rendered prompt. Versions are immutable, so the exact text can always be rebuilt. That is 2.5 KB a run, about 1.8 TB a year.',
+        '2M × 12 KB = 24 GB a day, about **8.8 TB a year**: twelve times the versions. Cheaper: store `version_id` plus the run\'s variables (say 0.5 KB) instead of the rendered prompt; versions are immutable, so a deterministic renderer rebuilds the exact text. That is 2.5 KB a run, about 1.8 TB a year.',
       hint: 'Runs per day × bytes per run × 365. 1 TB is 10^12 bytes.',
     },
     {
@@ -208,7 +208,7 @@ const lesson: Lesson = {
             {
               text: '"Cap that account at its current share until we add capacity, and ask the customer to spread runs over the day."',
               quality: 'weak',
-              feedback: 'Your largest customer is the one you can least afford to throttle by email. Design for skew; it is normal.',
+              feedback: 'A support ticket, not a design: the skew stays, and your largest customer is the one you can least afford to throttle. Design for skew; it is normal.',
             },
           ],
         },
@@ -261,7 +261,7 @@ const lesson: Lesson = {
       prompt: 'Why does range-partitioning a huge table by month make "delete rows older than 90 days" cheap in Postgres?',
       choices: [
         {
-          text: 'Old months are whole partitions, so you detach or drop them instead of deleting rows one by one',
+          text: 'Old months are whole partitions, so you drop them instead of deleting rows one by one',
           correct: true,
           feedback: 'Yes. Dropping a partition is close to a metadata operation; a mass DELETE has to touch every row.',
         },

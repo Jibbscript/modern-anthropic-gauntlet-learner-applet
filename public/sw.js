@@ -1,19 +1,36 @@
 // Minimal offline cache for the hosted build: network-first for navigations,
 // cache-first for hashed assets. Bump VERSION to invalidate.
 const VERSION = 'gauntlet-v1'
+const RUNTIME = 'gauntlet-pyodide-v1'
 self.addEventListener('install', (e) => {
   self.skipWaiting()
   e.waitUntil(caches.open(VERSION).then((c) => c.addAll(['./', './index.html', './icon.svg', './manifest.webmanifest'])))
 })
 self.addEventListener('activate', (e) => {
   e.waitUntil(
-    caches.keys().then((keys) => Promise.all(keys.filter((k) => k !== VERSION).map((k) => caches.delete(k)))).then(() => self.clients.claim()),
+    caches.keys().then((keys) => Promise.all(keys.filter((k) => k !== VERSION && k !== RUNTIME).map((k) => caches.delete(k)))).then(() => self.clients.claim()),
   )
 })
 self.addEventListener('fetch', (e) => {
   const req = e.request
   if (req.method !== 'GET') return
   const url = new URL(req.url)
+  // the in-browser Python runtime for Code Labs: cache-first so labs work offline after one load
+  if (url.hostname === 'cdn.jsdelivr.net' && url.pathname.startsWith('/npm/pyodide@')) {
+    e.respondWith(
+      caches.open(RUNTIME).then((c) =>
+        c.match(req).then(
+          (hit) =>
+            hit ||
+            fetch(req).then((res) => {
+              if (res.ok) c.put(req, res.clone())
+              return res
+            }),
+        ),
+      ),
+    )
+    return
+  }
   if (url.origin !== location.origin) return
   if (req.mode === 'navigate') {
     e.respondWith(

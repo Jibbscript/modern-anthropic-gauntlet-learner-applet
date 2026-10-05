@@ -12,10 +12,10 @@ import {
   isAllDone,
   isBlocked,
   isThreadDone,
-  lostUpdates,
+  incrementsLabel,
+  overwrites,
   step,
   threadName,
-  droppedOwners,
   type Op,
   type RaceState,
 } from './race/model'
@@ -39,6 +39,10 @@ function threadVars(t: number): CSSProperties {
     ['--c' as string]: `var(--c-${h})`,
     ['--c-edge' as string]: `var(--c-${h}-edge)`,
   }
+}
+
+function capitalize(s: string): string {
+  return s.charAt(0).toUpperCase() + s.slice(1)
 }
 
 function useReduced(): boolean {
@@ -111,10 +115,12 @@ export default function RaceWidget({ config, onComplete }: WidgetProps<RaceConfi
     setState(s)
     setFlyers([])
     setLastOp(null)
+    setFailedRuns(0)
   }, [setup])
 
   const done = isAllDone(state, program)
-  const lost = useMemo(() => (done ? lostUpdates(state, setup) : []), [done, state, setup])
+  const ows = useMemo(() => (done ? overwrites(state, setup) : []), [done, state, setup])
+  const lostCount = expected - state.x
   const lostSoFar = state.writes.length - state.x
   const lastWrite = state.writes[state.writes.length - 1]
   const delay = reduce ? 0 : FLIGHT * 0.85
@@ -224,7 +230,9 @@ export default function RaceWidget({ config, onComplete }: WidgetProps<RaceConfi
           <span className="w-stat__value">{expected}</span>
         </div>
         <div className="race-mem" ref={memScope}>
-          <span className="w-label">Shared x</span>
+          <span className="w-label">
+            Shared <span className="race-mem__x">x</span>
+          </span>
           <div className="race-mem__box" ref={memRef}>
             <SwapValue k={state.writes.length} value={state.x} from="below" delay={state.writes.length ? delay : 0} className="race-mem__val" />
             <AnimatePresence>
@@ -240,12 +248,6 @@ export default function RaceWidget({ config, onComplete }: WidgetProps<RaceConfi
               )}
             </AnimatePresence>
           </div>
-          {lock && (
-            <motion.div layout className={['race-lock', state.lock !== null ? 'is-held' : ''].join(' ')} style={state.lock !== null ? threadVars(state.lock) : undefined}>
-              {state.lock !== null ? <Lock size={13} strokeWidth={2.8} /> : <LockOpen size={13} strokeWidth={2.8} />}
-              <span>{state.lock !== null ? `L held by ${threadName(state.lock)}` : 'L free'}</span>
-            </motion.div>
-          )}
         </div>
         <div className={['w-stat race-top__stat', lostSoFar > 0 ? 'is-bad' : ''].join(' ')}>
           <span className="w-stat__label">Lost</span>
@@ -253,6 +255,12 @@ export default function RaceWidget({ config, onComplete }: WidgetProps<RaceConfi
             <SwapValue k={lostSoFar} value={lostSoFar} from="above" delay={delay} />
           </span>
         </div>
+        {lock && (
+          <div className={['race-lock', state.lock !== null ? 'is-held' : ''].join(' ')} style={state.lock !== null ? threadVars(state.lock) : undefined}>
+            {state.lock !== null ? <Lock size={13} strokeWidth={2.8} /> : <LockOpen size={13} strokeWidth={2.8} />}
+            <span>{state.lock !== null ? `L held by ${threadName(state.lock)}` : 'L free'}</span>
+          </div>
+        )}
       </div>
 
       <div className="race-write" aria-live="polite">
@@ -269,7 +277,7 @@ export default function RaceWidget({ config, onComplete }: WidgetProps<RaceConfi
             ) : lastWrite.dropped.length ? (
               <>
                 <TriangleAlert size={14} strokeWidth={2.6} />
-                {threadName(lastWrite.thread)} stored {lastWrite.value} and overwrote {droppedOwners(lastWrite).map(threadName).join(' + ')}’s +1
+                {threadName(lastWrite.thread)} stored {lastWrite.value} and overwrote {incrementsLabel(lastWrite.dropped)}
               </>
             ) : (
               <>
@@ -402,7 +410,7 @@ export default function RaceWidget({ config, onComplete }: WidgetProps<RaceConfi
           >
             <div className="race-verdict__head">
               {state.x < expected ? <TriangleAlert size={20} strokeWidth={2.6} /> : <CircleCheck size={20} strokeWidth={2.6} />}
-              <span className="race-verdict__title">{state.x < expected ? (lost.length > 1 ? `${lost.length} lost updates` : 'Lost update') : 'Every increment landed'}</span>
+              <span className="race-verdict__title">{state.x < expected ? (lostCount > 1 ? `${lostCount} lost updates` : 'Lost update') : 'Every increment landed'}</span>
             </div>
             <div className="race-verdict__nums">
               <div>
@@ -416,12 +424,13 @@ export default function RaceWidget({ config, onComplete }: WidgetProps<RaceConfi
             </div>
             {state.x < expected ? (
               <ul className="race-verdict__why">
-                {lost.slice(0, 3).map((l) => (
-                  <li key={l.id}>
+                {ows.map((o) => (
+                  <li key={o.write}>
                     <b>
-                      Thread {threadName(l.by)}’s write overwrote Thread {threadName(l.victim)}’s.
+                      Thread {threadName(o.by)}’s write overwrote Thread {threadName(o.over)}’s.
                     </b>{' '}
-                    {threadName(l.by)} loaded x = {l.staleValue} before {threadName(l.victim)}’s STORE landed, then stored {l.storedValue}.
+                    {threadName(o.by)} loaded x = {o.staleValue} before {threadName(o.over)} stored {o.overValue}, then stored {o.storedValue}. {capitalize(incrementsLabel(o.lost))}{' '}
+                    {o.lost.length > 1 ? 'are' : 'is'} lost.
                   </li>
                 ))}
               </ul>

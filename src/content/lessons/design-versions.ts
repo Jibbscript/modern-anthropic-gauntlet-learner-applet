@@ -116,7 +116,7 @@ const lesson: Lesson = {
       kind: 'concept',
       id: 'limits',
       title: 'Limits per org: requests and tokens',
-      body: "Each org gets a **token bucket**: capacity is the burst it may send at once, the refill rate its sustained pace. Empty bucket: `429` with `Retry-After`.\n\nFor model calls, meter **tokens** as well as requests: one 100,000-token run costs as much as 200 small ones. Behind every org's bucket sits your provider limit, shared by everyone.\n\nHold to burst: five get through, then about one a second.",
+      body: "Each org gets a **token bucket**: capacity is the burst it may send, the refill rate its sustained pace. Empty bucket: `429` with `Retry-After`.\n\nFor model calls, meter **tokens** as well as requests: one 100,000-token run costs as much as 200 small ones. Behind every org's bucket sits your provider limit, shared by everyone.\n\nHold to burst: five get through, then about one a second.",
       widget: { id: 'tokenbucket', config: { capacity: 5, rate: 1, compareFixedWindow: false, goal: 'explore' } },
     },
     {
@@ -303,7 +303,7 @@ const lesson: Lesson = {
       prompt: "You charge an org's token bucket before a run starts, but nobody knows how long the output will be. What do you deduct?",
       choices: [
         {
-          text: 'Input tokens plus `max_tokens`, then refund the unused part when the run ends',
+          text: 'Input tokens plus `max_tokens`; refund the unused part when the run ends',
           correct: true,
           feedback: 'Yes. Reserve the worst case so the org cannot overshoot, then settle to actual usage.',
         },

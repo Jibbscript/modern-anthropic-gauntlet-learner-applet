@@ -307,7 +307,7 @@ function StreakCard({ s, today, onOpen }: { s: GauntletState; today: string; onO
       className="learn-streak"
       whileTap={{ y: 2 }}
       onClick={onOpen}
-      aria-label={`${live.count}-day streak. ${status}. Show streak details`}
+      aria-label={`${live.count}-day streak. ${status}. ${weekOf(today).filter((k) => qualifies(s.days[k])).length} of 7 days this week. Show streak details`}
     >
       <span className="learn-streak__head">
         <Bolt on={live.doneToday} size={30} />
@@ -331,7 +331,7 @@ function HeroCard({ s, lessonId }: { s: GauntletState; lessonId: string }) {
   const n = course.lessons.length
   const k = lesson.index + 1
   const steps = lesson.steps.length
-  const pct = resume ? Math.min(1, prog.resumeStep / Math.max(1, steps)) : 0
+  const pct = resume ? Math.min(0.99, prog.resumeStep / Math.max(1, steps)) : 0
   return (
     <motion.section variants={item} className={`learn-hero learn-hero--${course.color}`} style={courseStyle(course.color)} aria-label="Continue learning">
       <div className="learn-hero__panel">
@@ -374,7 +374,7 @@ function HeroCard({ s, lessonId }: { s: GauntletState; lessonId: string }) {
   )
 }
 
-function EndCard({ kind, started }: { kind: 'complete' | 'waiting'; started: boolean }) {
+function EndCard({ kind, started, reviewDue }: { kind: 'complete' | 'waiting'; started: boolean; reviewDue: boolean }) {
   const setTab = useNav((n) => n.setTab)
   return (
     <motion.section variants={item} className={`learn-end learn-end--${kind}`}>
@@ -388,15 +388,19 @@ function EndCard({ kind, started }: { kind: 'complete' | 'waiting'; started: boo
       <div className="learn-end__text">
         <p>
           {kind === 'complete'
-            ? 'Keep it fresh: short daily reviews hold it in memory until the interview.'
+            ? reviewDue
+              ? 'Keep it fresh: the daily review below holds it in memory until the interview.'
+              : 'Keep it fresh: short daily reviews hold it in memory until the interview.'
             : started
               ? "You've finished everything that's ready. Practice and your Story Bank are open in the meantime."
               : 'The first lessons are being written. Your Story Bank is open in the meantime.'}
         </p>
       </div>
-      <Button variant="secondary" size="md" block onClick={() => setTab(kind === 'complete' ? 'practice' : 'stories')}>
-        {kind === 'complete' ? 'Go to Practice' : 'Open Story Bank'}
-      </Button>
+      {!(kind === 'complete' && reviewDue) && (
+        <Button variant="secondary" size="md" block onClick={() => setTab(kind === 'complete' ? 'practice' : 'stories')}>
+          {kind === 'complete' ? 'Go to Practice' : 'Open Story Bank'}
+        </Button>
+      )}
     </motion.section>
   )
 }
@@ -410,7 +414,8 @@ function ReviewCard({ s, now }: { s: GauntletState; now: number }) {
   const strength = reviewed.length ? reviewed.reduce((a, c) => a + recallNow(c, now), 0) / reviewed.length : null
   const allNew = due.every((id) => s.cards[id]?.last == null)
   const n = plan.due
-  const mins = Math.max(1, Math.round(plan.cardIds.length * 0.4))
+  const session = plan.cardIds.length
+  const mins = Math.max(1, Math.round(session * 0.4))
   const title = allNew ? `${n} new card${n === 1 ? '' : 's'} to lock in` : `${n} card${n === 1 ? ' is' : 's are'} fading`
   return (
     <motion.section variants={item} className="learn-card learn-review" aria-label="Daily review">
@@ -430,7 +435,7 @@ function ReviewCard({ s, now }: { s: GauntletState; now: number }) {
               <span>First pass locks them in</span>
             )}
             <span className="learn-review__dot" aria-hidden="true" />
-            <span className="tabular">≈ {mins} min</span>
+            <span className="tabular">{session < n ? `${session} now, ≈ ${mins} min` : `≈ ${mins} min`}</span>
           </div>
         </div>
       </div>
@@ -493,7 +498,7 @@ function CourseCard({ course, s, mastery }: { course: Course; s: GauntletState; 
     )
   } else if (ready === 0) {
     chip = <span className="chip learn-course__chip">Coming soon</span>
-  } else if (mastery && mastery.coverage > 0) {
+  } else if (done > 0 && mastery && mastery.coverage > 0) {
     chip = (
       <span className="chip chip--course learn-course__chip tabular" title="Mastery">
         <Brain size={13} strokeWidth={2.6} /> {Math.round(mastery.mastery * 100)}%
@@ -512,7 +517,7 @@ function CourseCard({ course, s, mastery }: { course: Course; s: GauntletState; 
         haptic('light')
         nav.openCourse(course.id)
       }}
-      aria-label={`${course.title}: ${done} of ${total} lessons done`}
+      aria-label={`${course.title}: ${complete ? 'complete' : ready === 0 ? 'coming soon' : `${done} of ${total} lessons done`}`}
     >
       <span className="learn-course__art">
         <CourseArt course={course} size={64} />
@@ -544,6 +549,10 @@ export default function LearnScreen() {
   const today = dayKey(now)
   const [sheet, setSheet] = useState<SheetKind>(null)
   const [scrolled, setScrolled] = useState(false)
+  // sheets mount on the app frame so their scrim covers the tab bar, like an iOS sheet
+  const rootRef = useRef<HTMLDivElement>(null)
+  const [frame, setFrame] = useState<HTMLElement | null>(null)
+  useLayoutEffect(() => setFrame((rootRef.current?.closest('.app-frame') as HTMLElement | null) ?? null), [])
 
   const playable = useMemo(playableCatalog, [])
   const recId = useMemo(() => recommendedLesson(s, playable, now), [s, playable, now])
@@ -561,6 +570,11 @@ export default function LearnScreen() {
     !unauthored && readyLessons.length > 0 && readyLessons.every((l) => s.lessons[l.id]?.completedAt) ? 'complete' : 'waiting'
 
   const started = COURSES.filter((c) => courseProgress(s, c).done > 0).length
+  const finished = COURSES.filter((c) => {
+    const p = courseProgress(s, c)
+    return p.total > 0 && p.done === p.total
+  }).length
+  const reviewDue = buildSession(s, CATALOG, now).cardIds.length > 0
 
   let countdown: ReactNode = null
   if (s.profile.interviewDate) {
@@ -588,7 +602,7 @@ export default function LearnScreen() {
   }
 
   return (
-    <div className="learn">
+    <div className="learn" ref={rootRef}>
       <header className={`learn-head safe-top ${scrolled ? 'is-scrolled' : ''}`}>
         <div className="learn-head__row">
           <Logo size={28} className="learn-head__logo" />
@@ -654,14 +668,26 @@ export default function LearnScreen() {
 
           <StreakCard s={s} today={today} onOpen={() => open('streak')} />
 
-          {recId && CATALOG.lessons[recId] ? <HeroCard s={s} lessonId={recId} /> : <EndCard kind={endKind} started={Object.values(s.lessons).some((l) => l.completedAt)} />}
+          {recId && CATALOG.lessons[recId] ? (
+            <HeroCard key={recId} s={s} lessonId={recId} />
+          ) : (
+            <EndCard kind={endKind} started={Object.values(s.lessons).some((l) => l.completedAt)} reviewDue={reviewDue} />
+          )}
 
           <ReviewCard s={s} now={now} />
           <StoryNudge slots={storySlots} />
 
           <motion.div variants={item} className="learn-section">
             <h2>Courses</h2>
-            <span className="learn-section__aside tabular">{started ? `${started} of ${COURSES.length} started` : `${COURSES.length} courses`}</span>
+            <span className="learn-section__aside tabular">
+              {finished === COURSES.length
+                ? `All ${COURSES.length} done`
+                : finished > 0
+                  ? `${finished} of ${COURSES.length} done`
+                  : started
+                    ? `${started} of ${COURSES.length} started`
+                    : `${COURSES.length} courses`}
+            </span>
           </motion.div>
           <div className="learn-courses">
             <span className="learn-courses__line" aria-hidden="true" />
@@ -672,10 +698,15 @@ export default function LearnScreen() {
         </motion.div>
       </div>
 
-      <Sheet open={sheet !== null} onClose={() => setSheet(null)} label={sheet === 'streak' ? 'Streak' : 'Daily goal'}>
-        {sheet === 'streak' && <StreakSheetBody s={s} today={today} onClose={() => setSheet(null)} />}
-        {sheet === 'goal' && <GoalSheetBody s={s} today={today} onClose={() => setSheet(null)} />}
-      </Sheet>
+      {(() => {
+        const el = (
+          <Sheet open={sheet !== null} onClose={() => setSheet(null)} label={sheet === 'streak' ? 'Streak' : 'Daily goal'}>
+            {sheet === 'streak' && <StreakSheetBody s={s} today={today} onClose={() => setSheet(null)} />}
+            {sheet === 'goal' && <GoalSheetBody s={s} today={today} onClose={() => setSheet(null)} />}
+          </Sheet>
+        )
+        return frame ? createPortal(el, frame) : el
+      })()}
     </div>
   )
 }

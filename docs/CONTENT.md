@@ -119,3 +119,20 @@ const lesson: Lesson = {
 
 export default lesson
 ```
+
+## Code labs (src/labs/data/*.ts)
+
+Labs are CodeSignal-style progressive problems run in the browser by Pyodide
+through `src/labs/harness.py.ts`. Rules:
+
+- 4 levels; each level's `tests` holds only that level's new `test_*`
+  functions (names unique across levels); the runner runs levels 1..N.
+- `solution` for level N is the cumulative solution after that level.
+- Standard library only. Threads cannot start in Pyodide (`threading.Lock`
+  works); tests run inside a running event loop, so never call
+  `asyncio.run()` — write `async def test_*` instead. Each test has an 8 s
+  limit (async tests are cancelled at 6 s).
+- Use `assert x == y, 'helpful message'`; a bare assert only shows its line.
+- `npm run validate` checks every lab in CPython: the starter fails level 1,
+  each solution passes its levels, and each new level's tests fail the
+  previous solution.

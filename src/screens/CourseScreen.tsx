@@ -157,7 +157,7 @@ function PathNodeView({
   const prog = s.lessons[lesson.id]
   const resume = status === 'current' && !!prog && prog.resumeStep > 0
   const progress = resume ? Math.min(1, prog.resumeStep / Math.max(1, lesson.steps.length)) : 0
-  const labelLeft = x + puck / 2 + (status === 'current' ? 16 : 12)
+  const labelLeft = x + puck / 2 + (status === 'current' ? 18 : 12)
   const ph = (puck / 92) * 64
   let sub: ReactNode
   if (status === 'done') {
@@ -183,7 +183,19 @@ function PathNodeView({
         className="cs-node__btn"
         style={{ left: x - puck / 2, width: puck, height: ph }}
         onClick={onOpen}
-        aria-label={`${lesson.title}: ${status === 'soon' ? 'coming soon' : status}`}
+        aria-label={`Lesson ${index + 1}, ${lesson.title}: ${
+          status === 'done'
+            ? `completed, best ${Math.round((prog?.bestAccuracy ?? 0) * 100)}%`
+            : status === 'soon'
+              ? 'coming soon'
+              : status === 'locked'
+                ? 'locked'
+                : resume
+                  ? `in progress, ${Math.round(progress * 100)}% done`
+                  : status === 'current'
+                    ? 'up next'
+                    : 'ready to start'
+        }`}
         initial={{ scale: 0.6, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ type: 'spring', stiffness: 460, damping: 20, delay: 0.08 + index * 0.05 }}
@@ -314,6 +326,8 @@ function Level({
 
 function NodeSheet({ node, course, s, onClose }: { node: PathNode; course: Course; s: GauntletState; onClose: () => void }) {
   const { lesson, status, index } = node
+  // the playable lesson right before this one (unwritten lessons never gate the path)
+  const blocker = course.lessons.slice(0, index).reverse().find((l) => hasSteps(l) && !s.lessons[l.id]?.completedAt)
   const prog = s.lessons[lesson.id]
   const resume = !!prog && !prog.completedAt && prog.resumeStep > 0
   const skills = lesson.skills.map((id) => SKILLS.find((k) => k.id === id)).filter((k): k is NonNullable<typeof k> => !!k)
@@ -342,7 +356,7 @@ function NodeSheet({ node, course, s, onClose }: { node: PathNode; course: Cours
         <span className="cs-sheet__status-icon is-locked">
           <Lock size={13} strokeWidth={2.8} />
         </span>
-        <span>Locked until you finish the lesson before it</span>
+        <span>{blocker ? <>Unlocks when you finish <b>{blocker.title}</b></> : 'Locked until you finish the lesson before it'}</span>
       </>
     )
   else if (status === 'soon')
@@ -440,22 +454,23 @@ function NodeSheet({ node, course, s, onClose }: { node: PathNode; course: Cours
 export default function CourseScreen({ courseId }: { courseId: AreaId }) {
   const s = useStore()
   const course = COURSES.find((c) => c.id === courseId) ?? COURSES[0]
-  const [now] = useState(() => Date.now())
-  const [open, setOpen] = useState<PathNode | null>(null)
+  const [openId, setOpenId] = useState<string | null>(null)
   const [scrolled, setScrolled] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
   const currentEl = useRef<HTMLDivElement | null>(null)
   const [pathRef, width] = useWidth<HTMLDivElement>()
 
   const nodes = useMemo(() => pathNodes(s, course), [s, course])
+  // the sheet reads the live node, so it never shows a stale status
+  const open = openId ? (nodes.find((n) => n.lesson.id === openId) ?? null) : null
   const levels = useMemo(() => {
     const out: PathNode[][] = []
     for (const n of nodes) (out[n.level] ??= []).push(n)
     return out
   }, [nodes])
   const { done, total } = courseProgress(s, course)
-  const mastery = useMemo(() => areaMastery(s, CATALOG, now)[course.id], [s, now, course.id])
-  const skillM = useMemo(() => skillMastery(s, CATALOG, now), [s, now])
+  const mastery = useMemo(() => areaMastery(s, CATALOG, Date.now())[course.id], [s, course.id])
+  const skillM = useMemo(() => skillMastery(s, CATALOG, Date.now()), [s])
   const skills = SKILLS.filter((k) => k.area === course.id)
   const geo = geometry(width)
   const steps = course.lessons.reduce((a, l) => a + l.steps.length, 0)
@@ -497,7 +512,7 @@ export default function CourseScreen({ courseId }: { courseId: AreaId }) {
   const openNode = (n: PathNode) => {
     sfx('tap')
     haptic('light')
-    setOpen(n)
+    setOpenId(n.lesson.id)
   }
 
   return (
@@ -600,8 +615,8 @@ export default function CourseScreen({ courseId }: { courseId: AreaId }) {
         </section>
       </div>
 
-      <Sheet open={open !== null} onClose={() => setOpen(null)} label={open?.lesson.title}>
-        <AnimatePresence>{open && <NodeSheet node={open} course={course} s={s} onClose={() => setOpen(null)} />}</AnimatePresence>
+      <Sheet open={open !== null} onClose={() => setOpenId(null)} label={open?.lesson.title}>
+        <AnimatePresence>{open && <NodeSheet node={open} course={course} s={s} onClose={() => setOpenId(null)} />}</AnimatePresence>
       </Sheet>
     </div>
   )

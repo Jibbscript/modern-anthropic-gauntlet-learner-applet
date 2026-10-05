@@ -10,8 +10,10 @@
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "validate": "tsx scripts/validate-content.ts",
-    "check": "npm run typecheck && npm run validate && npm run test"
+    "validate": "tsx scripts/validate-content.ts && tsx scripts/validate-labs.ts",
+    "check": "npm run typecheck && npm run validate && npm run test",
+    "validate:content": "tsx scripts/validate-content.ts",
+    "smoke": "tsx scripts/smoke.ts"
   },
   "dependencies": {
     "canvas-confetti": "^1.9.4",

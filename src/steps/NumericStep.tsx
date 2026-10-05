@@ -168,6 +168,7 @@ const MAGS = [
   { s: 'B', word: 'billion' },
 ] as const
 const SUFFIX = /\s*([kmbt])$/i
+const SYMBOL_UNIT = /^[^\p{L}\p{N}\s]{1,2}$/u
 
 /** last entry per step, so "Try again" lets the learner nudge the number instead of retyping */
 const memory = new Map<string, string>()
@@ -194,24 +195,35 @@ export default function NumericStep({ step, phase, attempt, setController, onHin
     if (locked) input.current?.blur()
   }, [locked])
 
-  const tol = step.tolerance ?? 0.01
+  const tol = Math.max(0, step.tolerance ?? 0.01)
   const unit = step.unit?.trim() || undefined
+  /** "×" and "%" read as part of the number ("6.5×"), not as a word in a chip */
+  const sym = !!unit && SYMBOL_UNIT.test(unit)
   const value = useMemo(() => parseNumber(raw, unit), [raw, unit])
   const verdict = useMemo(() => (value == null ? null : judge(value, step.answer, tol)), [value, step.answer, tol])
-  const withUnit = (n: string) => (unit ? `${n} ${unit}` : n)
+  const withUnit = (n: string) => (!unit ? n : sym ? `${n}${unit}` : `${n} ${unit}`)
+  /** K/M/B shortcuts and shorthand tips only help when the answer is big */
+  const big = Math.abs(step.answer) >= 1000
+  // never show an example that would itself be accepted (a probability step must not suggest "1/16")
+  const examples = useMemo(() => {
+    const pool = big ? ['1.2k', '3M', '4e6', '2.5B', '750k'] : step.answer > 0 && step.answer < 1 ? ['3/8', '0.4', '15%', '1/3'] : []
+    return pool.filter((e) => !judge(parseNumber(e) ?? NaN, step.answer, Math.max(tol, 0.1)).correct).slice(0, 3)
+  }, [big, step.answer, tol])
 
   useEffect(() => {
     setController({
       ready: value != null,
       check: () => {
         const v = judge(value ?? NaN, step.answer, tol)
-        const target = unit ? `${fmtNum(step.answer)} ${unit}` : fmtNum(step.answer)
+        const target = withUnit(fmtNum(step.answer))
         if (v.correct) return { correct: true, feedback: v.err < 1e-9 ? `Exactly ${target}.` : `Within ${fmtPct(v.err * 100)} of ${target}.` }
         const dir = v.dir === 'high' ? 'high' : 'low'
-        return { correct: false, feedback: v.far ? `${v.far[0].toUpperCase()}${v.far.slice(1)} too ${dir}.` : `Too ${dir}.` }
+        if (!v.far) return { correct: false, feedback: `Too ${dir}.` }
+        if (v.far.startsWith('about')) return { correct: false, feedback: `About${v.far.slice(5)} too ${dir}.` }
+        return { correct: false, feedback: `Too ${dir}: ${v.far}.` }
       },
     })
-  }, [value, step.answer, tol, unit, setController])
+  }, [value, step.answer, tol, unit, sym, setController]) // withUnit depends only on unit + sym
 
   const suffix = SUFFIX.exec(raw)?.[1]?.toUpperCase()
   const base = raw.replace(SUFFIX, '')
@@ -224,20 +236,32 @@ export default function NumericStep({ step, phase, attempt, setController, onHin
     input.current?.focus({ preventScroll: true })
   }
 
-  // the number shrinks to fit beside the unit chip (see --nf-chars in the CSS)
-  const fit = { '--nf-chars': Math.max(3, (raw || '0').length), '--nf-unit': unit ? `${unit.length * 9 + 36}px` : '0px' } as CSSProperties
+  // the number shrinks to fit beside the unit chip (see --nf-chars in the CSS); a symbol unit counts as glyphs
+  const fit = {
+    '--nf-chars': Math.max(3, (raw || '0').length + (sym ? unit!.length : 0)),
+    '--nf-unit': unit && !sym ? `${unit.length * 9 + 36}px` : '0px',
+  } as CSSProperties
   const fieldState = phase === 'answer' ? 'answer' : phase === 'correct' ? 'correct' : 'incorrect'
   // already a plain number (commas allowed): a "= …" echo would just repeat it
   const plain = value != null && /^[+-]?(\d{1,3}(,\d{3})+|\d+)(\.\d+)?$/.test(raw.trim())
   const words = compactWords(step.answer)
+  const range = [step.answer * (1 - tol), step.answer * (1 + tol)]
   const typedWords = value == null ? null : compactWords(value)
 
   let status: ReactNode
   if (phase === 'answer') {
     status = !raw.trim() ? (
-      <span className="numeric__help">
-        Shorthand works: <b>1.2k</b>, <b>3M</b>, <b>4e6</b>, <b>1/16</b>
-      </span>
+      examples.length > 0 ? (
+        <span className="numeric__help">
+          {big ? 'Shorthand works: ' : 'Fractions work too: '}
+          {examples.map((e, i) => (
+            <span key={e}>
+              {i > 0 && ', '}
+              <b>{e}</b>
+            </span>
+          ))}
+        </span>
+      ) : null
     ) : value == null ? (
       <span className="numeric__help numeric__help--warn">Can’t read that as a number yet</span>
     ) : plain ? (
@@ -292,6 +316,7 @@ export default function NumericStep({ step, phase, attempt, setController, onHin
               autoCapitalize="off"
               spellCheck={false}
               placeholder="0"
+              size={1}
               value={raw}
               readOnly={locked}
               onChange={(e) => setRaw(e.target.value)}
@@ -300,7 +325,14 @@ export default function NumericStep({ step, phase, attempt, setController, onHin
               aria-describedby={`numeric-${step.id}-status`}
             />
           </span>
-          {unit && <span className="numeric__unit">{unit}</span>}
+          {unit &&
+            (sym ? (
+              <span className="numeric__sym" aria-hidden>
+                {unit}
+              </span>
+            ) : (
+              <span className="numeric__unit">{unit}</span>
+            ))}
           <AnimatePresence>
             {phase === 'correct' && (
               <motion.span
@@ -316,7 +348,7 @@ export default function NumericStep({ step, phase, attempt, setController, onHin
           </AnimatePresence>
         </motion.div>
 
-        <div id={`numeric-${step.id}-status`} className="numeric__status" aria-live="polite">
+        <div id={`numeric-${step.id}-status`} className="numeric__status">
           <AnimatePresence mode="popLayout" initial={false}>
             <motion.span
               key={phase === 'answer' ? `a:${!raw.trim() ? 'empty' : value == null ? 'bad' : plain ? 'plain' : 'eq'}` : phase}
@@ -331,7 +363,7 @@ export default function NumericStep({ step, phase, attempt, setController, onHin
           </AnimatePresence>
         </div>
 
-        {phase === 'answer' && (
+        {phase === 'answer' && big && (
           <div className="numeric__mags" role="group" aria-label="Multiply by">
             {MAGS.map((m) => (
               <motion.button
@@ -362,13 +394,22 @@ export default function NumericStep({ step, phase, attempt, setController, onHin
         >
           <span className="eyebrow numeric__answer-label">Answer</span>
           <span className="numeric__answer-val tabular">
-            {fmtNum(step.answer)}
-            {unit && <span className="numeric__unit numeric__unit--good">{unit}</span>}
+            {sym ? withUnit(fmtNum(step.answer)) : fmtNum(step.answer)}
+            {unit && !sym && <span className="numeric__unit numeric__unit--good">{unit}</span>}
           </span>
           {words && <span className="numeric__answer-sub">≈ {words}</span>}
           {tol > 0 && (
             <span className="numeric__answer-sub">
-              Anything from <b className="tabular">{fmtSig(step.answer * (1 - tol))}</b> to <b className="tabular">{fmtSig(step.answer * (1 + tol))}</b> counts
+              {step.answer === 0 ? (
+                <>
+                  Anything within <b className="tabular">±{fmtSig(tol)}</b> counts
+                </>
+              ) : (
+                <>
+                  Anything from <b className="tabular">{fmtSig(Math.min(range[0], range[1]))}</b> to{' '}
+                  <b className="tabular">{fmtSig(Math.max(range[0], range[1]))}</b> counts
+                </>
+              )}
             </span>
           )}
         </motion.div>

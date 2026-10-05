@@ -130,6 +130,20 @@
     color var(--dur-2),
     box-shadow var(--dur-2);
 }
+/* "×" / "%": set in the number's own font, hugging the digits */
+.numeric__sym {
+  flex: none;
+  margin-left: calc(var(--s-3) * -1 + 2px);
+  color: var(--ink-3);
+  font-weight: 500;
+  transition: color var(--dur-2);
+}
+.numeric__field--correct .numeric__sym,
+.numeric__field--incorrect .numeric__sym {
+  color: inherit;
+  opacity: 0.6;
+}
+
 .numeric__field--correct .numeric__unit,
 .numeric__unit--good {
   background: color-mix(in srgb, var(--good) 16%, transparent);

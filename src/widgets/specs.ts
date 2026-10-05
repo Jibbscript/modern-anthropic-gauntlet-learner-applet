@@ -25,6 +25,8 @@ export interface WidgetProps<C = Record<string, unknown>> {
  * a thread that tries to ACQUIRE a held lock shows as blocked.
  * goal 'lose-update': complete when all threads finish with counter < expected.
  * goal 'correct': complete when all threads finish with counter == expected.
+ * mode 'lock' + goal 'lose-update' cannot lose an update; it completes after
+ * any full run ("try to break it").
  */
 export interface RaceConfig {
   threads?: 2 | 3
@@ -41,6 +43,8 @@ export interface RaceConfig {
  * the wait-for graph; flash a cycle when deadlocked.
  * goal 'deadlock': complete when a deadlock is reached.
  * goal 'finish': complete when both threads finish.
+ * scenario 'ordered' + goal 'deadlock' cannot deadlock; it completes after a
+ * run in which both threads contended for a lock ("try to break it").
  */
 export interface DeadlockConfig {
   scenario?: 'opposite' | 'ordered'
@@ -62,7 +66,7 @@ export interface CrawlerConfig {
   workers?: number
   dedupe?: 'none' | 'check-then-add' | 'atomic'
   sameHost?: boolean
-  /** which controls the learner may change */
+  /** controls fixed at their config value (shown read-only with a lock) */
   lockControls?: ('workers' | 'dedupe' | 'sameHost')[]
   goal?: 'no-dupes' | 'finish'
 }
@@ -95,11 +99,13 @@ export interface LruConfig {
  * waits on one thread but cannot speed up CPU work. Show total wall time.
  * goal 'fastest': complete when the learner picks a config within 10% of
  * the best achievable wall time for the current task kind.
+ * Units: one CPU task = 1 time unit, displayed as seconds.
  */
 export interface PoolConfig {
   kind?: 'cpu' | 'io'
   tasks?: number
   cores?: number
+  /** controls fixed at their default/config value (shown read-only with a lock) */
   lockControls?: ('kind' | 'executor' | 'workers')[]
   goal?: 'fastest' | 'explore'
 }
@@ -110,7 +116,7 @@ export interface PoolConfig {
  * bounded queue size between stages. Images flow as tiles; queues fill and
  * show backpressure; the bottleneck stage is highlighted. Shows
  * throughput (images/sec) and total time for the batch.
- * goal 'throughput': complete when throughput >= `target` images/sec.
+ * goal 'throughput': complete when throughput >= `target` images per time unit.
  */
 export interface PipelineConfig {
   images?: number

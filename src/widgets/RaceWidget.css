@@ -56,6 +56,11 @@
   align-items: center;
   gap: 6px;
 }
+.race-mem__x {
+  text-transform: none;
+  font-family: var(--font-code);
+  font-size: var(--fs-sm);
+}
 .race-mem__box {
   position: relative;
   display: grid;
@@ -95,6 +100,9 @@
     0 0 18px 2px color-mix(in srgb, var(--bad) 45%, transparent);
 }
 .race-lock {
+  grid-column: 1 / -1;
+  justify-self: center;
+  margin-top: calc(-1 * var(--s-1));
   display: inline-flex;
   align-items: center;
   gap: 4px;
@@ -527,7 +535,12 @@
   .race-top__stat .w-stat__label {
     letter-spacing: 0.02em;
   }
-  .race-mem__box {
+  .race-mem__x {
+  text-transform: none;
+  font-family: var(--font-code);
+  font-size: var(--fs-sm);
+}
+.race-mem__box {
     width: 68px;
   }
 }

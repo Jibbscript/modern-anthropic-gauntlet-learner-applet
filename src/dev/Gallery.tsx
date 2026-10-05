@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
+import { MotionConfig } from 'motion/react'
 import type { Step, WidgetId } from '../core/types'
 import { StepRunner } from '../lesson/StepRunner'
 import { WidgetHost } from '../widgets/WidgetHost'
@@ -18,7 +19,17 @@ import { CATALOG } from '../content'
  * Append &theme=dark to force dark mode.
  */
 export function Gallery() {
-  const q = new URLSearchParams(location.search)
+  return (
+    <MotionConfig reducedMotion="user">
+      <GalleryInner />
+    </MotionConfig>
+  )
+}
+
+function GalleryInner() {
+  const q = useMemo(() => new URLSearchParams(location.search), [])
+  // parse once: a fresh config object per render would restart widgets that key on config identity
+  const widgetConfig = useMemo(() => (q.get('config') ? JSON.parse(q.get('config')!) : {}), [q])
   const mode = q.get('gallery')
   if (q.get('theme')) document.documentElement.dataset.theme = q.get('theme')!
 
@@ -47,7 +58,7 @@ export function Gallery() {
       <div className="app-frame" style={courseStyle('teal')}>
         <div className="scroll" style={{ padding: 20 }}>
           <h3 style={{ marginBottom: 12 }}>{id}</h3>
-          <WidgetHost widget={{ id, config: q.get('config') ? JSON.parse(q.get('config')!) : {} }} onComplete={(ok) => console.log('widget complete', ok)} />
+          <WidgetHost widget={{ id, config: widgetConfig }} onComplete={(ok) => console.log('widget complete', ok)} />
         </div>
       </div>
     )

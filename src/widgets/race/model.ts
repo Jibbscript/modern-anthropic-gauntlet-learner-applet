@@ -227,8 +227,3 @@ export function incrementsLabel(ids: string[]): string {
     .map((o) => (ids.filter((id) => id[0] === o).length > 1 ? `both of ${o}’s +1s` : `${o}’s +1`))
     .join(' and ')
 }
-
-/** "A"-style labels for the increments a write dropped */
-export function droppedOwners(w: Write): number[] {
-  return [...new Set(w.dropped.map(victimOf))]
-}

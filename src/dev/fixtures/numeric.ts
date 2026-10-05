@@ -1,6 +1,6 @@
 import type { Step } from '../../core/types'
 
-/** Numeric fixtures: estimate with tolerance + unit, huge number, small decimal with default tolerance, exact integer. */
+/** Numeric fixtures: estimate with tolerance + unit, huge number, small decimal with default tolerance, exact integer, symbol unit. */
 const steps: Step[] = [
   {
     kind: 'numeric',
@@ -38,6 +38,17 @@ const steps: Step[] = [
     tolerance: 0,
     unit: 's',
     explanation: '24 × 60 × 60 = **86,400**.',
+  },
+  {
+    kind: 'numeric',
+    id: 'fx-numeric-speedup',
+    eyebrow: 'Edge case',
+    prompt: 'A job is **90%** parallel. With 8 workers, what speedup does Amdahl’s law predict?',
+    answer: 4.7,
+    tolerance: 0.05,
+    unit: '×',
+    explanation: '1 / (0.1 + 0.9 / 8) = 1 / 0.2125 ≈ **4.7×**. The serial 10% caps the speedup at 10× no matter how many workers you add.',
+    hint: 'Speedup = 1 / (serial + parallel / workers).',
   },
 ]
 
