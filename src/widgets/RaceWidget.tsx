@@ -82,7 +82,7 @@ function SwapValue({ k, value, from, delay, className }: { k: string | number; v
   )
 }
 
-export default function RaceWidget({ config, onComplete }: WidgetProps<RaceConfig>) {
+export default function RaceWidget({ config, onComplete, hostGoal }: WidgetProps<RaceConfig>) {
   const nThreads = config.threads === 3 ? 3 : 2
   const increments = config.increments === 2 ? 2 : 1
   const lock = config.mode === 'lock'
@@ -224,19 +224,21 @@ export default function RaceWidget({ config, onComplete }: WidgetProps<RaceConfi
 
   return (
     <div className="race" ref={rootRef}>
-      <AnimatePresence mode="wait" initial={false}>
-        {reached ? (
-          <motion.div key="done" className="w-goal race-goal" initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: 'spring', stiffness: 520, damping: 18 }}>
-            <CircleCheck size={18} strokeWidth={2.6} />
-            {reachedText}
-          </motion.div>
-        ) : (
-          <motion.div key="todo" className="w-goal race-goal race-goal--todo" exit={{ opacity: 0, scale: 0.96 }} transition={{ duration: 0.12 }}>
-            <Target size={16} strokeWidth={2.6} />
-            {goalText}
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {!hostGoal && (
+        <AnimatePresence mode="wait" initial={false}>
+          {reached ? (
+            <motion.div key="done" className="w-goal race-goal" initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: 'spring', stiffness: 520, damping: 18 }}>
+              <CircleCheck size={18} strokeWidth={2.6} />
+              {reachedText}
+            </motion.div>
+          ) : (
+            <motion.div key="todo" className="w-goal race-goal race-goal--todo" exit={{ opacity: 0, scale: 0.96 }} transition={{ duration: 0.12 }}>
+              <Target size={16} strokeWidth={2.6} />
+              {goalText}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      )}
 
       {/* shared memory */}
       <div className="race-top">

@@ -45,7 +45,7 @@ function blockFont(n: number): CSSProperties | undefined {
   return { fontSize: len <= 8 ? 13 : len <= 11 ? 11 : 9 }
 }
 
-export default function VmWidget({ config, onComplete }: WidgetProps<VmConfig>) {
+export default function VmWidget({ config, onComplete, hostGoal }: WidgetProps<VmConfig>) {
   const reduce = useReduced()
   const uid = useId()
   // keyed by value, not identity: a parent re-render with an equal config must not restart the machine
@@ -232,19 +232,21 @@ export default function VmWidget({ config, onComplete }: WidgetProps<VmConfig>) 
 
   return (
     <div className="vm">
-      <AnimatePresence mode="wait" initial={false}>
-        {reached ? (
-          <motion.div key="done" className="w-goal vm-goal" initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: 'spring', stiffness: 520, damping: 18 }}>
-            <CircleCheck size={18} strokeWidth={2.6} />
-            {reachedText}
-          </motion.div>
-        ) : (
-          <motion.div key="todo" className="w-goal vm-goal vm-goal--todo" exit={{ opacity: 0, scale: 0.96 }} transition={{ duration: 0.12 }}>
-            <Target size={16} strokeWidth={2.6} />
-            {goalText}
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {!hostGoal && (
+        <AnimatePresence mode="wait" initial={false}>
+          {reached ? (
+            <motion.div key="done" className="w-goal vm-goal" initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: 'spring', stiffness: 520, damping: 18 }}>
+              <CircleCheck size={18} strokeWidth={2.6} />
+              {reachedText}
+            </motion.div>
+          ) : (
+            <motion.div key="todo" className="w-goal vm-goal vm-goal--todo" exit={{ opacity: 0, scale: 0.96 }} transition={{ duration: 0.12 }}>
+              <Target size={16} strokeWidth={2.6} />
+              {goalText}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      )}
 
       <div className="vm-main">
         {/* program listing */}

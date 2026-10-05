@@ -147,10 +147,8 @@ const lesson: Lesson = {
       eyebrow: 'Calibration',
       prompt: 'Sort each statement.',
       buckets: [
-        // \u00AD = soft hyphen. At 390px, three bucket buttons split 'Calibrated' mid-letter; the soft
-        // hyphens give a clean break point and push the label over SortStep's compact-size threshold.
-        { id: 'cal', label: 'Cali\u00ADbrated' },
-        { id: 'over', label: 'Over\u00ADclaimed' },
+        { id: 'cal', label: 'Calibrated' },
+        { id: 'over', label: 'Overclaimed' },
         { id: 'hedge', label: 'Empty hedge' },
       ],
       items: [

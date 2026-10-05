@@ -30,6 +30,7 @@ const memory = new Map<string, Placement[]>()
 const FLY = { type: 'spring', stiffness: 460, damping: 38 } as const
 const range = (n: number) => Array.from({ length: n }, (_, i) => i)
 const plain = (t: string) => t.replace(/[`*=]/g, '')
+const longestWord = (t: string) => Math.max(...t.replace(/\u00AD/g, '').split(/\s+/).map((w) => w.length))
 
 /**
  * Brilliant-style sorting: one card centre stage on a little deck, big bucket
@@ -62,7 +63,8 @@ export default function SortStep({ step, phase, attempt, setController, lessonId
   const lid = (i: number) => `${step.id}:sort:${i}`
 
   const stacked = B > 2 || Math.max(...step.items.map((it) => plain(it.text).length)) > 48
-  const longLabels = step.buckets.some((b) => b.label.length > (B > 2 ? 11 : 18))
+  // a long label, or one long word that would split mid-letter in a narrow button (three columns at 390px)
+  const longLabels = step.buckets.some((b) => b.label.length > (B > 2 ? 11 : 18) || longestWord(b.label) > (B > 2 ? 8 : 14))
   const hideButtons = stacked && locked
 
   useEffect(() => {

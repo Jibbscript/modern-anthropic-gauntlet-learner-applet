@@ -270,6 +270,9 @@
   line-height: 1.2;
   text-align: center;
   overflow-wrap: break-word;
+  /* a word too long for a 320px three-column row breaks at a syllable, not mid-letter */
+  -webkit-hyphens: auto;
+  hyphens: auto;
 }
 /* multi-line labels read better on a rounded rectangle than in a pill */
 .sort-board--long .sort-bucket__btn {

@@ -341,6 +341,9 @@
   color: var(--code-ink);
   overflow-wrap: anywhere;
 }
+.rich-code--keep {
+  white-space: nowrap;
+}
 .rich-mark {
   background: linear-gradient(transparent 55%, color-mix(in srgb, var(--warn) 45%, transparent) 55%);
   color: inherit;

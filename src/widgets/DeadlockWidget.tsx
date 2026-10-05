@@ -171,7 +171,7 @@ function ThreadNode({ t, s, progs, stuck, reduce }: { t: number; s: DState; prog
 }
 
 /* -------------------------------------------------------------- widget */
-export default function DeadlockWidget({ config, onComplete }: WidgetProps<DeadlockConfig>) {
+export default function DeadlockWidget({ config, onComplete, hostGoal }: WidgetProps<DeadlockConfig>) {
   const scenario = config.scenario === 'ordered' ? 'ordered' : 'opposite'
   const goal = config.goal ?? (scenario === 'opposite' ? 'deadlock' : 'finish')
   /** with a consistent lock order a deadlock is impossible: completes after a contended run finishes */
@@ -263,19 +263,21 @@ export default function DeadlockWidget({ config, onComplete }: WidgetProps<Deadl
 
   return (
     <div className="dl">
-      <AnimatePresence mode="wait" initial={false}>
-        {reached ? (
-          <motion.div key="done" className="w-goal dl-goal" initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: 'spring', stiffness: 520, damping: 18 }}>
-            <CircleCheck size={18} strokeWidth={2.6} />
-            {reachedText}
-          </motion.div>
-        ) : (
-          <motion.div key="todo" className="w-goal dl-goal dl-goal--todo" exit={{ opacity: 0, scale: 0.96 }} transition={{ duration: 0.12 }}>
-            <Target size={16} strokeWidth={2.6} />
-            {goalText}
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {!hostGoal && (
+        <AnimatePresence mode="wait" initial={false}>
+          {reached ? (
+            <motion.div key="done" className="w-goal dl-goal" initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: 'spring', stiffness: 520, damping: 18 }}>
+              <CircleCheck size={18} strokeWidth={2.6} />
+              {reachedText}
+            </motion.div>
+          ) : (
+            <motion.div key="todo" className="w-goal dl-goal dl-goal--todo" exit={{ opacity: 0, scale: 0.96 }} transition={{ duration: 0.12 }}>
+              <Target size={16} strokeWidth={2.6} />
+              {goalText}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      )}
 
       {/* wait-for graph */}
       <div className={['dl-graph', deadlocked ? 'is-deadlocked' : ''].join(' ')}>

@@ -72,24 +72,24 @@ const lesson: Lesson = {
       eyebrow: 'Depth 2',
       prompt:
         'Same story, one level deeper:\n\n' +
-        '> Last spring I owned a schema migration for search, and we were behind. I skipped the staging load test. The migration rebuilt an index online, and p99 latency hit two seconds for six hours. I rolled back, ran the postmortem, and we made the load test mandatory.\n\n' +
-        'What will a probing interviewer most likely ask for next?',
+        '> I owned a search schema migration, and we were behind. I skipped the staging load test. The online index rebuild pushed p99 latency to two seconds for six hours. I rolled back, ran the postmortem, and we made the load test mandatory.\n\n' +
+        'What will a probing interviewer ask next?',
       choices: [
         {
-          text: 'What you were thinking when you decided to skip the load test',
+          text: 'What you were thinking when you skipped the load test',
           correct: true,
           feedback: "Yes. The answer names the decision but hides the reasoning. That's rung 2, and it's where the interesting part of a failure lives.",
         },
         {
-          text: 'More technical detail about how the online index rebuild worked',
+          text: 'How the online index rebuild worked, in technical detail',
           feedback: "Tempting for an engineer, but that's the project deep-dive. Here the gap is about you, not the index.",
         },
         {
-          text: 'The dollar cost to the business of six hours of slow search',
+          text: 'What six hours of slow search cost the business',
           feedback: 'Numbers help, and cost is a real rung. But the bigger hole comes earlier: why the test got skipped at all.',
         },
         {
-          text: 'Which other people on the team had reviewed the migration plan',
+          text: 'Who else on the team had reviewed the migration plan',
           feedback: 'It might come up, but it moves the focus off your own decision, which is what the question asked about.',
         },
       ],

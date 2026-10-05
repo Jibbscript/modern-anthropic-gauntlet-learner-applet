@@ -147,7 +147,7 @@ function Jar({ capacity, level, mode, uid, reduce, flash }: { capacity: number; 
 }
 
 /* --------------------------------------------------------------- widget */
-export default function TokenBucketWidget({ config, onComplete }: WidgetProps<TokenBucketConfig>) {
+export default function TokenBucketWidget({ config, onComplete, hostGoal }: WidgetProps<TokenBucketConfig>) {
   const capacity = Number.isFinite(config.capacity) ? Math.max(1, Math.min(20, Math.round(config.capacity!))) : 5
   // above ~5/s a hold can't outrun the refill on screen, and the window-edge burst disappears
   const rate = Number.isFinite(config.rate) && config.rate! > 0 ? Math.max(0.1, Math.min(5, config.rate!)) : 1
@@ -388,7 +388,7 @@ export default function TokenBucketWidget({ config, onComplete }: WidgetProps<To
 
   return (
     <div className="tb" ref={rootRef}>
-      {goal === 'burst' && (
+      {goal === 'burst' && !hostGoal && (
         <AnimatePresence mode="wait" initial={false}>
           {reached ? (
             <motion.div key="done" className="w-goal tb-goal" initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: 'spring', stiffness: 520, damping: 18 }}>

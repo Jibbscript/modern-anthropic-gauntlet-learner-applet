@@ -116,9 +116,8 @@ const lesson: Lesson = {
       eyebrow: 'Spot the anti-pattern',
       multi: true,
       prompt:
-        'A candidate answers *Tell me about a failure*:\n\n' +
-        '> The launch slipped three weeks. Our PM kept changing the spec, and QA was understaffed, so bugs got through. Honestly, I probably cared too much about getting it perfect. Anyway, it shipped and customers were happy.\n\n' +
-        'Which anti-patterns does it contain? Select all that apply.',
+        'Select every anti-pattern in this answer to *Tell me about a failure*:\n\n' +
+        '> The launch slipped three weeks. Our PM kept changing the spec and QA was understaffed. Honestly, I cared too much about getting it perfect. Anyway, it shipped and customers were happy.',
       choices: [
         {
           text: 'Blaming others for the outcome',

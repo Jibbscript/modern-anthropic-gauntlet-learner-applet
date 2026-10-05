@@ -61,7 +61,7 @@ function describe(f: Flash): { text: string; tone: 'good' | 'bad' | 'plain' } {
   }
 }
 
-export default function LruWidget({ config, onComplete }: WidgetProps<LruConfig>) {
+export default function LruWidget({ config, onComplete, hostGoal, onGoalProgress }: WidgetProps<LruConfig>) {
   const capacity = clampCapacity(config.capacity)
   const rawGoal = config.goal
   // keyed by content, not identity: a parent re-render with an equal config must not restart the run
@@ -229,24 +229,30 @@ export default function LruWidget({ config, onComplete }: WidgetProps<LruConfig>
     doneText = predict ? 'Goal reached: every eviction called' : 'Goal reached: sequence replayed'
   }
 
+  // a WidgetStep that shows the goal chip carries this counter instead of our goal row
+  const hostCount = hostGoal && !reached ? goalCount : null
+  useEffect(() => onGoalProgress?.(hostCount), [hostCount, onGoalProgress])
+
   const showHint = !reached && !seqMode && goal === 'hits' && s.misses >= 2 && s.hits < hitTarget
 
   return (
     <div className="lru">
-      <AnimatePresence mode="wait" initial={false}>
-        {reached ? (
-          <motion.div key="done" className="w-goal lru-goal" initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={POP}>
-            <CircleCheck size={18} strokeWidth={2.6} />
-            <span className="lru-goal__text">{doneText}</span>
-          </motion.div>
-        ) : (
-          <motion.div key="todo" className="w-goal lru-goal lru-goal--todo" exit={{ opacity: 0, scale: 0.96 }} transition={{ duration: 0.12 }}>
-            <Target size={16} strokeWidth={2.6} />
-            <span className="lru-goal__text">{goalText}</span>
-            {goalCount && <span className="lru-goal__count tabular">{goalCount}</span>}
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {!hostGoal && (
+        <AnimatePresence mode="wait" initial={false}>
+          {reached ? (
+            <motion.div key="done" className="w-goal lru-goal" initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={POP}>
+              <CircleCheck size={18} strokeWidth={2.6} />
+              <span className="lru-goal__text">{doneText}</span>
+            </motion.div>
+          ) : (
+            <motion.div key="todo" className="w-goal lru-goal lru-goal--todo" exit={{ opacity: 0, scale: 0.96 }} transition={{ duration: 0.12 }}>
+              <Target size={16} strokeWidth={2.6} />
+              <span className="lru-goal__text">{goalText}</span>
+              {goalCount && <span className="lru-goal__count tabular">{goalCount}</span>}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      )}
 
       {seqMode && (
         <ol className="lru-seq" aria-label="Operation sequence">

@@ -104,7 +104,7 @@ class Stats:
       kind: 'widget',
       id: 'locked',
       eyebrow: 'Try to break it',
-      prompt: 'Same race, but each increment is now wrapped in ACQUIRE and RELEASE. Interleave however you like and run both threads to the end.',
+      prompt: 'Two threads again, now incrementing `x` twice each, with every increment wrapped in ACQUIRE and RELEASE. Interleave however you like and run both threads to the end.',
       goal: 'Every increment counted',
       widget: { id: 'race', config: { threads: 2, increments: 2, mode: 'lock', goal: 'correct' } },
       explanation:

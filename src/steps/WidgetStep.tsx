@@ -23,6 +23,8 @@ export default function WidgetStep({ step, phase, attempt, complete }: StepProps
   const required = step.requireComplete !== false
   const failed = useWidgetFailed()
   const [reached, setReached] = useState(phase === 'correct')
+  // a live counter for the goal (e.g. "1/3"), reported by widgets that have one
+  const [progress, setProgress] = useState<string | null>(null)
   const reachedRef = useRef(reached)
   const completeRef = useRef(complete)
   completeRef.current = complete
@@ -51,9 +53,10 @@ export default function WidgetStep({ step, phase, attempt, complete }: StepProps
     <div className="step widget-step">
       {step.eyebrow && <div className="eyebrow step__eyebrow">{step.eyebrow}</div>}
       <Rich text={step.prompt} className="step__prompt" />
-      {step.goal && <GoalChip goal={step.goal} reached={reached} animate={attempt === 0 || reached} />}
+      {step.goal && <GoalChip goal={step.goal} progress={reached ? null : progress} reached={reached} animate={attempt === 0 || reached} />}
       <div className="widget-step__host" ref={failed.ref}>
-        <WidgetHost widget={step.widget} onComplete={onWidget} />
+        {/* the chip above is the step's one goal: the widget hides its own goal row */}
+        <WidgetHost widget={step.widget} onComplete={onWidget} hostGoal={!!step.goal} onGoalProgress={setProgress} />
       </div>
       {/* a simulation that cannot load (unknown id, a lazy chunk failing offline) must not strand a required step */}
       {failed.value && required && phase === 'answer' && !reached && (
@@ -100,7 +103,7 @@ function useWidgetFailed() {
   return { value, ref }
 }
 
-function GoalChip({ goal, reached, animate }: { goal: string; reached: boolean; animate: boolean }) {
+function GoalChip({ goal, progress, reached, animate }: { goal: string; progress: string | null; reached: boolean; animate: boolean }) {
   return (
     <motion.div
       className={`widget-goal${reached ? ' widget-goal--reached' : ''}`}
@@ -127,6 +130,7 @@ function GoalChip({ goal, reached, animate }: { goal: string; reached: boolean; 
         <span className="widget-goal__label">{reached ? 'Goal reached' : 'Goal'}</span>
         <span className="widget-goal__text">{goal}</span>
       </span>
+      {progress && <span className="widget-goal__count tabular">{progress}</span>}
     </motion.div>
   )
 }

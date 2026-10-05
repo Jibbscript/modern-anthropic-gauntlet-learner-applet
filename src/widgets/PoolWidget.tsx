@@ -35,7 +35,7 @@ const LANE_GAP = 6
 const LANE_H = 13
 const AXIS_H = 16
 
-export default function PoolWidget({ config, onComplete }: WidgetProps<PoolConfig>) {
+export default function PoolWidget({ config, onComplete, hostGoal }: WidgetProps<PoolConfig>) {
   const tasks = Math.max(1, Math.min(16, Math.round(config.tasks ?? 8)))
   const cores = Math.max(1, Math.min(16, Math.round(config.cores ?? 4)))
   const locked = useMemo(() => new Set(config.lockControls ?? []), [config.lockControls])
@@ -109,28 +109,30 @@ export default function PoolWidget({ config, onComplete }: WidgetProps<PoolConfi
 
   return (
     <div className="pool">
-      <AnimatePresence mode="wait" initial={false}>
-        {reached ? (
-          <motion.div
-            key="done"
-            className="w-goal"
-            initial={{ scale: 0.85, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ type: 'spring', stiffness: 520, damping: 20 }}
-          >
-            <CheckCircle2 size={18} strokeWidth={2.6} />
-            <span>
-              Goal reached
-              {goal === 'fastest' && <span className="pool-goal__detail"> · fastest possible is {best.wall.toFixed(1)} s</span>}
-            </span>
-          </motion.div>
-        ) : (
-          <motion.div key="todo" className="pool-goal" exit={{ opacity: 0, y: -4 }} transition={{ duration: reduce ? 0 : 0.15 }}>
-            <Target size={15} strokeWidth={2.6} />
-            <span>{goalText}</span>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {!hostGoal && (
+        <AnimatePresence mode="wait" initial={false}>
+          {reached ? (
+            <motion.div
+              key="done"
+              className="w-goal"
+              initial={{ scale: 0.85, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ type: 'spring', stiffness: 520, damping: 20 }}
+            >
+              <CheckCircle2 size={18} strokeWidth={2.6} />
+              <span>
+                Goal reached
+                {goal === 'fastest' && <span className="pool-goal__detail"> · fastest possible is {best.wall.toFixed(1)} s</span>}
+              </span>
+            </motion.div>
+          ) : (
+            <motion.div key="todo" className="pool-goal" exit={{ opacity: 0, y: -4 }} transition={{ duration: reduce ? 0 : 0.15 }}>
+              <Target size={15} strokeWidth={2.6} />
+              <span>{goalText}</span>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      )}
 
       <div className="pool-stats">
         <div className={`w-stat pool-stat${fastest && goal === 'fastest' ? ' pool-stat--good' : ''}`}>

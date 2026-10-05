@@ -28,7 +28,7 @@ const DEDUPE: { id: Dedupe; label: string; blurb: (cap: number) => string }[] = 
 const hostVar = (host: number) => ({ ['--host' as string]: HOST_COLORS[host] ?? HOST_COLORS[0] }) as CSSProperties
 const workerVar = (w: number) => ({ ['--wc' as string]: WORKER_COLORS[w] }) as CSSProperties
 
-export default function CrawlerWidget({ config, onComplete }: WidgetProps<CrawlerConfig>) {
+export default function CrawlerWidget({ config, onComplete, hostGoal }: WidgetProps<CrawlerConfig>) {
   const graph: SiteGraph = GRAPHS[config.graph ?? 'small'] ?? GRAPHS.small
   const locked = useMemo(() => new Set(config.lockControls ?? []), [config.lockControls])
   const goal = config.goal === 'no-dupes' ? 'no-dupes' : 'finish'
@@ -176,25 +176,27 @@ export default function CrawlerWidget({ config, onComplete }: WidgetProps<Crawle
 
   return (
     <div className="crawl">
-      <AnimatePresence mode="wait" initial={false}>
-        {reached ? (
-          <motion.div
-            key="done"
-            className="w-goal"
-            initial={{ scale: 0.85, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ type: 'spring', stiffness: 520, damping: 20 }}
-          >
-            <CheckCircle2 size={18} strokeWidth={2.6} />
-            <span>Goal reached</span>
-          </motion.div>
-        ) : (
-          <motion.div key="todo" className="crawl-goal" exit={{ opacity: 0, y: -4 }} transition={{ duration: reduce ? 0 : 0.15 }}>
-            <Target size={15} strokeWidth={2.6} />
-            <span>{goalText}</span>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {!hostGoal && (
+        <AnimatePresence mode="wait" initial={false}>
+          {reached ? (
+            <motion.div
+              key="done"
+              className="w-goal"
+              initial={{ scale: 0.85, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ type: 'spring', stiffness: 520, damping: 20 }}
+            >
+              <CheckCircle2 size={18} strokeWidth={2.6} />
+              <span>Goal reached</span>
+            </motion.div>
+          ) : (
+            <motion.div key="todo" className="crawl-goal" exit={{ opacity: 0, y: -4 }} transition={{ duration: reduce ? 0 : 0.15 }}>
+              <Target size={15} strokeWidth={2.6} />
+              <span>{goalText}</span>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      )}
 
       <div className="crawl-stats">
         <Stat label="Pages" value={`${uniqueDone}/${reach.size}`} />

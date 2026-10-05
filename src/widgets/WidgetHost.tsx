@@ -15,14 +15,25 @@ class Boundary extends Component<{ children: ReactNode }, { err: Error | null }>
 }
 
 /** Renders a widget by id inside a framed stage with error + loading states. */
-export function WidgetHost({ widget, onComplete }: { widget: WidgetRef; onComplete: (ok: boolean) => void }) {
+export function WidgetHost({
+  widget,
+  onComplete,
+  hostGoal,
+  onGoalProgress,
+}: {
+  widget: WidgetRef
+  onComplete: (ok: boolean) => void
+  /** the caller shows the goal itself; see WidgetProps.hostGoal */
+  hostGoal?: boolean
+  onGoalProgress?: (progress: string | null) => void
+}) {
   const W = WIDGETS[widget.id]
   if (!W) return <div className="widget-error">Unknown simulation “{widget.id}”.</div>
   return (
     <div className="widget-stage">
       <Boundary>
         <Suspense fallback={<div className="widget-loading" aria-label="Loading simulation" />}>
-          <W config={widget.config ?? {}} onComplete={onComplete} />
+          <W config={widget.config ?? {}} onComplete={onComplete} hostGoal={hostGoal} onGoalProgress={onGoalProgress} />
         </Suspense>
       </Boundary>
     </div>

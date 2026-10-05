@@ -27,7 +27,7 @@ const PILE = 3
 const tileStyle = (img: number) => ({ ['--img' as string]: `var(${IMG_HUES[img % IMG_HUES.length]})` }) as CSSProperties
 const fmtRate = (r: number) => (Number.isFinite(r) ? r.toFixed(2) : '–')
 
-export default function PipelineWidget({ config, onComplete }: WidgetProps<PipelineConfig>) {
+export default function PipelineWidget({ config, onComplete, hostGoal }: WidgetProps<PipelineConfig>) {
   const images = Math.max(4, Math.min(60, Math.round(config.images ?? 24)))
   const costs = useMemo(() => {
     const c = config.costs ?? { load: 1, resize: 2, filter: 4, save: 1 }
@@ -162,25 +162,27 @@ export default function PipelineWidget({ config, onComplete }: WidgetProps<Pipel
 
   return (
     <div className="pipe">
-      <AnimatePresence mode="wait" initial={false}>
-        {reached ? (
-          <motion.div
-            key="done"
-            className="w-goal"
-            initial={{ scale: 0.85, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ type: 'spring', stiffness: 520, damping: 20 }}
-          >
-            <CheckCircle2 size={18} strokeWidth={2.6} />
-            <span>Goal reached</span>
-          </motion.div>
-        ) : (
-          <motion.div key="todo" className="pipe-goal" exit={{ opacity: 0, y: -4 }} transition={{ duration: reduce ? 0 : 0.15 }}>
-            <Target size={15} strokeWidth={2.6} />
-            <span>{goalText}</span>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {!hostGoal && (
+        <AnimatePresence mode="wait" initial={false}>
+          {reached ? (
+            <motion.div
+              key="done"
+              className="w-goal"
+              initial={{ scale: 0.85, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ type: 'spring', stiffness: 520, damping: 20 }}
+            >
+              <CheckCircle2 size={18} strokeWidth={2.6} />
+              <span>Goal reached</span>
+            </motion.div>
+          ) : (
+            <motion.div key="todo" className="pipe-goal" exit={{ opacity: 0, y: -4 }} transition={{ duration: reduce ? 0 : 0.15 }}>
+              <Target size={15} strokeWidth={2.6} />
+              <span>{goalText}</span>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      )}
 
       <div className="pipe-stats">
         <div className={`w-stat pipe-stat${goal === 'throughput' ? (met ? ' pipe-stat--good' : '') : ''}`}>

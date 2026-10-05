@@ -39,7 +39,7 @@ function toggle(set: Set<number>, d: number): Set<number> {
   return n
 }
 
-export default function SamplerWidget({ config, onComplete }: WidgetProps<SamplerConfig>) {
+export default function SamplerWidget({ config, onComplete, hostGoal }: WidgetProps<SamplerConfig>) {
   // keyed by content so an equal config from a parent re-render doesn't restart the run
   const sampleKey = JSON.stringify(config.samples ?? null)
   const samples = useMemo(() => normalize(JSON.parse(sampleKey)), [sampleKey])
@@ -182,22 +182,24 @@ export default function SamplerWidget({ config, onComplete }: WidgetProps<Sample
 
   return (
     <div className="smp">
-      <AnimatePresence mode="wait" initial={false}>
-        {reached ? (
-          <motion.div key="done" className="w-goal smp-goal" initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={POP}>
-            <CircleCheck size={18} strokeWidth={2.6} />
-            <span className="smp-goal__text">{doneText}</span>
-          </motion.div>
-        ) : (
-          <motion.div key="todo" className="w-goal smp-goal smp-goal--todo" exit={{ opacity: 0, scale: 0.96 }} transition={{ duration: 0.12 }}>
-            <Target size={16} strokeWidth={2.6} />
-            <span className="smp-goal__text">{goalText}</span>
-            <span className="smp-goal__count tabular">
-              {Math.min(step, n)}/{n}
-            </span>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {!hostGoal && (
+        <AnimatePresence mode="wait" initial={false}>
+          {reached ? (
+            <motion.div key="done" className="w-goal smp-goal" initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={POP}>
+              <CircleCheck size={18} strokeWidth={2.6} />
+              <span className="smp-goal__text">{doneText}</span>
+            </motion.div>
+          ) : (
+            <motion.div key="todo" className="w-goal smp-goal smp-goal--todo" exit={{ opacity: 0, scale: 0.96 }} transition={{ duration: 0.12 }}>
+              <Target size={16} strokeWidth={2.6} />
+              <span className="smp-goal__text">{goalText}</span>
+              <span className="smp-goal__count tabular">
+                {Math.min(step, n)}/{n}
+              </span>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      )}
 
       {/* ------------------------------------------------ compare panel */}
       <AnimatePresence mode="wait" initial={false}>

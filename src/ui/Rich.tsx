@@ -42,7 +42,16 @@ export function renderInline(text: string, keyBase = 'i'): ReactNode[] {
     if (m.index > last) out.push(text.slice(last, m.index))
     const tok = m[0]
     const key = `${keyBase}${n++}`
-    if (m[1]) out.push(<code key={key} className="rich-code">{seams(tok.slice(1, -1))}</code>)
+    if (m[1]) {
+      const code = tok.slice(1, -1)
+      // a short hyphenated token (`Retry-After`, `x-api-key`) must not split at its hyphen
+      const keep = code.length <= 14 && code.includes('-')
+      out.push(
+        <code key={key} className={keep ? 'rich-code rich-code--keep' : 'rich-code'}>
+          {seams(code)}
+        </code>,
+      )
+    }
     else if (m[2]) out.push(<strong key={key}>{renderInline(tok.slice(2, -2), key)}</strong>)
     else if (m[3]) out.push(<mark key={key} className="rich-mark">{renderInline(tok.slice(2, -2), key)}</mark>)
     else if (m[4]) {

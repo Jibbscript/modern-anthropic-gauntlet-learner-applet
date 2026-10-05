@@ -77,7 +77,7 @@ function groupLabel(stage: Stage, g: Group, files: DFile[]): { main: string; sub
   return { main: `${f.head.slice(0, 4)}${f.body}` || 'empty', sub: 'full hash' }
 }
 
-export default function DedupWidget({ config, onComplete }: WidgetProps<DedupConfig>) {
+export default function DedupWidget({ config, onComplete, hostGoal, onGoalProgress }: WidgetProps<DedupConfig>) {
   // keyed by content so an equal config from a parent re-render doesn't restart the run
   const filesKey = JSON.stringify(config.files ?? null)
   const files = useMemo(() => normalizeFiles(JSON.parse(filesKey)), [filesKey])
@@ -161,24 +161,30 @@ export default function DedupWidget({ config, onComplete }: WidgetProps<DedupCon
   const goalCount = goal === 'explore' ? `${stage}/3` : final ? `${confirmed.size}/${dups.length}` : null
   const doneText = goal === 'explore' ? 'Goal reached: all three stages run' : dups.length ? 'Goal reached: every duplicate group found' : 'Goal reached: no duplicates here'
 
+  // a WidgetStep that shows the goal chip carries this counter instead of our goal row
+  const hostCount = hostGoal && !reached ? goalCount : null
+  useEffect(() => onGoalProgress?.(hostCount), [hostCount, onGoalProgress])
+
   const pile = [...r.ruledOut.entries()].sort((a, b) => a[1] - b[1] || a[0] - b[0])
 
   return (
     <div className="dd">
-      <AnimatePresence mode="wait" initial={false}>
-        {reached ? (
-          <motion.div key="done" className="w-goal dd-goal" initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={POP}>
-            <CircleCheck size={18} strokeWidth={2.6} />
-            <span className="dd-goal__text">{doneText}</span>
-          </motion.div>
-        ) : (
-          <motion.div key="todo" className="w-goal dd-goal dd-goal--todo" exit={{ opacity: 0, scale: 0.96 }} transition={{ duration: 0.12 }}>
-            <Target size={16} strokeWidth={2.6} />
-            <span className="dd-goal__text">{goalText}</span>
-            {goalCount && <span className="dd-goal__count tabular">{goalCount}</span>}
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {!hostGoal && (
+        <AnimatePresence mode="wait" initial={false}>
+          {reached ? (
+            <motion.div key="done" className="w-goal dd-goal" initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={POP}>
+              <CircleCheck size={18} strokeWidth={2.6} />
+              <span className="dd-goal__text">{doneText}</span>
+            </motion.div>
+          ) : (
+            <motion.div key="todo" className="w-goal dd-goal dd-goal--todo" exit={{ opacity: 0, scale: 0.96 }} transition={{ duration: 0.12 }}>
+              <Target size={16} strokeWidth={2.6} />
+              <span className="dd-goal__text">{goalText}</span>
+              {goalCount && <span className="dd-goal__count tabular">{goalCount}</span>}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      )}
 
       {/* -------------------------------------------------- stage card */}
       <section className="dd-stage">

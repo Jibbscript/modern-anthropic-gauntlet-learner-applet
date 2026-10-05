@@ -58,7 +58,7 @@ function useReduced(): boolean {
 
 type Feedback = { tone: 'good' | 'retry' | 'neutral' | 'info'; text: string } | null
 
-export default function EstimatorWidget({ config, onComplete }: WidgetProps<EstimatorConfig>) {
+export default function EstimatorWidget({ config, onComplete, hostGoal }: WidgetProps<EstimatorConfig>) {
   const reduce = useReduced()
   const uid = useId()
   const presetKey = JSON.stringify(config.preset ?? null)
@@ -187,19 +187,21 @@ export default function EstimatorWidget({ config, onComplete }: WidgetProps<Esti
 
   return (
     <div className="est">
-      <AnimatePresence mode="wait" initial={false}>
-        {reached ? (
-          <motion.div key="done" className="w-goal est-goal" initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: 'spring', stiffness: 520, damping: 18 }}>
-            <CircleCheck size={18} strokeWidth={2.6} />
-            {reachedText}
-          </motion.div>
-        ) : (
-          <motion.div key="todo" className="w-goal est-goal est-goal--todo" exit={{ opacity: 0, scale: 0.96 }} transition={{ duration: 0.12 }}>
-            <Target size={16} strokeWidth={2.6} />
-            {goalText}
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {!hostGoal && (
+        <AnimatePresence mode="wait" initial={false}>
+          {reached ? (
+            <motion.div key="done" className="w-goal est-goal" initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: 'spring', stiffness: 520, damping: 18 }}>
+              <CircleCheck size={18} strokeWidth={2.6} />
+              {reachedText}
+            </motion.div>
+          ) : (
+            <motion.div key="todo" className="w-goal est-goal est-goal--todo" exit={{ opacity: 0, scale: 0.96 }} transition={{ duration: 0.12 }}>
+              <Target size={16} strokeWidth={2.6} />
+              {goalText}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      )}
 
       {config.scenario && (
         <section className="est-scenario">

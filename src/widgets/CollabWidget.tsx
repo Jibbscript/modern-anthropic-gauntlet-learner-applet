@@ -75,7 +75,7 @@ function Doc({ segs, caret }: { segs: Seg[]; caret?: User }) {
 
 const quote = (s: string) => `“${s.length > 16 ? s.slice(0, 15) + '…' : s}”`
 
-export default function CollabWidget({ config, onComplete }: WidgetProps<CollabConfig>) {
+export default function CollabWidget({ config, onComplete, hostGoal }: WidgetProps<CollabConfig>) {
   const reduce = useReduced()
   const base = typeof config.base === 'string' ? config.base : DEFAULT_BASE
   const aKey = JSON.stringify([base, config.editA ?? DEFAULT_A, config.editB ?? DEFAULT_B])
@@ -228,19 +228,21 @@ export default function CollabWidget({ config, onComplete }: WidgetProps<CollabC
 
   return (
     <div className="collab">
-      <AnimatePresence mode="wait" initial={false}>
-        {reached ? (
-          <motion.div key="done" className="w-goal collab-goal" initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: 'spring', stiffness: 520, damping: 18 }}>
-            <CircleCheck size={18} strokeWidth={2.6} />
-            {reachedText}
-          </motion.div>
-        ) : (
-          <motion.div key="todo" className="w-goal collab-goal collab-goal--todo" exit={{ opacity: 0, scale: 0.96 }} transition={{ duration: 0.12 }}>
-            <Target size={16} strokeWidth={2.6} />
-            {goalText}
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {!hostGoal && (
+        <AnimatePresence mode="wait" initial={false}>
+          {reached ? (
+            <motion.div key="done" className="w-goal collab-goal" initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: 'spring', stiffness: 520, damping: 18 }}>
+              <CircleCheck size={18} strokeWidth={2.6} />
+              {reachedText}
+            </motion.div>
+          ) : (
+            <motion.div key="todo" className="w-goal collab-goal collab-goal--todo" exit={{ opacity: 0, scale: 0.96 }} transition={{ duration: 0.12 }}>
+              <Target size={16} strokeWidth={2.6} />
+              {goalText}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      )}
 
       {/* strategy picker */}
       <div className="collab-picker" role="radiogroup" aria-label="Merge strategy">

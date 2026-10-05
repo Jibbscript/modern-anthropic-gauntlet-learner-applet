@@ -14,6 +14,13 @@ import type { WidgetId } from '../core/types'
 export interface WidgetProps<C = Record<string, unknown>> {
   config: C
   onComplete: (ok: boolean) => void
+  /**
+   * Set by a WidgetStep that shows the goal itself (its goal chip). The widget
+   * then skips its own goal row, so the screen shows one goal, not two, and
+   * reports any live counter for the goal (e.g. "1/3") via onGoalProgress.
+   */
+  hostGoal?: boolean
+  onGoalProgress?: (progress: string | null) => void
 }
 
 /**

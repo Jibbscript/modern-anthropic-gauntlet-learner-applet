@@ -59,6 +59,17 @@
   overflow-wrap: break-word;
 }
 
+.widget-goal__count {
+  flex: none;
+  margin-left: 2px;
+  padding: 2px 9px;
+  border-radius: var(--r-pill);
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  color: var(--ink-2);
+  background: var(--bg);
+}
+
 .widget-goal--reached {
   background: var(--good-soft);
   box-shadow: inset 0 0 0 2px var(--good);
