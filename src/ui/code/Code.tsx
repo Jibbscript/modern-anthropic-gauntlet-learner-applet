@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import type { CSSProperties, ReactNode } from 'react'
 import type { CodeBlock, Lang } from '../../core/types'
 import { Rich } from '../Rich'
 import { tokenLines, type Tok } from './highlight'
@@ -18,6 +18,17 @@ export function Toks({ toks }: { toks: Tok[] }) {
       )}
     </>
   )
+}
+
+/** leading indent in columns (tab = 4); lets a soft-wrapped line hang past its own indent */
+function indentOf(line: string) {
+  let n = 0
+  for (const ch of line) {
+    if (ch === ' ') n += 1
+    else if (ch === '\t') n += 4
+    else break
+  }
+  return n
 }
 
 /**
@@ -58,7 +69,9 @@ export function Code({
             return (
               <div key={i} className={['code__line', highlight?.includes(n) && 'code__line--hl', lc].filter(Boolean).join(' ')} {...rest}>
                 {numbers && <span className="code__no">{n}</span>}
-                <span className="code__src">{renderLine?.(n, toks, raw[i] ?? '') ?? (toks.length ? <Toks toks={toks} /> : ' ')}</span>
+                <span className="code__src" style={{ '--hang': indentOf(raw[i] ?? '') } as CSSProperties}>
+                  {renderLine?.(n, toks, raw[i] ?? '') ?? (toks.length ? <Toks toks={toks} /> : ' ')}
+                </span>
               </div>
             )
           })}

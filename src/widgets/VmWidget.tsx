@@ -1,6 +1,6 @@
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { CircleCheck, CircleHelp, OctagonX, Pause, Play, RotateCcw, SkipForward, Target, TriangleAlert } from 'lucide-react'
-import { useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react'
 import { Button } from '../ui/Button'
 import { Tile, type TileState } from '../ui/Tile'
 import { haptic, sfx } from '../ui/fx'
@@ -36,6 +36,13 @@ function Source({ line }: { line: Line }) {
   if (line.comment) parts.push(<span key="c" className="vm-src__com"># {line.comment}</span>)
   if (!parts.length) parts.push(<span key="e" className="vm-src__blank"> </span>)
   return <>{parts}</>
+}
+
+/** long numbers shrink to fit the block instead of being cut off: a truncated value would be a wrong value */
+function blockFont(n: number): CSSProperties | undefined {
+  const len = showNum(n).length
+  if (len <= 6) return undefined
+  return { fontSize: len <= 8 ? 13 : len <= 11 ? 11 : 9 }
 }
 
 export default function VmWidget({ config, onComplete }: WidgetProps<VmConfig>) {
@@ -315,13 +322,15 @@ export default function VmWidget({ config, onComplete }: WidgetProps<VmConfig>) 
                     <motion.div
                       key={item.id}
                       layout={!reduce}
-                      className={['vm-block', isTop ? 'is-top' : ''].join(' ')}
+                      className={['vm-block', isTop ? 'is-top' : '', showNum(item.value).length > 6 ? 'is-long' : ''].join(' ')}
                       initial={reduce ? false : { y: -34, opacity: 0, scale: 0.7 }}
                       animate={{ y: 0, opacity: 1, scale: 1 }}
                       exit={reduce ? { opacity: 0, transition: { duration: 0 } } : { y: -26, opacity: 0, scale: 0.6, transition: { duration: 0.18 } }}
                       transition={SPRING}
                     >
-                      <span className="vm-block__v tabular">{showNum(item.value)}</span>
+                      <span className="vm-block__v tabular" style={blockFont(item.value)} title={showNum(item.value)}>
+                        {showNum(item.value)}
+                      </span>
                       {isTop && <span className="vm-block__tag">top</span>}
                     </motion.div>
                   )

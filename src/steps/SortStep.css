@@ -241,7 +241,7 @@
   padding: var(--s-2) var(--s-4);
   border-radius: inherit;
   background: var(--c, var(--select));
-  color: #fff;
+  color: var(--c-on, #fff);
   overflow: hidden;
   transition: transform 90ms var(--ease-out), background var(--dur-2), color var(--dur-2), filter var(--dur-1);
 }

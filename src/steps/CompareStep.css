@@ -18,7 +18,7 @@
   width: 40px;
   height: 40px;
   border-radius: var(--r-pill);
-  color: #fff;
+  color: var(--c-on, #fff);
   background: linear-gradient(160deg, color-mix(in srgb, var(--c, var(--select)) 70%, #fff), var(--c, var(--select)) 60%);
   box-shadow: 0 3px 0 0 var(--c-edge, var(--select-edge));
 }

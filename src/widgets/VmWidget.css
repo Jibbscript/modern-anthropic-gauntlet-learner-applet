@@ -300,6 +300,10 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+/* a long number would run under the "top" tag: drop it below the tag */
+.vm-block.is-top.is-long .vm-block__v {
+  padding-top: 9px;
+}
 .vm-block__tag {
   position: absolute;
   top: 2px;

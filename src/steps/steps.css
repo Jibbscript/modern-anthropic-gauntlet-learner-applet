@@ -45,3 +45,24 @@
 .goal-chip {
   align-self: flex-start;
 }
+
+/*
+ * Code inside a step soft-wraps instead of scrolling sideways, so the token a
+ * step is about (a blank, the buggy call, the printed value) is never hidden
+ * past the edge of a phone-width box. Wrapped rows hang 2ch past the line's own
+ * indent (--hang, set per line by ui/code/Code) so Python's indentation still
+ * reads; the line number marks where each real line starts.
+ */
+.step .code__lines {
+  width: 100%;
+}
+.step .code__src {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  padding-left: calc((var(--hang, 0) + 2) * 1ch);
+  text-indent: calc((var(--hang, 0) + 2) * -1ch);
+}
+/* text-indent is inherited: inline-block children (cloze slots) must not shift */
+.step .code__src * {
+  text-indent: 0;
+}
