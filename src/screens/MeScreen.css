@@ -189,6 +189,7 @@
 
 /* ---------------------------------------------------------------- stats */
 .me-stats {
+  container: mestats / inline-size;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--s-3);
@@ -287,6 +288,35 @@
 }
 .me-stat__note.is-good {
   color: var(--good-ink);
+}
+
+/* narrow phones: icon beside the number, label and note full width below */
+@container mestats (max-width: 320px) {
+  .me-stat {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    align-content: start;
+    column-gap: 10px;
+    row-gap: 0;
+  }
+  .me-stat__text {
+    display: contents;
+  }
+  .me-stat__icon {
+    width: 32px;
+    height: 32px;
+  }
+  .me-stat__label,
+  .me-stat__note {
+    grid-column: 1 / -1;
+  }
+  .me-stat__label {
+    margin-top: 4px;
+  }
+  .me-stat__value {
+    font-size: 24px;
+  }
 }
 
 /* -------------------------------------------------------------- heatmap */

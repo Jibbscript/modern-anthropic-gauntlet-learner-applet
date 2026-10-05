@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { bucketTake, burstObserved, burstRate, densest, makeBucket, makeWindow, nextTokenIn, tokensAt, windowTake, type Bucket, type FixedWindow, type ReqEvent } from './model'
+import { bucketMaxIn, bucketTake, burstObserved, burstRate, densest, makeBucket, makeWindow, nextTokenIn, peakSpan, tokensAt, windowTake, type Bucket, type FixedWindow, type ReqEvent } from './model'
 
 function sendBucket(b: Bucket, times: number[]): { b: Bucket; events: ReqEvent[] } {
   const events: ReqEvent[] = []
@@ -89,6 +89,34 @@ describe('fixed window', () => {
     const { events } = sendBucket(makeBucket(5, 1), [...before, ...after])
     expect(events.filter((e) => e.ok).length).toBe(5)
   })
+})
+
+describe('peak metric', () => {
+  // a learner holding the button across a window edge, for several configs
+  for (const [capacity, rate] of [
+    [5, 1],
+    [10, 1],
+    [3, 0.5],
+    [5, 10],
+    [20, 2],
+  ]) {
+    it(`a hold across a window edge beats the bucket bound (cap ${capacity}, rate ${rate})`, () => {
+      const r = burstRate(rate)
+      const W = capacity / rate
+      const span = peakSpan(capacity, rate)
+      expect(span).toBeLessThan(W)
+      const bound = bucketMaxIn(capacity, rate, span)
+      // start the hold so that `capacity` requests land just before the edge
+      const start = W - capacity / r - 0.001
+      const times = Array.from({ length: Math.ceil(3 * capacity) }, (_, i) => start + i / r)
+      const ev = sendWindow(makeWindow(capacity, W), times)
+      const peakWin = densest(ev.filter((e) => e.ok).map((e) => e.t), span).count
+      expect(peakWin).toBeGreaterThan(bound)
+      // the bucket, hammered the same way, never exceeds its bound
+      const { events } = sendBucket(makeBucket(capacity, rate, 0), times)
+      expect(densest(events.filter((e) => e.ok).map((e) => e.t), span).count).toBeLessThanOrEqual(bound)
+    })
+  }
 })
 
 describe('densest', () => {

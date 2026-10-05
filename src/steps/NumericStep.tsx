@@ -1,6 +1,6 @@
 import { AnimatePresence, motion } from 'motion/react'
 import { ArrowDown, ArrowUp, Check, Equal } from 'lucide-react'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react'
 import type { NumericStep as T } from '../core/types'
 import { Rich } from '../ui/Rich'
 import { haptic, sfx } from '../ui/fx'
@@ -103,6 +103,9 @@ function fmtRatio(r: number): string {
   return fmtNum(Number(r.toPrecision(2)))
 }
 
+const SUP = '⁰¹²³⁴⁵⁶⁷⁸⁹'
+const sup = (n: number) => [...String(n)].map((d) => SUP[Number(d)]).join('')
+
 /** "8 billion" style gloss for big numbers */
 function compactWords(n: number): string | null {
   if (Math.abs(n) < 1e6) return null
@@ -129,7 +132,7 @@ export function judge(x: number, answer: number, tolerance = 0.01): NumericVerdi
     const r = Math.abs(x / answer)
     const big = r >= 1 ? r : 1 / r
     const oom = Math.round(Math.log10(big))
-    far = big < 1.95 ? `about ${fmtPct(err * 100)}` : big < 10_000 ? `about ${fmtRatio(big)}×` : `about ${oom} orders of magnitude`
+    far = big < 1.95 ? `about ${fmtPct(err * 100)}` : big < 10_000 ? `about ${fmtRatio(big)}×` : `about 10${sup(oom)}×`
   }
   return { correct, err, dir, far }
 }
@@ -167,6 +170,7 @@ export default function NumericStep({ step, phase, attempt, setController, onHin
   useEffect(() => {
     if (locked) input.current?.blur()
   }, [locked])
+
   const tol = step.tolerance ?? 0.01
   const unit = step.unit?.trim() || undefined
   const value = useMemo(() => parseNumber(raw, unit), [raw, unit])
@@ -197,13 +201,15 @@ export default function NumericStep({ step, phase, attempt, setController, onHin
     input.current?.focus({ preventScroll: true })
   }
 
-  const len = (raw || '0').length + (unit ? Math.ceil(unit.length * 0.45) : 0)
-  const size = len <= 7 ? 'xl' : len <= 10 ? 'lg' : len <= 14 ? 'md' : 'sm'
+  // the number shrinks to fit beside the unit chip (see --nf-chars in the CSS)
+  const fit = { '--nf-chars': Math.max(3, (raw || '0').length), '--nf-unit': unit ? `${unit.length * 9 + 36}px` : '0px' } as CSSProperties
   const fieldState = phase === 'answer' ? 'answer' : phase === 'correct' ? 'correct' : 'incorrect'
-  const plain = value != null && /^[+-]?\d+(\.\d+)?$/.test(raw.trim())
+  // already a plain number (commas allowed): a "= …" echo would just repeat it
+  const plain = value != null && /^[+-]?(\d{1,3}(,\d{3})+|\d+)(\.\d+)?$/.test(raw.trim())
   const words = compactWords(step.answer)
+  const typedWords = value == null ? null : compactWords(value)
 
-  let status: React.ReactNode
+  let status: ReactNode
   if (phase === 'answer') {
     status = !raw.trim() ? (
       <span className="numeric__help">
@@ -212,7 +218,7 @@ export default function NumericStep({ step, phase, attempt, setController, onHin
     ) : value == null ? (
       <span className="numeric__help numeric__help--warn">Can’t read that as a number yet</span>
     ) : plain ? (
-      <span className="numeric__help">{compactWords(value) ? `≈ ${compactWords(value)}` : ' '}</span>
+      <span className="numeric__help">{typedWords ? `≈ ${typedWords}` : ' '}</span>
     ) : (
       <span className="numeric__help numeric__help--eq">
         <Equal size={14} strokeWidth={3} />
@@ -244,7 +250,8 @@ export default function NumericStep({ step, phase, attempt, setController, onHin
 
       <div className="numeric__stack">
         <motion.div
-          className={`numeric__field numeric__field--${fieldState} numeric__field--${size}`}
+          className={`numeric__field numeric__field--${fieldState}`}
+          style={fit}
           animate={phase === 'incorrect' ? { x: [0, -8, 8, -6, 6, -2, 0] } : phase === 'correct' ? { scale: [1, 1.04, 1] } : { x: 0, scale: 1 }}
           transition={{ duration: phase === 'incorrect' ? 0.42 : 0.34 }}
           onClick={() => !locked && input.current?.focus()}

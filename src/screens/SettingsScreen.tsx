@@ -122,7 +122,7 @@ export default function SettingsScreen() {
                 <span className="set-field__label" id="set-role">
                   Role you are interviewing for
                 </span>
-                <Segmented label="Role" value={profile.role} options={ROLES} onChange={(role) => setProfile({ role })} />
+                <Segmented label="Role" className="set-seg--roles" value={profile.role} options={ROLES} onChange={(role) => setProfile({ role })} />
               </div>
               <div className="set-field">
                 <label className="set-field__label" htmlFor="set-date">
@@ -344,14 +344,16 @@ function Segmented<T extends string | number>({
   options,
   onChange,
   label,
+  className,
 }: {
   value: T
   options: { value: T; label: string; icon?: ReactNode }[]
   onChange: (v: T) => void
   label: string
+  className?: string
 }) {
   return (
-    <div className="set-seg" role="radiogroup" aria-label={label}>
+    <div className={['set-seg', className].filter(Boolean).join(' ')} role="radiogroup" aria-label={label}>
       {options.map((o) => {
         const on = o.value === value
         return (

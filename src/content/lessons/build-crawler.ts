@@ -82,15 +82,14 @@ print(urljoin(page, "../about"))`,
       kind: 'cloze',
       id: 'normalize',
       prompt: 'Complete the normalizer so `/a`, `/a#top`, and a relative `a` found on the home page all become the same key.',
-      code: `from urllib.parse import urldefrag, urljoin, urlparse
-
-def normalize(page_url: str, href: str) -> str:
+      code: `def normalize(page_url: str, href: str):
     absolute = {{0}}(page_url, href)
     clean, _fragment = {{1}}(absolute)
     return clean
 
-def same_host(url: str, start: str) -> bool:
-    return urlparse(url).{{2}} == urlparse(start).netloc`,
+def same_host(url: str, start: str):
+    root = urlparse(start).netloc
+    return urlparse(url).{{2}} == root`,
       blanks: [
         { options: ['urljoin', 'urlparse', 'os.path.join'], answer: 0 },
         { options: ['urlparse', 'urldefrag', 'urlsplit'], answer: 1 },
@@ -219,7 +218,7 @@ def test_each_page_fetched_once():
       kind: 'mcq',
       id: 'politeness',
       eyebrow: 'Extend it',
-      prompt: 'Tests pass. The interviewer says: *now point it at a real site.* Which changes belong in the next level? Select all that apply.',
+      prompt: 'Tests pass. The interviewer says: *now point it at a real site.* Which changes belong in the next level?',
       multi: true,
       choices: [
         {
@@ -344,10 +343,13 @@ def test_each_page_fetched_once():
       skill: 'build.crawler',
       kind: 'predict',
       prompt: 'What does this print?',
-      code: `from urllib.parse import urldefrag, urljoin
+      code: `from urllib.parse import urljoin
+from urllib.parse import urldefrag
 
-print(urljoin("https://a.com/docs/", "intro"))
-print(urldefrag("https://a.com/x?y=1#top").url)`,
+base = "https://a.com/docs/"
+print(urljoin(base, "intro"))
+url = "https://a.com/x?y=1#top"
+print(urldefrag(url).url)`,
       answers: ['https://a.com/docs/intro\nhttps://a.com/x?y=1'],
       explanation: 'With a trailing slash, `docs/` is a directory, so the relative link goes inside it. `urldefrag` drops only the `#fragment`; the query string is part of the resource and stays.',
     },

@@ -30,15 +30,15 @@ const lesson: Lesson = {
       code: {
         lang: 'text',
         code: `Traceback (most recent call last):
-  File "/srv/app/main.py", line 6, in <module>
+  File "/app/main.py", line 6, in <module>
     handle({"id": 48213})
-  File "/srv/app/main.py", line 4, in handle
+  File "/app/main.py", line 4, in handle
     return get_user(req["id"])
            ^^^^^^^^^^^^^^^^^^^
-  File "/srv/app/api.py", line 5, in get_user
+  File "/app/api.py", line 5, in get_user
     return fetch(rows, user_id)
            ^^^^^^^^^^^^^^^^^^^^
-  File "/srv/app/db.py", line 2, in fetch
+  File "/app/db.py", line 2, in fetch
     return rows[user_id]
            ~~~~^^^^^^^^^
 KeyError: 48213`,
@@ -52,14 +52,14 @@ KeyError: 48213`,
       code: {
         lang: 'text',
         code: `Traceback (most recent call last):
-  File "/srv/app/jobs.py", line 7, in <module>
+  File "/app/jobs.py", line 7, in <module>
     run([])
-  File "/srv/app/jobs.py", line 4, in run
-    total = summarize(batch)
-            ^^^^^^^^^^^^^^^^
-  File "/srv/app/report.py", line 2, in summarize
-    return sum(r["amount"] for r in rows) / len(rows)
-           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~
+  File "/app/jobs.py", line 4, in run
+    avg = mean(batch)
+          ^^^^^^^^^^^
+  File "/app/calc.py", line 3, in mean
+    return total / len(rows)
+           ~~~~~~^~~~~~~~~~~
 ZeroDivisionError: division by zero`,
       },
       choices: [
@@ -68,7 +68,7 @@ ZeroDivisionError: division by zero`,
           feedback: '`run` called the function that failed. It is one frame further from the crash.',
         },
         {
-          text: '`summarize`',
+          text: '`mean`',
           correct: true,
           feedback: 'Right. The last `File` line is the innermost frame, and the `^` marker points at the division.',
         },
@@ -77,8 +77,8 @@ ZeroDivisionError: division by zero`,
           feedback: 'That is the outermost frame, where the script started. Tracebacks print most recent call last, so read from the bottom.',
         },
         {
-          text: '`sum`',
-          feedback: '`sum` returned 0 just fine; the division by `len(rows)` failed. And C builtins do not get `File` lines of their own.',
+          text: '`len`',
+          feedback: '`len` returned 0 just fine; dividing by that 0 failed. And C builtins do not get `File` lines of their own.',
         },
       ],
       explanation: 'Read from the bottom: the exception line, then the frame just above it. The `^` under `/` pins the failing operation within that line.',
@@ -131,16 +131,20 @@ def parse(tb: str) -> tuple[str, list[tuple[str, int, str]]]:
       code: `from collections import Counter
 
 crashes = [
-    ("KeyError", ["api.py:get_user", "db.py:fetch"]),
-    ("KeyError", ["api.py:get_user", "db.py:fetch"]),
-    ("TimeoutError", ["api.py:get_user", "http.py:call"]),
-    ("KeyError", ["api.py:list_users", "db.py:fetch"]),
+    ("KeyError", ["cli", "load", "db"]),
+    ("KeyError", ["web", "load", "db"]),
+    ("Timeout", ["web", "load", "http"]),
+    ("KeyError", ["web", "save", "db"]),
 ]
-groups = Counter((exc, tuple(frames[-2:])) for exc, frames in crashes)
-print(len(groups), groups.most_common(1)[0][1])`,
+groups = Counter(
+    (exc, tuple(frames[-2:]))
+    for exc, frames in crashes
+)
+top = groups.most_common(1)[0]
+print(len(groups), top[1])`,
       answers: ['3 2'],
       explanation:
-        'Three signatures: the two identical `get_user → fetch` KeyErrors share one group (count 2), the TimeoutError differs by type, and `list_users → fetch` differs by frame. Note the `tuple(...)`: a list is unhashable, so it cannot be part of a dict key.',
+        'Three signatures. The first two crashes enter from different places (`cli`, `web`) but share the innermost `load → db`, so they group together (count 2). The `Timeout` differs by type, and `save → db` differs by frame. Note the `tuple(...)`: a list is unhashable, so it cannot be part of a dict key.',
       hint: 'A signature here is the exception type plus the last two frames.',
     },
     {
@@ -186,11 +190,12 @@ t=10  main > render
       kind: 'cloze',
       id: 'prefix-loop',
       prompt: 'Complete the converter. Events are `("B" or "E", name, time)`, and `end` is when the last sample stops.',
-      code: `def to_events(samples: list[list[str]], ts: list[float], end: float):
+      code: `def to_events(samples, ts, end):
     events, prev = [], []
     for t, stack in zip(ts, samples):
+        n = min(len(prev), len(stack))
         i = 0
-        while i < min(len(prev), len(stack)) and {{0}}:
+        while i < n and {{0}}:
             i += 1
         for name in {{1}}:
             events.append(("E", name, t))
@@ -206,17 +211,24 @@ t=10  main > render
         { options: ['reversed(prev)', 'prev', 'stack[i:]'], answer: 0 },
       ],
       explanation:
-        'Compare by ==position==, `prev[i] == stack[i]`; membership breaks on recursion. Old frames end innermost first, so walk `prev[i:]` reversed. After the last sample, everything still open closes at `end`, again innermost first, so the events nest like a stack.',
+        'Compare by ==position==, `prev[i] == stack[i]`. Membership is fooled whenever a name sits elsewhere in the new stack: `[main, a, b] → [main, b, a]` would look unchanged. Old frames end innermost first, so walk `prev[i:]` reversed. At the end, everything still open closes at `end`, innermost first, so the events nest like a stack.',
       hint: 'Ends must come out in the opposite order to how those frames began.',
     },
     {
       kind: 'predict',
       id: 'events',
       prompt: 'Using `to_events` from the last step, with `+name` for a begin and `-name` for an end, what does this print?',
-      code: `samples = [["main"], ["main", "f"], ["main", "f", "f"], ["main", "g"]]
-events = to_events(samples, [0, 10, 20, 30], end=40)
-print(" ".join(("+" if kind == "B" else "-") + name
-               for kind, name, _ in events))`,
+      code: `samples = [
+    ["main"],
+    ["main", "f"],
+    ["main", "f", "f"],
+    ["main", "g"],
+]
+ts = [0, 10, 20, 30]
+ev = to_events(samples, ts, end=40)
+sym = {"B": "+", "E": "-"}
+out = [sym[k] + n for k, n, _ in ev]
+print(" ".join(out))`,
       answers: ['+main +f +f -f -f +g -g -main'],
       explanation:
         't=0 begins `main`; t=10 begins `f`. t=20 is recursion: the prefix is `[main, f]`, so a second `f` begins. t=30 shares only `main`, so both `f`s end, innermost first, and `g` begins. At t=40 the open stack closes: `g`, then `main`.',
@@ -244,8 +256,9 @@ print(" ".join(("+" if kind == "B" else "-") + name
       explanation:
         'Membership compares by ==name==, not position. The recursive `f` is already "in" the previous stack, so it never begins, yet both copies end later, and the events stop nesting. A stack is a sequence: find the common prefix by index, then slice.',
       fix: {
-        code: `        i = 0
-        while i < min(len(prev), len(stack)) and prev[i] == stack[i]:
+        code: `        n = min(len(prev), len(stack))
+        i = 0
+        while i < n and prev[i] == stack[i]:
             i += 1
         for name in reversed(prev[i:]):
             events.append(("E", name, t))
@@ -359,8 +372,14 @@ print(" ".join(("+" if kind == "B" else "-") + name
       skill: 'build.stacktrace',
       kind: 'predict',
       prompt: '`to_events` diffs consecutive stacks by common prefix (compared by position), ends old frames innermost first, begins new ones outermost first, and closes everything at `end`. What does this print?',
-      code: `events = to_events([["main", "a", "b"], ["main", "b"]], [0, 1], end=2)
-print(" ".join(("+" if k == "B" else "-") + n for k, n, _ in events))`,
+      code: `samples = [
+    ["main", "a", "b"],
+    ["main", "b"],
+]
+ev = to_events(samples, [0, 1], end=2)
+sym = {"B": "+", "E": "-"}
+out = [sym[k] + n for k, n, _ in ev]
+print(" ".join(out))`,
       answers: ['+main +a +b -b -a +b -b -main'],
       explanation: 'The prefix is only `[main]`, because position 1 holds `a` before and `b` after. So `b` and `a` both end, and a new `b` begins one level higher, even though a `b` was already open.',
     },
@@ -379,11 +398,13 @@ print(" ".join(("+" if k == "B" else "-") + n for k, n, _ in events))`,
       skill: 'build.stacktrace',
       kind: 'spotbug',
       prompt: 'This signature splits one `KeyError` bug into 9,000 groups. Which line?',
-      code: `def signature(exc_type: str, message: str, frames: list[Frame]) -> tuple:
-    app = [f for f in frames if "site-packages" not in f.file]
-    top = app[-3:]
-    return (exc_type, message, tuple((f.file, f.func) for f in top))`,
-      bugLines: [4],
+      code: `def signature(exc, msg, frames):
+    mine = [f for f in frames
+            if "site-packages" not in f.file]
+    top = mine[-3:]
+    where = tuple((f.file, f.func) for f in top)
+    return (exc, msg, where)`,
+      bugLines: [6],
       explanation: 'The message carries per-occurrence data (`KeyError: 48213`), so every user ID becomes its own group. Keep the type and innermost in-app frames; show messages as samples inside a group.',
     },
     {

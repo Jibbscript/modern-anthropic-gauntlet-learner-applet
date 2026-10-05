@@ -232,10 +232,10 @@ export default function DeadlockWidget({ config, onComplete }: WidgetProps<Deadl
     setEvent((e) => ({ n: e.n + 1, ...d }))
 
     if (findCycle(next)) {
-      haptic('error')
       if (goal === 'deadlock' && !tryToBreak) complete()
       else {
         sfx('wrong')
+        haptic('error')
         setMisses((m) => m + 1)
       }
       return

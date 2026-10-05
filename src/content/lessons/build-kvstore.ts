@@ -13,11 +13,11 @@ const lesson: Lesson = {
       eyebrow: 'Build round',
       title: 'Level 1 is the trap',
       body:
-        'Candidates describe practical rounds that keep growing one program: build it, make it work, extend it, scale it, test it. A leveled in-memory store is the classic practice problem for that shape: each level adds a spec to the same code.\n\n' +
+        'Candidates report (2025-2026) that the online assessment is a 90-minute CodeSignal project built over four levels, each unlocking when its tests pass. An in-memory key-field-value database is the most reported project.\n\n' +
         'Level 1 takes ten minutes. What decides levels 3 and 4 is whether your level 1 data model can ==absorb new requirements without a rewrite==.',
       callout: {
         tone: 'warn',
-        text: 'The spec below is a typical practice version, not a leaked question. Real prompts vary; the habits transfer.',
+        text: 'The specs here are prep-site reconstructions, not Anthropic’s text. Level 4 varies by report (backup/restore or historical reads), and some 2026 reports describe six levels. Practise the shape.',
       },
     },
     {
@@ -55,14 +55,17 @@ const lesson: Lesson = {
       title: 'Level 1 in a few lines',
       body:
         '`setdefault` creates a record on first write. The other habit worth having from minute one: when `delete` removes the last field, remove the record too. Then "empty record" never needs special handling in scans or backups.\n\n' +
-        'Write a test per method now. You will rerun them every time a level unlocks.',
+        'Keep a test per method. You will rerun them every time a level unlocks.',
       code: {
-        code: `class Store:
+        code: `Record = dict[str, str]  # field -> value
+
+class Store:
     def __init__(self):
-        self.data: dict[str, dict[str, str]] = {}
+        self.data: dict[str, Record] = {}
 
     def set(self, key, field, value):
-        self.data.setdefault(key, {})[field] = value`,
+        rec = self.data.setdefault(key, {})
+        rec[field] = value`,
       },
     },
     {
@@ -71,7 +74,8 @@ const lesson: Lesson = {
       eyebrow: 'Your turn',
       prompt: 'Finish `get` and `delete`. `get` returns `None` for anything missing; `delete` returns whether it removed something.',
       code: `def get(self, key, field):
-    return self.data.get(key, {}).{{0}}(field)
+    rec = self.data.get(key, {})
+    return rec.{{0}}(field)
 
 def delete(self, key, field):
     rec = self.data.get(key)
@@ -97,15 +101,19 @@ def delete(self, key, field):
         'Scans return one string like `age(31), name(Ada)`: fields sorted, `field(value)` pairs joined by `", "`, and `""` for a missing key. Points here are lost on formatting, not algorithms: sorting by value, a trailing comma, forgetting that string sort is case-sensitive. Build the string in one helper and have both scans call it.',
       code: {
         code: `def _fmt(self, rec, prefix=""):
-    items = sorted((f, v) for f, v in rec.items()
-                   if f.startswith(prefix))
-    return ", ".join(f"{f}({v})" for f, v in items)
+    items = sorted(
+        (f, v) for f, v in rec.items()
+        if f.startswith(prefix))
+    return ", ".join(
+        f"{f}({v})" for f, v in items)
 
 def scan(self, key):
-    return self._fmt(self.data.get(key, {}))
+    rec = self.data.get(key, {})
+    return self._fmt(rec)
 
 def scan_by_prefix(self, key, prefix):
-    return self._fmt(self.data.get(key, {}), prefix)`,
+    rec = self.data.get(key, {})
+    return self._fmt(rec, prefix)`,
       },
     },
     {
@@ -113,12 +121,15 @@ def scan_by_prefix(self, key, prefix):
       id: 'scan-output',
       eyebrow: 'Predict',
       prompt: 'What does this print? Two lines.',
-      code: `rec = {"b2": "x", "a10": "y", "a2": "z", "B": "w"}
+      code: `rec = {"b2": "x", "a10": "y",
+       "a2": "z", "B": "w"}
 
 def fmt(rec, prefix=""):
-    items = sorted((f, v) for f, v in rec.items()
-                   if f.startswith(prefix))
-    return ", ".join(f"{f}({v})" for f, v in items)
+    items = sorted(
+        (f, v) for f, v in rec.items()
+        if f.startswith(prefix))
+    return ", ".join(
+        f"{f}({v})" for f, v in items)
 
 print(fmt(rec, "a"))
 print(fmt(rec))`,
@@ -140,8 +151,10 @@ class Entry:
     value: str
     expires: int | None = None
 
-def _alive(self, e: Entry, ts: int) -> bool:
-    return e.expires is None or ts < e.expires`,
+def _alive(self, e: Entry, ts: int):
+    if e.expires is None:
+        return True
+    return ts < e.expires`,
         caption: 'The level 1 dict now maps fields to `Entry` objects. Nothing else in the structure changes.',
       },
     },
@@ -163,27 +176,31 @@ def _alive(self, e: Entry, ts: int) -> bool:
       prompt:
         'A test sets a field at 10 with ttl 5, then expects `get_at(…, 15)` to return `None`. It gets `"abc"` back. Tap the bug.',
       code: `def _alive(self, e, ts):
-    return e.expires is None or ts <= e.expires
+    if e.expires is None:
+        return True
+    return ts <= e.expires
 
-def set_at_with_ttl(self, key, field, value, ts, ttl):
+def set_at_with_ttl(self, key, field,
+                    value, ts, ttl):
     rec = self.data.setdefault(key, {})
     rec[field] = Entry(value, ts + ttl)
 
 def get_at(self, key, field, ts):
     e = self.data.get(key, {}).get(field)
-    if e is None or not self._alive(e, ts):
-        return None
-    return e.value
+    if e and self._alive(e, ts):
+        return e.value
+    return None
 
 def scan_at(self, key, ts):
     rec = self.data.get(key, {})
-    live = {f: e.value for f, e in rec.items()
+    live = {f: e.value
+            for f, e in rec.items()
             if self._alive(e, ts)}
     return self._fmt(live)`,
-      bugLines: [2],
+      bugLines: [4],
       explanation:
         '`expires` is `t + ttl`, the first timestamp at which the field is dead, so the check must be strict. Because every read goes through `_alive`, one character fixes get, scan and backup together. That is the payoff of keeping time logic in one place.',
-      fix: { code: '    return e.expires is None or ts < e.expires' },
+      fix: { code: '    return ts < e.expires' },
       hint: 'What does `expires` mean: the last alive timestamp, or the first dead one?',
     },
     {
@@ -197,9 +214,14 @@ def scan_at(self, key, ts):
         code: `def backup(self, ts):
     snap = {}
     for key, rec in self.data.items():
-        live = {f: (e.value, None if e.expires is None
-                    else e.expires - ts)
-                for f, e in rec.items() if self._alive(e, ts)}
+        live = {}
+        for f, e in rec.items():
+            if not self._alive(e, ts):
+                continue
+            left = None
+            if e.expires is not None:
+                left = e.expires - ts
+            live[f] = (e.value, left)
         if live:
             snap[key] = live
     self.backups.append((ts, snap))
@@ -243,19 +265,19 @@ def scan_at(self, key, ts):
       items: [
         'Read the whole new spec, examples included',
         'List which existing methods change behavior',
-        'Turn the spec’s examples into tests',
         'Make the smallest data-model change that fits',
-        'Implement, then rerun every earlier level’s tests',
+        'Implement, running the new tests as you go',
+        'Rerun every earlier level’s tests before moving on',
       ],
       explanation:
-        'Reading first stops you building the wrong thing, and the examples are free test cases. A minimal model change (wrap the value in an `Entry`) keeps earlier levels passing, and rerunning old tests catches regressions before they cost you a level.',
-      hint: 'Tests come from the spec, so the spec comes first. Regression checks come last.',
+        'Reading first stops you building the wrong thing. A minimal model change (wrap the value in an `Entry`) keeps earlier levels passing. Candidates describe tests shipping with each OA level, so treat them as the real spec and read failures closely; in live rounds you write them yourself.',
+      hint: 'Understand before you change; check for regressions last.',
     },
     {
       kind: 'interview',
       id: 'pushback',
       eyebrow: 'Interview sim',
-      setup: 'You passed level 3. The interviewer pauses to talk before level 4.',
+      setup: 'Same problem in a live round: the interviewer has watched you pass level 3 and pauses before level 4.',
       turns: [
         {
           interviewer: 'Suppose many threads share this store. What breaks, and what do you do first?',
@@ -360,14 +382,19 @@ def scan_at(self, key, ts):
     return len(snap)
 
 def restore(self, ts, ts_to_restore):
-    for t, snap in reversed(self.backups):
+    for t, snap in self.backups[::-1]:
         if t <= ts_to_restore:
-            self.data = {k: dict(r)
-                         for k, r in snap.items()}
+            self.data = {
+                k: dict(r)
+                for k, r in snap.items()}
             return`,
       bugLines: [2],
-      explanation: '`dict(self.data)` copies only the outer dict; each record dict is shared with the live store, so later sets write into the backup.',
-      fix: { code: '    snap = {k: dict(r) for k, r in self.data.items()}' },
+      explanation:
+        '`dict(self.data)` copies only the outer dict. Each record dict is shared with the live store, so later sets write into the backup. Copy each record too.',
+      fix: {
+        code: `    snap = {k: dict(r)
+            for k, r in self.data.items()}`,
+      },
     },
     {
       id: 'build-kvstore.alive-predict',
@@ -375,7 +402,9 @@ def restore(self, ts, ts_to_restore):
       kind: 'predict',
       prompt: 'What does this print? Three lines.',
       code: `def alive(expires, ts):
-    return expires is None or ts < expires
+    if expires is None:
+        return True
+    return ts < expires
 
 set_at, ttl = 10, 3
 for ts in (10, 12, 13):
@@ -388,8 +417,10 @@ for ts in (10, 12, 13):
       skill: 'build.kvstore',
       kind: 'cloze',
       prompt: 'Fill in the three TTL rules: the alive check, remaining TTL at backup, and expiry after restore.',
-      code: `def _alive(e, ts):
-    return e.expires is None or ts {{0}} e.expires
+      code: `def alive(e, ts):
+    if e.expires is None:
+        return True
+    return ts {{0}} e.expires
 
 def remaining(e, backup_ts):
     if e.expires is None:
@@ -397,7 +428,9 @@ def remaining(e, backup_ts):
     return e.expires {{1}} backup_ts
 
 def restored_expiry(rem, restore_ts):
-    return None if rem is None else restore_ts {{2}} rem`,
+    if rem is None:
+        return None
+    return restore_ts {{2}} rem`,
       blanks: [
         { options: ['<', '<=', '>'], answer: 0 },
         { options: ['-', '+', '//'], answer: 0 },
@@ -435,6 +468,26 @@ def restored_expiry(rem, restore_ts):
       prompt: 'A field is set at 5 with ttl 20. Then `backup(15)`. Later, `restore(100, 15)`. At what timestamp does the restored field expire?',
       answer: 110,
       explanation: 'Expiry 25, so 25 − 15 = 10 remaining at backup. Restored at 100, it expires at 110.',
+    },
+    {
+      id: 'build-kvstore.delete-expired',
+      skill: 'build.kvstore',
+      kind: 'mcq',
+      prompt: 'A field expired at 15. At 20, `delete_at(key, field, 20)` targets it. What should it return under a typical spec?',
+      choices: [
+        {
+          text: '`False`: to every reader the field is already gone',
+          correct: true,
+          feedback: 'Delete reports whether a live field was removed, so it checks `_alive` like every other read.',
+        },
+        {
+          text: '`True`: the entry was still in the dict, so it was deleted',
+          feedback: 'That leaks storage details. Lazy expiry means the dict can hold dead entries that no reader should see.',
+        },
+        { text: '`None`, because the field has expired', feedback: 'Delete returns a boolean in this spec; `None` is what `get_at` returns.' },
+        { text: 'It raises `KeyError`', feedback: 'Missing or expired fields are normal cases, not exceptions.' },
+      ],
+      explanation: 'With lazy expiry, every operation that reads a field, delete included, must apply the same `_alive` check. Forgetting it in delete is a common TTL bug.',
     },
   ],
 }

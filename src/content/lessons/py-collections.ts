@@ -14,8 +14,11 @@ const lesson: Lesson = {
       title: 'Correct is not done',
       body: "Candidates report that practical rounds rarely stop at \"it works\". The next prompt is \"now make it scale\" or \"now make it concurrent\". What breaks first is rarely the algorithm. It's a container doing something linear inside a loop you assumed was cheap.\n\nThe same few characters can hide very different costs:",
       code: {
-        code: `x in items   # list: compares against every element
-x in seen    # set: one hash lookup, on average`,
+        code: `# list: compares against every element
+x in items
+
+# set: one hash lookup, on average
+x in seen`,
       },
     },
     {
@@ -72,8 +75,9 @@ by_host = defaultdict(list)
 for url in urls:
     by_host[host(url)].append(url)
 
-codes = Counter(line.split()[0] for line in log)
-codes.most_common(3)   # [(code, count), ...]`,
+first = (ln.split()[0] for ln in log)
+codes = Counter(first)
+codes.most_common(3)  # [(code, n), ...]`,
       },
       callout: {
         tone: 'warn',
@@ -105,10 +109,11 @@ print(c["s"], c["z"])`,
         code: `import heapq, itertools
 
 h, tie = [], itertools.count()
-heapq.heappush(h, (deadline, next(tie), job))
-deadline, _, job = heapq.heappop(h)   # earliest first
-h[0]                                  # peek, O(1)
-heapq.nlargest(3, scores)             # top 3`,
+item = (deadline, next(tie), job)
+heapq.heappush(h, item)
+deadline, _, job = heapq.heappop(h)
+soonest = h[0]       # peek, O(1)
+top3 = heapq.nlargest(3, scores)`,
       },
     },
     {
@@ -145,14 +150,14 @@ class LRU:
     def get(self, key):
         if key not in self.data:
             return None
-        self.data.move_to_end(key)          # now most recent
+        self.data.move_to_end(key)
         return self.data[key]
 
     def put(self, key, value):
         self.data[key] = value
         self.data.move_to_end(key)
         if len(self.data) > self.capacity:
-            self.data.popitem(last=False)   # evict oldest`,
+            self.data.popitem(last=False)`,
       },
     },
     {
@@ -177,16 +182,19 @@ class LRU:
       kind: 'concept',
       id: 'bisect-sets',
       title: 'Sorted lists and set algebra',
-      body: 'On a sorted list, `bisect` finds positions in O(log n), so "how many events before t?" is one call. Inserting still shifts elements, so `insort` is O(n). Sets answer whole-collection questions in one expression: `-` (difference), `&` (intersection), `|` (union), `^` (in one but not both).',
+      body: 'On a sorted list, `bisect` finds positions in O(log n): `bisect_left` lands before the first equal item, `bisect_right` just after the last. "How many events before t?" is one call. Inserting still shifts elements, so `insort` is O(n). Sets answer whole-collection questions in one expression: `-`, `&`, `|`, `^`.',
       code: {
         code: `import bisect
 
 ts = [3, 7, 7, 12, 20]
-bisect.bisect_left(ts, 7)    # 1: before the first 7
-bisect.bisect_right(ts, 7)   # 3: after the last 7
-bisect.insort(ts, 10)        # stays sorted, O(n)
+bisect.bisect_left(ts, 7)   # 1
+bisect.bisect_right(ts, 7)  # 3
+bisect.insort(ts, 10)       # O(n)
 
-found - visited              # links not crawled yet`,
+found - visited   # not yet crawled
+found & visited   # in both
+found | visited   # in either
+found ^ visited   # in exactly one`,
       },
     },
     {
@@ -194,13 +202,16 @@ found - visited              # links not crawled yet`,
       id: 'window',
       eyebrow: 'Fill in',
       prompt: "Count timestamps in the **inclusive** range [lo, hi] of a sorted list, then return the links you haven't visited.",
-      code: `import bisect
+      code: `from bisect import bisect_left, bisect_right
 
 def count_between(ts, lo, hi):
-    """How many t in sorted ts with lo <= t <= hi?"""
-    return bisect.{{0}}(ts, hi) - bisect.{{1}}(ts, lo)
+    # ts is sorted; count lo <= t <= hi
+    upper = {{0}}(ts, hi)
+    lower = {{1}}(ts, lo)
+    return upper - lower
 
-def new_links(found: set, visited: set) -> set:
+def new_links(found, visited):
+    # both are sets
     return found {{2}} visited`,
       blanks: [
         { options: ['bisect_left', 'bisect_right', 'insort'], answer: 1 },
@@ -259,13 +270,13 @@ def new_links(found: set, visited: set) -> set:
       body: 'Choose by the operation you do most, then check what it costs inside your hottest loop. A perf bug is still a bug, and "now scale it" is a commonly reported follow-up in practical rounds.',
       code: {
         lang: 'text',
-        code: `BFS frontier     deque        O(1) ends
-counts, top-k    Counter      O(1) update
-group by key     defaultdict  O(1) append
-next smallest    heapq        O(log n)
-LRU order        OrderedDict  O(1) move/pop
-sorted search    bisect       O(log n)
-membership       set          O(1) avg`,
+        code: `BFS frontier   deque        O(1) ends
+counting       Counter      O(1)
+grouping       defaultdict  O(1)
+next smallest  heapq        O(log n)
+LRU order      OrderedDict  O(1)
+sorted search  bisect       O(log n)
+membership     set          O(1) avg`,
       },
     },
   ],
@@ -302,8 +313,9 @@ h = []
 heapq.heappush(h, (2, "write"))
 heapq.heappush(h, (1, "read"))
 heapq.heappush(h, (2, "audit"))
-print([heapq.heappop(h)[1] for _ in range(3)])`,
-      answers: ["['read', 'audit', 'write']"],
+while h:
+    print(heapq.heappop(h)[1])`,
+      answers: ['read\naudit\nwrite'],
       explanation:
         'Tuples compare left to right: priority 1 first, then the two priority-2 items fall back to comparing their strings. If payloads are not comparable, put a counter in the middle as a tie-breaker.',
     },

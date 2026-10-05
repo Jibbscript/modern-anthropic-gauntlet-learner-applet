@@ -283,7 +283,7 @@ function StageStatus({ phase }: { phase: StepProps['phase'] }) {
       : phase === 'correct'
         ? [CircleCheck, 'Every card is in the right bucket', '', 'good']
         : phase === 'incorrect'
-          ? [CircleX, 'Red cards are in the wrong bucket', '', 'bad']
+          ? [CircleX, 'Yellow cards belong in another bucket', '', 'bad']
           : [Eye, 'Here is where each card goes', 'Striped cards were moved.', 'reveal']
   const compact = phase !== 'answer'
   return (

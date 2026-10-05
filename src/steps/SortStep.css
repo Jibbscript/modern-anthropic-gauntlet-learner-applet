@@ -233,11 +233,12 @@
 .sort-bucket__label {
   position: relative;
   z-index: 1;
+  min-width: 0;
   font-size: var(--fs-md);
   font-weight: 700;
   line-height: 1.2;
   text-align: center;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
   hyphens: auto;
 }
 .sort-bucket__n {
@@ -400,7 +401,10 @@
   .sort-buckets {
     gap: 8px;
   }
+  .sort-bucket__face {
+    padding: var(--s-2) 6px;
+  }
   .sort-bucket__label {
-    font-size: var(--fs-sm);
+    font-size: 13px;
   }
 }

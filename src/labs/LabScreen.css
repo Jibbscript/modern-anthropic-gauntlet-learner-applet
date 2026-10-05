@@ -276,6 +276,10 @@
   box-shadow: inset 0 0 0 2px var(--good);
 }
 
+.lab__sum--stale {
+  opacity: 0.55;
+}
+
 .lab__sum--bad {
   background: var(--bad-soft);
   color: var(--bad-ink);
@@ -963,6 +967,15 @@
 
 .lab-done__over {
   color: var(--ink-3);
+}
+
+.lab-done__titles {
+  min-width: 0;
+}
+
+.lab-done p.lab-done__name {
+  font-weight: 700;
+  color: var(--ink);
 }
 
 .lab-done--compact {

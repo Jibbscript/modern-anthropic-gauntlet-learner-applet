@@ -21,9 +21,10 @@ for i in range(len(names)):
         passed.append(names[i].title())
 
 # says what it means
+rows = zip(names, scores, strict=True)
 passed = [
     name.title()
-    for name, score in zip(names, scores, strict=True)
+    for name, score in rows
     if score >= 50
 ]`,
       },
@@ -33,7 +34,8 @@ passed = [
       id: 'dict-comp',
       eyebrow: 'Predict',
       prompt: 'Comprehensions build dicts too. What does this print?',
-      code: `words = ["apple", "avocado", "banana", "blueberry", "cherry"]
+      code: `words = ["apple", "avocado", "banana",
+         "blueberry", "cherry"]
 first = {w[0]: w for w in words}
 print(first)`,
       answers: ["{'a': 'avocado', 'b': 'blueberry', 'c': 'cherry'}"],
@@ -87,13 +89,15 @@ print(first)`,
       title: 'Unpack instead of index',
       body: "Indexing (`row[0]`, `row[2]`) makes readers count. Unpacking names things, and a starred target grabs \"the rest\". `enumerate` gives you the index without `range(len(...))`. And `zip(..., strict=True)` (Python 3.10+) raises `ValueError` when inputs differ in length, where plain `zip` silently stops at the shortest.",
       code: {
-        code: `host, port = addr.split(":")   # ValueError unless exactly 2 parts
+        code: `# ValueError unless exactly two parts
+host, port = addr.split(":")
 first, *middle, last = path.split("/")
 
-for lineno, line in enumerate(lines, start=1):
+for i, line in enumerate(lines, start=1):
     ...
 
-for name, score in zip(names, scores, strict=True):
+pairs = zip(names, scores, strict=True)
+for name, score in pairs:
     ...`,
       },
     },
@@ -118,12 +122,14 @@ print(list(zip([1, 2, 3], "xy")))`,
       code: {
         code: `def records(path):
     with open(path) as f:
-        for line in f:
-            line = line.strip()
-            if line and not line.startswith("#"):
+        for raw in f:
+            line = raw.strip()
+            if line and line[0] != "#":
                 yield line.split(",")
 
-errors = (r for r in records("app.log") if r[1] == "ERROR")
+rows = records("app.log")
+errors = (r for r in rows
+          if r[1] == "ERROR")
 print(sum(1 for _ in errors))`,
       },
     },
@@ -186,12 +192,16 @@ with working_dir("/tmp") as p:
         return ["no orders"]
     groups = {}
     for o in orders:
-        groups.{{0}}(o.customer, []).append(o.total)
-    ranked = sorted(groups.items(), key={{1}}, reverse=True)
-    lines = [f"{name}: {sum(ts):.2f}" for name, ts in ranked]
+        totals = groups.{{0}}(o.name, [])
+        totals.append(o.total)
+    ranked = sorted(groups.items(),
+                    key={{1}},
+                    reverse=True)
+    out = [f"{n}: {sum(t):.2f}"
+           for n, t in ranked]
     if {{2}}(o.days > 7 for o in orders):
-        lines.append("some orders are late")
-    return lines`,
+        out.append("some orders are late")
+    return out`,
       blanks: [
         { options: ['get', 'setdefault', 'pop', 'update'], answer: 1 },
         { options: ['lambda kv: kv[1]', 'len', 'lambda kv: sum(kv[1])', 'sum'], answer: 2 },
@@ -207,11 +217,13 @@ with working_dir("/tmp") as p:
       title: 'Evaluated when?',
       body: "Two classic traps, one question: *when* does Python evaluate this?\n\nA default value is evaluated **once**, when `def` runs, so a mutable default (`[]`, `{}`, `set()`) is shared by every call. A closure reads its variables when it's **called**, not when it's created, so lambdas made in a loop all see the loop's final value.",
       code: {
-        code: `def add(item, bucket=[]):     # one list, shared by every call
+        code: `# one list, shared by every call
+def add(item, bucket=[]):
     bucket.append(item)
     return bucket
 
-def add(item, bucket=None):   # the fix
+# the fix: a fresh list per call
+def add(item, bucket=None):
     if bucket is None:
         bucket = []
     bucket.append(item)
@@ -229,7 +241,7 @@ def add(item, bucket=None):   # the fix
       prompt: "The first call prints `['a', 'b', 'c']`. The second, identical call prints `['a']`. Tap the line that causes it.",
       code: `from collections import deque
 
-def crawl_order(start, links, seen=set()):
+def crawl(start, links, seen=set()):
     order = []
     queue = deque([start])
     seen.add(start)
@@ -243,13 +255,13 @@ def crawl_order(start, links, seen=set()):
     return order
 
 links = {"a": ["b", "c"], "b": ["c"]}
-print(crawl_order("a", links))
-print(crawl_order("a", links))`,
+print(crawl("a", links))
+print(crawl("a", links))`,
       bugLines: [3],
       explanation:
         "`seen=set()` is evaluated once, when `def` runs. The first call fills that one set; the second call starts with every page already \"seen\". Tests that call the function once pass, which is how this survives into an interview.",
       fix: {
-        code: `def crawl_order(start, links, seen=None):
+        code: `def crawl(start, links, seen=None):
     if seen is None:
         seen = set()
     ...`,
@@ -260,26 +272,27 @@ print(crawl_order("a", links))`,
       kind: 'spotbug',
       id: 'late-binding',
       eyebrow: 'Find the bug',
-      prompt: 'A 50-character title should fail the 10-character limit, yet `validate` returns `[]`. Tap the buggy line.',
-      code: `def make_validators(limits):
-    """Map each field to a check: is the value short enough?"""
-    checks = {}
-    for name, max_len in limits.items():
-        checks[name] = lambda value: len(value) <= max_len
-    return checks
+      prompt: 'A 50-character title should break the 10-character limit, yet `problems` returns `[]`. Tap the buggy line.',
+      code: `def make_checks(limits):
+    # field -> check(value) -> bool
+    return {
+        f: lambda v: len(v) <= n
+        for f, n in limits.items()
+    }
 
+def problems(record, checks):
+    return [f for f, ok in checks.items()
+            if not ok(record.get(f, ""))]
 
-def validate(record, checks):
-    return [f for f, ok in checks.items() if not ok(record.get(f, ""))]
-
-
-checks = make_validators({"title": 10, "body": 200})
-print(validate({"title": "x" * 50, "body": "hi"}, checks))`,
-      bugLines: [5],
+limits = {"title": 10, "body": 200}
+record = {"title": "x" * 50, "body": "hi"}
+checks = make_checks(limits)
+print(problems(record, checks))`,
+      bugLines: [4],
       explanation:
-        'Each lambda looks up `max_len` when it is *called*. By then the loop has finished and `max_len` is 200, so every field gets the body\'s limit. Bind the value at creation time with a default argument, or use `functools.partial`.',
-      fix: { code: `checks[name] = lambda value, limit=max_len: len(value) <= limit` },
-      hint: 'When does the lambda read `max_len`?',
+        "Each lambda looks up `n` when it is *called*. By then the comprehension has finished and `n` is 200, so every field gets the body's limit. A comprehension is still a loop with one shared variable. Bind the value at creation time with a default argument, or use `functools.partial`.",
+      fix: { code: `f: lambda v, n=n: len(v) <= n` },
+      hint: 'When does the lambda read `n`?',
     },
     {
       kind: 'concept',
@@ -327,12 +340,13 @@ class Crawl:
       skill: 'py.idioms',
       kind: 'spotbug',
       prompt: '`fetch_all(["a", "b", "c"], fetch)` fetches `"c"` three times. Tap the bug.',
-      code: `import threading
+      code: `from threading import Thread
 
 def fetch_all(urls, fetch):
     threads = []
     for url in urls:
-        threads.append(threading.Thread(target=lambda: fetch(url)))
+        t = Thread(target=lambda: fetch(url))
+        threads.append(t)
     for t in threads:
         t.start()
     for t in threads:
@@ -340,7 +354,7 @@ def fetch_all(urls, fetch):
       bugLines: [6],
       explanation:
         'The lambda reads `url` when the thread runs, after the loop has moved on (late binding). Pass the value explicitly so it is captured now.',
-      fix: { code: `threads.append(threading.Thread(target=fetch, args=(url,)))` },
+      fix: { code: `t = Thread(target=fetch, args=(url,))` },
     },
     {
       id: 'py-idioms.genexp-twice',
@@ -378,8 +392,10 @@ class Url:
     host: str
     path: str = "/"
 
-seen = {Url("a.com"), Url("a.com", "/"), Url("b.com")}
-print(len(seen))`,
+a = Url("a.com")
+b = Url("a.com", "/")
+c = Url("b.com")
+print(len({a, b, c}))`,
       answers: ['2'],
       explanation:
         '`frozen=True` (with the default `eq=True`) generates `__hash__` from the fields, so equal records collapse in a set. `Url("a.com")` equals `Url("a.com", "/")`.',

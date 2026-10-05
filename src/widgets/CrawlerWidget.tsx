@@ -1,6 +1,6 @@
 import { AnimatePresence, LayoutGroup, motion, useReducedMotion, useReducedMotionConfig } from 'motion/react'
 import { CheckCircle2, Lock, Pause, Play, RotateCcw, StepForward, Target } from 'lucide-react'
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
+import { useEffect, useId, useMemo, useRef, useState, type CSSProperties } from 'react'
 import { Button } from '../ui/Button'
 import { Tile } from '../ui/Tile'
 import { haptic, sfx } from '../ui/fx'
@@ -61,6 +61,7 @@ export default function CrawlerWidget({ config, onComplete }: WidgetProps<Crawle
     return () => ro.disconnect()
   }, [])
 
+  const groupId = useId()
   const edges = useMemo(() => edgeGeometry(graph), [graph])
   const reach = useMemo(() => crawlable(graph, opts.sameHost), [graph, opts.sameHost])
 
@@ -179,7 +180,7 @@ export default function CrawlerWidget({ config, onComplete }: WidgetProps<Crawle
         <Stat label="Ticks" value={sim.tick} />
       </div>
 
-      <LayoutGroup id="crawl">
+      <LayoutGroup id={groupId}>
         <div className="crawl-card">
           <div className="crawl-legend" aria-hidden>
             {hostsShown.map((h) => {

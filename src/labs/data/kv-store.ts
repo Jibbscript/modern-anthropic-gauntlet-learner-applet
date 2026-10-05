@@ -842,7 +842,7 @@ const lab: Lab = {
   title: 'In-memory database',
   area: 'builds',
   summary:
-    'The most commonly reported progressive build: a record store that grows **TTLs** and **point-in-time backups** over four levels. Earlier levels keep their tests, so every refactor has to keep them green.',
+    'The progressive build candidates report most often: a record store that grows **TTLs** and **point-in-time backups** over four levels. Earlier levels keep their tests, so every refactor has to keep them green.',
   minutes: 90,
   starter: STARTER,
   levels: [level1, level2, level3, level4],

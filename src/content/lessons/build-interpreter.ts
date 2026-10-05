@@ -13,8 +13,8 @@ const lesson: Lesson = {
       eyebrow: 'Build round',
       title: 'A loop and a dict',
       body:
-        'Candidates report small instruction interpreters among the practical questions: a made-up instruction set, a short spec, make it run.\n\n' +
-        "It sounds like compiler work. It isn't. A clean interpreter is three pieces: a parser that turns lines into `(op, args, line_no)`, a dict of handlers, and a loop with a program counter. The round tests whether you build them cleanly, then ==extend them without a rewrite==.",
+        'Instruction interpreters turn up in candidate reports, less often than crawlers or file dedup: a made-up instruction set, a short spec, make it run.\n\n' +
+        "This isn't compiler work. A clean interpreter is three pieces: a parser that turns lines into `(op, args, line_no)`, a dict of handlers, and a loop with a program counter. The test is building them cleanly, then ==extending them without a rewrite==.",
       code: {
         lang: 'text',
         code: `# add two numbers and print the result
@@ -70,7 +70,7 @@ HALT`,
         'In this lesson `DUP` copies the top, `SWAP` flips the top two, and `JZ` and `PRINT` pop their value.',
       code: {
         code: `def binop(self, fn):
-    b = self.pop()   # top of stack: right operand
+    b = self.pop()  # top: right operand
     a = self.pop()
     self.push(fn(a, b))`,
       },
@@ -109,9 +109,10 @@ def op_sub(vm):
 
 def op_jz(vm, label):
     if vm.pop() == 0:
-        return label   # ask the loop to jump
+        return label  # loop jumps there
 
-DISPATCH = {"PUSH": op_push, "SUB": op_sub,
+DISPATCH = {"PUSH": op_push,
+            "SUB": op_sub,
             "JZ": op_jz}`,
       },
     },
@@ -120,16 +121,20 @@ DISPATCH = {"PUSH": op_push, "SUB": op_sub,
       id: 'core-loop',
       eyebrow: 'Your turn',
       prompt:
-        'Fill in the core loop. A parser already produced `program` (a list of `(op, args, line)`) and `labels` (label name → instruction index).',
+        'Fill in the core loop. A parser already produced `program` (a list of `(op, args, line)`) and `labels` (label name → instruction index). HALT sets `vm.halted`.',
       code: `def run(program, labels):
-    vm, pc = VM(), 0
-    while pc < len(program) and not vm.halted:
+    vm, pc, n = VM(), 0, len(program)
+    while pc < n and not vm.halted:
         op, args, line = program[pc]
         handler = DISPATCH.{{0}}(op)
         if handler is None:
-            raise VMError(f"line {line}: unknown op {op}")
+            raise VMError(
+                f"line {line}: unknown op")
         target = handler(vm, *args)
-        pc = {{1}} if target is None else {{2}}
+        if target is None:
+            pc = {{1}}
+        else:
+            pc = {{2}}
     return vm`,
       blanks: [
         { options: ['get', 'pop', 'setdefault'], answer: 0 },
@@ -220,7 +225,8 @@ HALT`,
 
 def pop(self):
     if not self.stack:
-        raise VMError(f"line {self.line}: stack underflow")
+        raise VMError(
+            f"line {self.line}: stack underflow")
     return self.stack.pop()`,
       },
     },
@@ -243,7 +249,8 @@ def pop(self):
         a = self.pop()
         self.stack.append(fn(b, a))
 
-OPS = {"ADD": operator.add, "SUB": operator.sub,
+OPS = {"ADD": operator.add,
+       "SUB": operator.sub,
        "MUL": operator.mul}`,
       bugLines: [13],
       explanation:
@@ -451,6 +458,34 @@ def op_dup(vm):
       kind: 'flash',
       front: 'How would you add `CALL label` and `RET` to a stack VM?',
       back: 'A separate call stack. CALL pushes `pc + 1` and jumps to the label; RET pops and jumps there. RET on an empty call stack raises with the line number.',
+    },
+    {
+      id: 'build-interpreter.revisit',
+      skill: 'build.interpreter',
+      kind: 'mcq',
+      prompt:
+        'An instruction set has only `acc x` (add x to an accumulator), `nop`, and `jmp x` (jump x instructions; no conditional jumps). Why does reaching an already-executed instruction prove the program loops forever?',
+      choices: [
+        {
+          text: 'The next `pc` depends only on the current `pc`, so the path repeats',
+          correct: true,
+          feedback: 'Yes. Control flow never reads the accumulator, so the same instruction always leads to the same successor.',
+        },
+        {
+          text: 'The accumulator must hold the same value as last time',
+          feedback: 'It usually holds a different value. The loop is proven by control flow, not by data.',
+        },
+        {
+          text: 'Every `jmp` in such programs points backward',
+          feedback: 'Forward jumps are allowed. A cycle can include any mix of directions.',
+        },
+        {
+          text: 'The step limit has been exceeded by then',
+          feedback: 'No step limit is needed here; one revisit is already proof.',
+        },
+      ],
+      explanation:
+        'Track a set of visited indices and stop on the first repeat. A rarely reported variant ("repair the bootloader") builds on this: find the one swapped `jmp`/`nop` that makes the program terminate.',
     },
   ],
 }

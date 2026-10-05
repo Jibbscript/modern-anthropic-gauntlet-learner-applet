@@ -711,7 +711,7 @@ class LRUCache:
 
 const level3: LabLevel = {
   title: 'Stats and resize',
-  spec: `"How would you know the cache is working?" Add **metrics**, and a way to **resize** a live cache.
+  spec: `Interviewers like to ask how you would know the cache is working. Add **metrics**, and a way to **resize** a live cache.
 
 - \`stats()\` returns a new dict \`{"hits": h, "misses": m, "evictions": e}\`, counted since the cache was created.
 - A \`get\` that returns a value is a **hit**. A \`get\` that returns \`None\` (missing *or* expired) is a **miss**. \`put\` and \`len\` never change hits or misses.

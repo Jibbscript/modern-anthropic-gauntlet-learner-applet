@@ -6,12 +6,14 @@ import { Tile } from '../ui/Tile'
 import { haptic, sfx } from '../ui/fx'
 import type { TokenBucketConfig, WidgetProps } from './specs'
 import {
+  bucketMaxIn,
   bucketTake,
   burstRate,
   densest,
   makeBucket,
   makeWindow,
   newBurst,
+  peakSpan,
   tokensAt,
   trackBurst,
   windowAt,
@@ -88,8 +90,13 @@ function Jar({ capacity, level, mode, uid, reduce, flash }: { capacity: number; 
           <stop offset="0" className="tb-gold0" />
           <stop offset="1" className="tb-gold1" />
         </linearGradient>
+        <linearGradient id={`${uid}-glass`} x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" className="tb-glass0" />
+          <stop offset="0.5" className="tb-glass1" />
+          <stop offset="1" className="tb-glass2" />
+        </linearGradient>
       </defs>
-      <rect x={4} y={6} width={g.W - 8} height={g.H - 8} rx={16} className="tb-jar__glass" />
+      <rect x={4} y={6} width={g.W - 8} height={g.H - 8} rx={16} className="tb-jar__glass" fill={`url(#${uid}-glass)`} />
       {/* forming coin: fills like a pie as the refill accrues */}
       {frac > 0.001 && (
         <g>
@@ -115,7 +122,8 @@ function Jar({ capacity, level, mode, uid, reduce, flash }: { capacity: number; 
           )
         })}
       </AnimatePresence>
-      <rect x={10} y={14} width={5} height={Math.max(10, g.H - 34)} rx={2.5} className="tb-jar__gloss" />
+      <rect x={10} y={16} width={5} height={Math.max(10, g.H - 38)} rx={2.5} className="tb-jar__gloss" />
+      <rect x={g.W - 13} y={22} width={2.5} height={Math.max(8, (g.H - 38) * 0.45)} rx={1.25} className="tb-jar__gloss tb-jar__gloss--r" />
       <rect x={4} y={6} width={g.W - 8} height={g.H - 8} rx={16} className="tb-jar__rim" />
       <rect x={1} y={0} width={g.W - 2} height={10} rx={5} className="tb-jar__lip" />
       <AnimatePresence>
@@ -147,8 +155,8 @@ export default function TokenBucketWidget({ config, onComplete }: WidgetProps<To
   const windowLen = capacity / rate
   const holdRate = burstRate(rate)
   /** span for the "peak" burst metric, and the most a bucket can ever pass in it */
-  const peakSpan = Math.min(1, windowLen / 2)
-  const bucketBound = Math.floor(capacity + rate * peakSpan + 1e-9)
+  const span = peakSpan(capacity, rate)
+  const bucketBound = bucketMaxIn(capacity, rate, span)
 
   const reduce = useReduced()
   const uid = useId().replace(/[^a-zA-Z0-9_-]/g, '')
@@ -337,7 +345,7 @@ export default function TokenBucketWidget({ config, onComplete }: WidgetProps<To
   const accepted = eventsRef.current.filter((e) => e.ok)
   const peak = densest(
     accepted.map((e) => e.t),
-    peakSpan,
+    span,
   )
   const boundaryBurst = mode === 'window' && peak.count > bucketBound
 
@@ -356,7 +364,8 @@ export default function TokenBucketWidget({ config, onComplete }: WidgetProps<To
   const badY = okY + 15
   const tx = (t: number) => width - ((now - t) / SPAN) * width
   const ly = (v: number) => plotTop + (1 - v / capacity) * plotH
-  const samples = samplesRef.current.filter((s) => s.t >= now - SPAN - 0.5)
+  // pruned to the visible span plus one point before it, so the line reaches the left edge
+  const samples = samplesRef.current
   let line = ''
   samples.forEach((s, i) => {
     line += `${i ? 'L' : 'M'}${tx(s.t).toFixed(1)},${ly(s.v).toFixed(1)}`
@@ -505,7 +514,7 @@ export default function TokenBucketWidget({ config, onComplete }: WidgetProps<To
           <span className="w-label">Last {SPAN}s</span>
           {compare && (
             <span className={['tb-peak', boundaryBurst ? 'is-warn' : ''].join(' ')}>
-              Peak: {peak.count} in {fmt(peakSpan, 1)}s
+              Peak: {peak.count} in {fmt(span, 2)}s
             </span>
           )}
         </div>
@@ -551,7 +560,7 @@ export default function TokenBucketWidget({ config, onComplete }: WidgetProps<To
           <motion.div key="bb" className="tb-callout" initial={{ opacity: 0, y: 8, scale: 0.96 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0 }} transition={SPRING}>
             <TriangleAlert size={18} strokeWidth={2.6} />
             <span>
-              <b>Boundary burst:</b> {peak.count} requests got through in {fmt(peakSpan, 1)}s, {peak.count >= 2 * capacity ? 'twice' : `${(peak.count / capacity).toFixed(1)}×`} the {capacity}-per-window limit, because the counter reset mid-burst. A bucket never passes more than {bucketBound}.
+              <b>Boundary burst:</b> {peak.count} requests got through in {fmt(span, 2)}s, {peak.count >= 2 * capacity ? 'twice' : `${(peak.count / capacity).toFixed(1)}×`} the {capacity}-per-window limit, because the counter reset mid-burst. A bucket never passes more than {bucketBound}.
             </span>
           </motion.div>
         )}

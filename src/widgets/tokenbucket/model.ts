@@ -124,7 +124,24 @@ export function densest(times: number[], span: number): { count: number; from: n
   return best
 }
 
-/** hold-to-burst rate: about 8 req/s, but always faster than the refill */
+/**
+ * Hold-to-burst rate: about 8 req/s, but always well above the refill so a
+ * hold can both drain the bucket and push 2 x limit through a window edge.
+ */
 export function burstRate(rate: number): number {
-  return Math.max(8, Math.ceil(rate * 2))
+  return Math.max(8, Math.ceil(rate * 4))
+}
+
+/**
+ * Span for the "peak" metric: long enough for a hold to send 2 x capacity,
+ * shorter than a window. In that span a bucket can pass at most
+ * capacity + rate * span; a fixed window can pass up to 2 x capacity.
+ */
+export function peakSpan(capacity: number, rate: number): number {
+  return Math.min((2 * capacity) / burstRate(rate), capacity / rate / 2)
+}
+
+/** the most a full token bucket can accept in any interval of length `span` */
+export function bucketMaxIn(capacity: number, rate: number, span: number): number {
+  return Math.floor(capacity + rate * span + 1e-9)
 }

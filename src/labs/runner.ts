@@ -192,11 +192,11 @@ class Runner {
       const timer = setTimeout(() => fail('Python took too long to download. Check your connection and try again.'), LOAD_TIMEOUT_MS)
       let w: Worker
       try {
-        if (typeof Worker === 'undefined') throw new Error('Web Workers are not supported here.')
+        if (typeof Worker === 'undefined') throw new Error('Web Workers are not supported')
         this.url = URL.createObjectURL(new Blob([workerSource()], { type: 'text/javascript' }))
         w = new Worker(this.url)
       } catch (err) {
-        fail(`The Python runtime can't start here (${(err as Error)?.message || 'workers blocked'}).`)
+        fail(`The Python runtime can't start here (${String((err as Error)?.message || 'workers blocked').replace(/\.$/, '')}).`)
         return
       }
       this.worker = w
@@ -208,7 +208,12 @@ class Runner {
           this.set('ready')
           resolve(w)
         } else if (m.type === 'failed') {
-          fail(`The Python runtime couldn't load here (${m.message.split('\n')[0].slice(0, 160)}).`)
+          const blocked = /importScripts|NetworkError|Failed to fetch|load/i.test(m.message)
+          fail(
+            blocked
+              ? 'The Python download was blocked: you may be offline, or this page does not allow it.'
+              : `The Python runtime couldn't load here (${m.message.split('\n')[0].slice(0, 160).replace(/\.$/, '')}).`,
+          )
         } else if ('id' in m) {
           this.handlers.get(m.id)?.(m)
         }

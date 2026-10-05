@@ -5,6 +5,7 @@ import { WidgetHost } from '../widgets/WidgetHost'
 import { WIDGET_IDS } from '../widgets/specs'
 import { courseStyle } from '../ui/course'
 import { FIXTURES } from './fixtures'
+import { CATALOG } from '../content'
 
 /**
  * Dev-only gallery for visual QA. Open with:
@@ -12,6 +13,8 @@ import { FIXTURES } from './fixtures'
  *   /?gallery=step&kind=mcq    one step kind in a full lesson frame
  *   /?gallery=widgets          every widget with its default config
  *   /?gallery=widget&id=race   one widget
+ *   /?gallery=lesson&id=<lessonId>&step=<n>   one real lesson step (0-based)
+ *   /?gallery=card&id=<cardId>                one real review card
  * Append &theme=dark to force dark mode.
  */
 export function Gallery() {
@@ -23,6 +26,20 @@ export function Gallery() {
     const kind = q.get('kind') ?? 'mcq'
     const steps = FIXTURES.filter((f) => f.kind === kind)
     return <SingleStep steps={steps} />
+  }
+  if (mode === 'lesson' || mode === 'card') {
+    const id = q.get('id') ?? ''
+    const lesson = mode === 'lesson' ? CATALOG.lessons[id] : CATALOG.lessons[CATALOG.cards[id]?.lessonId ?? '']
+    const course = CATALOG.courses.find((c) => c.id === lesson?.courseId)
+    const step = mode === 'lesson' ? lesson?.steps[Number(q.get('step') ?? 0)] : CATALOG.cards[id] && { ...CATALOG.cards[id] }
+    if (!lesson || !course || !step) return <div data-smoke="missing">Not found: {id}</div>
+    return (
+      <div className="app-frame" style={courseStyle(course.color)}>
+        <div className="screen" data-smoke="ok">
+          <StepRunner step={step} mode={mode === 'lesson' ? 'lesson' : 'review'} lessonId={lesson.id} onResolved={() => {}} onNext={() => {}} />
+        </div>
+      </div>
+    )
   }
   if (mode === 'widget') {
     const id = (q.get('id') ?? 'race') as WidgetId

@@ -171,4 +171,8 @@
   .match-socket__dot {
     font-size: 11px;
   }
+  .match-item__text .rich-code {
+    font-size: 0.82em;
+    padding: 0.1em 0.25em;
+  }
 }

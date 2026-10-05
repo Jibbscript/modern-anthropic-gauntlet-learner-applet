@@ -92,6 +92,13 @@ export default function ClozeStep({ step, phase, attempt, setController, onHint,
   const locked = phase !== 'answer'
   const slotRefs = useRef(new Map<number, HTMLButtonElement>())
   const touched = useRef(false)
+  /** a keyboard pick unmounts the focused chip; hand focus to whatever the bank shows next */
+  const refocus = useRef(false)
+  const takeFocus = (el: HTMLElement | null) => {
+    if (!el || !refocus.current) return
+    refocus.current = false
+    ;(el.querySelector<HTMLElement>('button') ?? el).focus({ preventScroll: true })
+  }
 
   useEffect(() => {
     memory.set(memKey, fill)
@@ -117,9 +124,10 @@ export default function ClozeStep({ step, phase, attempt, setController, onHint,
     slotRefs.current.get(active)?.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' })
   }, [active])
 
-  const pick = (k: number) => {
+  const pick = (k: number, viaKeyboard = false) => {
     if (locked || active == null) return
     touched.current = true
+    refocus.current = viaKeyboard
     sfx('select')
     haptic('light')
     const next = fill.slice()
@@ -242,6 +250,8 @@ export default function ClozeStep({ step, phase, attempt, setController, onHint,
               {active == null ? (
                 <motion.div
                   key="done"
+                  ref={takeFocus}
+                  tabIndex={-1}
                   className="cloze__done"
                   initial={{ opacity: 0, y: 6 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -253,6 +263,7 @@ export default function ClozeStep({ step, phase, attempt, setController, onHint,
               ) : (
                 <motion.div
                   key={active}
+                  ref={takeFocus}
                   className="cloze__chips"
                   role="group"
                   aria-label={`Options for blank ${activePos + 1}`}
@@ -270,7 +281,7 @@ export default function ClozeStep({ step, phase, attempt, setController, onHint,
                         className={['cloze__chip', on && 'cloze__chip--on'].filter(Boolean).join(' ')}
                         aria-pressed={on}
                         aria-label={step.blanks[active].options[k]}
-                        onClick={() => pick(k)}
+                        onClick={(e) => pick(k, e.detail === 0)}
                         whileTap={{ y: 2 }}
                       >
                         <Toks toks={tokensOf(step.blanks[active].options[k])} />

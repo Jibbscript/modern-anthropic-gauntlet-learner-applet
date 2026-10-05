@@ -3,7 +3,8 @@ import { createRoot } from 'react-dom/client'
 import './styles/tokens.css'
 import './styles/base.css'
 
-const isGallery = import.meta.env.DEV && new URLSearchParams(location.search).has('gallery')
+// the dev gallery ships only in dev and in the `smoke` build used by scripts/smoke.ts
+const isGallery = (import.meta.env.DEV || import.meta.env.MODE === 'smoke') && new URLSearchParams(location.search).has('gallery')
 // both lazy so the dev gallery never pulls in the app tree (and vice versa)
 const Root = isGallery
   ? lazy(() => import('./dev/Gallery').then((m) => ({ default: m.Gallery })))

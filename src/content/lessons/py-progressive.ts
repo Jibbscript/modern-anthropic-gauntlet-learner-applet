@@ -57,18 +57,21 @@ const lesson: Lesson = {
         code: `@dataclass
 class Entry:
     value: str
-    expires_at: int | None = None   # level 3 adds this
+    expires_at: int | None = None
 
     def alive(self, now: int) -> bool:
-        return self.expires_at is None or now < self.expires_at
+        exp = self.expires_at
+        return exp is None or now < exp
 
 class KV:
-    def __init__(self) -> None:
+    def __init__(self):
         self._data: dict[str, Entry] = {}
 
-    def _live(self, key: str, now: int) -> Entry | None:
+    def _live(self, key, now):
         e = self._data.get(key)
-        return e if e is not None and e.alive(now) else None`,
+        if e is None or not e.alive(now):
+            return None
+        return e`,
       },
     },
     {
@@ -77,7 +80,8 @@ class KV:
       eyebrow: 'Predict',
       prompt: 'Using the `alive` rule above, a key set at t=5 with ttl=10 gets `expires_at = 15`. What does this print?',
       code: `e = Entry("v", expires_at=5 + 10)
-print([t for t in (5, 14, 15, 16) if e.alive(t)])`,
+times = (5, 14, 15, 16)
+print([t for t in times if e.alive(t)])`,
       answers: ['[5, 14]'],
       explanation:
         '`now < expires_at` makes the lifetime half-open: alive for [5, 15), gone at exactly 15. Specs differ on this boundary, so read the examples and test the exact edge. It is the most common place for a TTL off-by-one.',
@@ -89,11 +93,13 @@ print([t for t in (5, 14, 15, 16) if e.alive(t)])`,
       eyebrow: 'Fill in',
       prompt:
         'Level 2: `scan_by_prefix(prefix, now)` returns `"key(value)"` strings for live keys that start with `prefix`, sorted by key. Fill the blanks.',
-      code: `def scan_by_prefix(self, prefix: str, now: int) -> list[str]:
+      code: `def scan_by_prefix(self, prefix, now):
+    items = {{0}}(self._data.items())
     return [
         f"{k}({e.value})"
-        for k, e in {{0}}(self._data.items())
-        if k.{{1}}(prefix) and e.{{2}}(now)
+        for k, e in items
+        if k.{{1}}(prefix)
+        and e.{{2}}(now)
     ]`,
       blanks: [
         { options: ['list', 'sorted', 'reversed', 'set'], answer: 1 },
@@ -116,7 +122,8 @@ print([t for t in (5, 14, 15, 16) if e.alive(t)])`,
     assert db.get("a", now=0) == "1"
     assert db.delete("a", now=0) is True
     assert db.get("a", now=0) is None
-    assert db.delete("a", now=0) is False   # edge: missing key
+    # edge case: delete a missing key
+    assert db.delete("a", now=0) is False
 
 def test_level3_ttl_boundary():
     db = KV()
@@ -188,23 +195,26 @@ def test_level3_ttl_boundary():
         'Level 4. You back up at t=5, set a new key at t=6, then restore the t=5 backup, and the new key is still there. Tap the line that causes it.',
       code: `class KV:
     def __init__(self):
-        self._data: dict[str, Entry] = {}
-        self._backups: dict[int, dict[str, Entry]] = {}
+        self._data = {}  # key -> Entry
+        self._backups = {}  # ts -> state
 
     def set(self, key, value, now, ttl=None):
-        self._data[key] = Entry(value, None if ttl is None else now + ttl)
+        e = Entry(value)
+        if ttl is not None:
+            e.expires_at = now + ttl
+        self._data[key] = e
 
     def backup(self, now):
         self._backups[now] = self._data
-        return sum(1 for e in self._data.values() if e.alive(now))
 
     def restore(self, now, backup_ts):
-        self._data = dict(self._backups[backup_ts])`,
-      bugLines: [10],
+        snap = self._backups[backup_ts]
+        self._data = dict(snap)`,
+      bugLines: [13],
       explanation:
-        '`self._backups[now] = self._data` stores a reference to the live dict, not a snapshot, so every later `set` writes into the "backup" too. Copy at backup time. A shallow copy is enough here because `set` replaces `Entry` objects instead of mutating them. Line 14 already copies, so restoring the same backup twice is safe.',
+        '`self._backups[now] = self._data` stores a reference to the live dict, not a snapshot, so every later `set` writes into the "backup" too. Copy at backup time. A shallow copy is enough here because `set` stores a new `Entry` instead of mutating a stored one. Line 17 already copies, so restoring the same backup twice is safe.',
       fix: { code: `self._backups[now] = dict(self._data)` },
-      hint: 'After line 10 runs, how many dicts exist?',
+      hint: 'After line 13 runs, how many dicts exist?',
     },
     {
       kind: 'interview',
@@ -264,7 +274,7 @@ def test_level3_ttl_boundary():
               text: 'Nothing. The GIL makes dict operations atomic.',
               quality: 'weak',
               feedback:
-                'A single dict operation is atomic in CPython, but a method is many operations. `backup` loops over `_data` in Python, so a concurrent `set` can raise "dictionary changed size during iteration". And free-threaded builds (optional since 3.13) drop the GIL entirely.',
+                'A single dict operation is atomic in CPython, but a method is many operations. A snapshot that loops over `_data` in Python can raise "dictionary changed size during iteration" if another thread inserts mid-loop. And free-threaded builds (optional since 3.13) drop the GIL entirely.',
             },
             {
               text: "Lock `set`, `delete` and `restore`. Reads don't change anything, so they can skip the lock.",
@@ -325,8 +335,9 @@ def test_level3_ttl_boundary():
       code: `def alive(now, set_at, ttl):
     return now < set_at + ttl
 
-print(alive(104, 100, 5), alive(105, 100, 5))`,
-      answers: ['True False'],
+print(alive(104, 100, 5))
+print(alive(105, 100, 5))`,
+      answers: ['True\nFalse'],
       explanation: '`now < set_at + ttl` is half-open: alive for [100, 105), gone at exactly 105. Test that boundary explicitly; specs differ.',
     },
     {

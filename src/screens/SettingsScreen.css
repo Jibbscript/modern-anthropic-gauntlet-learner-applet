@@ -57,6 +57,7 @@
   color: var(--ink-3);
 }
 .set-card {
+  container: setcard / inline-size;
   border-radius: var(--r-lg);
   background: var(--surface);
   box-shadow: inset 0 0 0 2px var(--line);
@@ -117,26 +118,37 @@
 }
 .set-date__icon {
   position: absolute;
+  z-index: 1;
   left: 14px;
   color: var(--ink-3);
   pointer-events: none;
 }
 .set-input--date {
+  position: relative;
   padding-left: 42px;
   padding-right: 48px;
   font-variant-numeric: tabular-nums;
   line-height: 48px;
+  cursor: pointer;
 }
 .set-input--date::-webkit-date-and-time-value {
   text-align: left;
 }
+/* the whole field opens the native picker; the leading icon is the visual */
 .set-input--date::-webkit-calendar-picker-indicator {
-  opacity: 0.55;
+  position: absolute;
+  inset: 0;
+  width: auto;
+  height: auto;
+  margin: 0;
+  padding: 0;
+  opacity: 0;
   cursor: pointer;
 }
 .set-date__clear {
   position: absolute;
-  right: 40px;
+  z-index: 1;
+  right: 6px;
   width: 36px;
   height: 36px;
   color: var(--ink-3);
@@ -177,6 +189,14 @@
 }
 .set-seg__opt.is-on svg {
   color: var(--select);
+}
+
+/* narrow phones: four roles go two by two */
+@container setcard (max-width: 300px) {
+  .set-seg--roles {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 /* ---------------------------------------------------------------- goals */

@@ -132,6 +132,10 @@
 }
 .dl-lock__gloss {
   fill: #fff;
+  opacity: 0;
+  transition: opacity var(--dur-2);
+}
+.dl-lock.is-held .dl-lock__gloss {
   opacity: 0.35;
 }
 .dl-lock__label {

@@ -110,7 +110,7 @@ export default function MeScreen() {
               icon={Trophy}
               value={s.streak.best}
               label="Best streak"
-              note={s.streak.freezes ? `${s.streak.freezes} streak charge${s.streak.freezes > 1 ? 's' : ''} saved` : undefined}
+              note={s.streak.freezes ? `${s.streak.freezes} streak charge${s.streak.freezes > 1 ? 's' : ''}` : undefined}
             />
             <Stat tone="xp" icon={Sparkles} value={s.xp} label="Total XP" />
             <Stat tone="blue" icon={BookOpen} value={stats.lessons} label="Lessons done" note={stats.totalLessons ? `of ${stats.totalLessons}` : undefined} />
@@ -398,7 +398,7 @@ function AreaGroup({ course, area, skills }: { course: Course; area?: Mastery; s
   if (!list.length) return null
   const started = list.filter((k) => (skills[k.id]?.unlocked ?? 0) > 0).length
   const due = list.reduce((a, k) => a + (skills[k.id]?.due ?? 0), 0)
-  const m = area && area.total > 0 ? area.mastery : null
+  const m = area && area.unlocked > 0 ? area.mastery : null
   return (
     <div className={`me-area ${open ? 'is-open' : ''}`} style={courseStyle(course.color)}>
       <button type="button" className="me-area__head" onClick={() => setOpen((o) => !o)} aria-expanded={open}>
@@ -408,7 +408,7 @@ function AreaGroup({ course, area, skills }: { course: Course; area?: Mastery; s
         <span className="me-area__text">
           <span className="me-area__title">{course.title}</span>
           <span className="me-area__sub">
-            {started}/{list.length} skills started{due > 0 ? ` · ${due} due` : ''}
+            {started}/{list.length} started{due > 0 ? ` · ${due} due` : ''}
           </span>
         </span>
         <span className="me-area__pct tabular">{m == null ? '–' : `${Math.round(m * 100)}%`}</span>

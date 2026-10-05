@@ -294,9 +294,9 @@ button.learn-card:active,
 }
 .learn-hero__art {
   position: absolute;
-  right: 4px;
+  right: 2%;
   top: 50%;
-  translate: 0 -52%;
+  translate: 0 -50%;
   z-index: 1;
 }
 .learn-hero__tag {

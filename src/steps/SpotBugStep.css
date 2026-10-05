@@ -83,7 +83,7 @@
   --ln-bar: var(--good);
 }
 .spotbug__line--incorrect {
-  --ln-tint: color-mix(in srgb, var(--retry, var(--bad)) 15%, transparent);
+  --ln-tint: color-mix(in srgb, var(--retry, var(--bad)) 20%, transparent);
   --ln-bar: var(--retry, var(--bad));
 }
 .spotbug__line--reveal {

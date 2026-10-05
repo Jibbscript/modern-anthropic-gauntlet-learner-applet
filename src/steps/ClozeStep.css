@@ -215,6 +215,10 @@
   font-size: var(--fs-sm);
   font-weight: 700;
 }
+.cloze__done:focus-visible {
+  outline: 3px solid var(--select);
+  outline-offset: 2px;
+}
 .cloze__done svg {
   flex: none;
   color: var(--good);

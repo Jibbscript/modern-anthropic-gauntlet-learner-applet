@@ -13,11 +13,11 @@ const lesson: Lesson = {
       eyebrow: 'Build round',
       title: 'Two terabytes, one question',
       body:
-        'Candidates report file deduplication among the practical coding questions. The obvious answer is one line: hash every file, group by hash.\n\n' +
-        "On a 2 TB drive, that line reads 2 TB. At 500 MB/s that's over an hour, and most of it is wasted. A file whose size no other file shares can't have a duplicate. The real problem is ==avoiding reads==.",
+        'File dedup is one of the most frequent practical questions in 2025-2026 candidate reports, as a phone screen and onsite. The obvious answer is one line: hash every file, group by hash.\n\n' +
+        "On a 2 TB drive that line reads 2 TB: over an hour at 500 MB/s, mostly wasted. A file whose size no other file shares can't have a duplicate. The real problem is ==avoiding reads==.",
       callout: {
         tone: 'tip',
-        text: 'The arc candidates describe: make it work, extend it, make it concurrent, test it yourself. This lesson follows the same path.',
+        text: 'Follow-ups candidates report (2026): which parts are IO-bound vs CPU-bound, huge files, huge file counts, real-time detection. Some got no tests and wrote their own.',
       },
     },
     {
@@ -64,8 +64,10 @@ const lesson: Lesson = {
 def by_size(paths):
     groups = defaultdict(list)
     for p in paths:
-        groups[os.path.getsize(p)].append(p)
-    return [g for g in groups.values() if len(g) > 1]`,
+        size = os.path.getsize(p)
+        groups[size].append(p)
+    return [g for g in groups.values()
+            if len(g) > 1]`,
         caption: 'Stage 1: one `stat` per file, no content reads.',
       },
     },
@@ -117,15 +119,17 @@ def by_size(paths):
       title: "Stream, don't slurp",
       body:
         "`f.read()` pulls the whole file into memory. On a 40 GB disk image that's a `MemoryError`, or a machine deep in swap. Hash in fixed-size chunks instead: memory stays at one buffer whatever the file size, and 64 KiB to 1 MiB chunks keep per-call overhead negligible.\n\n" +
-        'Python 3.11 added `hashlib.file_digest`, which runs that loop for you. Know how to write it by hand anyway.',
+        'Python 3.11 added `hashlib.file_digest` to run that loop for you. Your interview environment may be older, so know the loop by hand.',
       code: {
         code: `def head_hash(path, n=4096):
     with open(path, "rb") as f:
-        return hashlib.sha256(f.read(n)).hexdigest()
+        h = hashlib.sha256(f.read(n))
+    return h.hexdigest()
 
 def full_hash_311(path):
     with open(path, "rb") as f:
-        return hashlib.file_digest(f, "sha256").hexdigest()`,
+        h = hashlib.file_digest(f, "sha256")
+    return h.hexdigest()`,
         caption: '`read(n)` is bounded, so the head hash is safe on any file size.',
       },
     },
@@ -161,21 +165,23 @@ def full_hash(path):
       code: `def head_hash(path, n=4096):
     with open(path, "rb") as f:
         head = f.read(n)
-    return hashlib.sha256(path.encode()).hexdigest()
+    h = hashlib.sha256(path.encode())
+    return h.hexdigest()
 
 def find_candidates(paths):
-    survivors = []
+    out = []
     for group in by_size(paths):
         heads = defaultdict(list)
         for p in group:
             heads[head_hash(p)].append(p)
-        survivors += [g for g in heads.values()
-                      if len(g) > 1]
-    return survivors`,
+        for g in heads.values():
+            if len(g) > 1:
+                out.append(g)
+    return out`,
       bugLines: [4],
       explanation:
         'Line 4 hashes the *path*, not the bytes it just read. Every path is unique, so every group splits into singletons. It slips past review because the function does open and read the file. A test with two identical files in different folders catches it instantly.',
-      fix: { code: '    return hashlib.sha256(head).hexdigest()' },
+      fix: { code: '    h = hashlib.sha256(head)' },
       hint: 'Look at exactly what gets fed to SHA-256.',
     },
     {
@@ -183,21 +189,25 @@ def find_candidates(paths):
       id: 'walk',
       title: 'Walk lazily, skip what lies',
       body:
-        'Write the walk as a generator over `os.scandir`: it yields files as it reads each directory, so a million-file folder never becomes a million-item list. `is_file(follow_symlinks=False)` skips symlinks; follow one and its target gets hashed twice and flagged as its own duplicate. Catch `PermissionError` per directory and keep going. Note that `os.walk` skips unreadable directories silently unless you pass `onerror`.',
+        'Write the walk as a generator over `os.scandir`: it yields files as it reads each directory, so a million-file folder never becomes a million-item list. Skip symlinks; follow one and its target gets hashed twice and flagged as its own duplicate. Catch `PermissionError` per directory and keep going. Note that `os.walk` skips unreadable directories silently unless you pass `onerror`.',
       code: {
         code: `def walk(top):
     stack = [top]
     while stack:
         d = stack.pop()
         try:
-            with os.scandir(d) as it:
-                for e in it:
-                    if e.is_dir(follow_symlinks=False):
-                        stack.append(e.path)
-                    elif e.is_file(follow_symlinks=False):
-                        yield e
-        except PermissionError as err:
-            log.warning("skip %s: %s", d, err)`,
+            it = os.scandir(d)
+        except PermissionError:
+            log.warning("skip %s", d)
+            continue
+        with it:
+            for e in it:
+                if e.is_symlink():
+                    continue
+                if e.is_dir():
+                    stack.append(e.path)
+                elif e.is_file():
+                    yield e`,
       },
     },
     {
@@ -231,7 +241,8 @@ def hash_all(paths, workers=8):
         digests = pool.map(full_hash, paths)
         for p, d in zip(paths, digests):
             by_hash[d].append(p)
-    return [g for g in by_hash.values() if len(g) > 1]`,
+    return [g for g in by_hash.values()
+            if len(g) > 1]`,
         caption: '`pool.map` returns results in input order, so `zip` pairs them correctly.',
       },
       callout: {
@@ -449,21 +460,27 @@ def hash_group(paths):
       id: 'build-dedup.nofollow',
       skill: 'build.dedup',
       kind: 'cloze',
-      prompt: 'Complete the walker so it yields regular files and never follows a symlink.',
-      code: `def walk(top):
-    stack = [top]
-    while stack:
-        with os.scandir(stack.pop()) as it:
-            for e in it:
-                if e.is_dir(follow_symlinks=False):
-                    stack.append(e.path)
-                elif e.{{0}}(follow_symlinks={{1}}):
-                    yield e`,
+      prompt: 'Complete `classify` so regular files get hashed and symlinks are never followed.',
+      code: `def classify(e):
+    # e is an os.DirEntry from scandir
+    if e.is_dir(follow_symlinks=False):
+        return "descend"
+    if e.{{0}}(
+            follow_symlinks={{1}}):
+        return "hash"
+    return "skip"  # symlinks, sockets`,
       blanks: [
         { options: ['is_file', 'is_symlink', 'stat'], answer: 0 },
         { options: ['False', 'True', '"auto"'], answer: 0 },
       ],
       explanation: '`is_file()` follows symlinks by default, so a link to a file counts as a file. With `follow_symlinks=False` it is true only for real regular files.',
+    },
+    {
+      id: 'build-dedup.realtime',
+      skill: 'build.dedup',
+      kind: 'flash',
+      front: 'Follow-up: new files keep arriving. How do you detect duplicates without rescanning everything?',
+      back: 'Keep the funnel’s indexes in memory: size → paths, plus cached head and full hashes. A new file is compared only within its size bucket, hashing lazily. Feed it from filesystem events (e.g. inotify) or a periodic scan.',
     },
   ],
 }

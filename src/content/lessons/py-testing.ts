@@ -16,8 +16,8 @@ const lesson: Lesson = {
       code: {
         code: `from collections import Counter
 
-def top_k(words: list[str], k: int) -> list[str]:
-    """The k most frequent words, most frequent first."""
+def top_k(words, k):
+    """The k most frequent words, highest first."""
     counts = Counter(words)
     return [w for w, _ in counts.most_common(k)]
 
@@ -157,27 +157,28 @@ def test_top_k({{1}}):
 def test_empty():
     assert dedupe([]) == []
 
-def test_keeps_first_occurrence():
-    result = dedupe(["b", "a", "b", "c"])
-    assert (result == ["b", "a", "c"], "order lost")
+def test_keeps_first():
+    out = dedupe(["b", "a", "b"])
+    assert (out == ["b", "a"], "lost")
 
 def test_no_duplicates_left():
-    result = dedupe(["x", "y", "x"])
-    assert len(result) == len(set(result))
+    out = dedupe(["x", "y", "x"])
+    assert len(out) == len(set(out))
 
 def test_matches_reference():
-    data = ["q", "p", "q"]
-    assert dedupe(data) == dedupe(list(data))`,
+    xs = ["q", "p", "q"]
+    assert dedupe(xs) == dedupe(xs)`,
       bugLines: [8, 16],
       explanation: "Line 8 asserts a tuple, and a non-empty tuple is always truthy. pytest does warn *assertion is always true*, but warnings scroll past. Line 16 compares `dedupe` with itself, so the code under test is also the oracle. Line 12 is a weak but real property test: it fails for the identity bug.",
       fix: {
-        code: `def test_keeps_first_occurrence():
-    result = dedupe(["b", "a", "b", "c"])
-    assert result == ["b", "a", "c"], "order lost"
+        code: `def test_keeps_first():
+    out = dedupe(["b", "a", "b"])
+    assert out == ["b", "a"], "lost"
 
 def test_matches_reference():
-    assert dedupe(["q", "p", "q"]) == ["q", "p"]`,
-        highlight: [3, 6],
+    xs = ["q", "p", "q"]
+    assert dedupe(xs) == ["q", "p"]`,
+        highlight: [3, 7],
       },
       hint: 'Imagine `dedupe = lambda xs: xs`. Which asserts still hold?',
     },
@@ -188,13 +189,15 @@ def test_matches_reference():
       body: "Code that reads the clock is awkward to test. Long sleeps make the suite slow; short ones make it flaky. Instead, take the clock as a parameter with the real one as the default. Production calls `TTLCache(10)`. The test passes a fake it controls and jumps time to exactly the boundary.",
       code: {
         code: `class TTLCache:
-    def __init__(self, ttl, clock=time.monotonic):
+    def __init__(self, ttl,
+                 clock=time.monotonic):
         self.ttl, self.clock = ttl, clock
         ...
 
 def test_expires_at_ttl():
     now = 100.0
-    cache = TTLCache(ttl=10, clock=lambda: now)
+    cache = TTLCache(ttl=10,
+                     clock=lambda: now)
     cache.put("a", 1)
     now = 109.9
     assert cache.get("a") == 1
@@ -284,7 +287,7 @@ def test_expires_at_ttl():
             {
               text: "The logic is simple and I traced it carefully, so I'm fairly confident it's correct.",
               quality: 'weak',
-              feedback: 'Confidence is not evidence. The round is explicitly checking whether you verify your own work.',
+              feedback: 'Confidence is not evidence. Testing your own code is a reported stage of these rounds, so skipping it skips the signal.',
             },
           ],
         },
@@ -292,17 +295,17 @@ def test_expires_at_ttl():
           interviewer: 'And the thread safety?',
           options: [
             {
-              text: "Eight threads doing random gets and puts, then assert invariants: size never exceeds capacity, and the dict and recency list hold the same keys. A green run doesn't prove safety, so I'd also check every shared-state path holds the lock.",
+              text: "Eight threads doing random gets and puts, asserting invariants: size never exceeds capacity, dict and recency list agree. A green run proves little, so I'd also check every shared path holds the lock.",
               quality: 'strong',
               feedback: "Strong. Invariants instead of exact outputs, plus an honest statement of what a stress test can't prove.",
             },
             {
-              text: "Concurrency bugs can't really be unit tested, so I'd rely on code review here.",
+              text: "Concurrency bugs can't really be unit tested, so I'd rely on a careful code review of the locking instead.",
               quality: 'weak',
               feedback: 'Half true and fully unhelpful. Stress tests raise the odds, and test seams can force a specific interleaving every run.',
             },
             {
-              text: 'Run a bunch of threads against it and make sure nothing crashes.',
+              text: 'Start a bunch of threads hammering get and put at once, and check that nothing crashes or hangs.',
               quality: 'okay',
               feedback: "A start, but 'nothing crashed' misses lost updates and corrupted state. Assert invariants, not just survival.",
             },

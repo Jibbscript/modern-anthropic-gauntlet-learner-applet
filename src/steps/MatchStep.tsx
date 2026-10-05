@@ -123,7 +123,7 @@ export default function MatchStep({ step, phase, attempt, setController, lessonI
       : phase === 'correct'
         ? 'Every pair matches'
         : phase === 'incorrect'
-          ? 'Red pairs don’t match'
+          ? 'Yellow pairs don’t match'
           : 'The correct pairs'
 
   const item = (side: Side, i: number, row: number) => {

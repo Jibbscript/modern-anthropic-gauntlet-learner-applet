@@ -112,6 +112,25 @@ async function copyText(text: string): Promise<boolean> {
   }
 }
 
+/** a test name with line-break opportunities after underscores */
+function TestName({ name }: { name: string }) {
+  const parts = name.split('_')
+  return (
+    <span className="lab-row__name">
+      {parts.map((p, i) => (
+        <span key={i}>
+          {p}
+          {i < parts.length - 1 && (
+            <>
+              _<wbr />
+            </>
+          )}
+        </span>
+      ))}
+    </span>
+  )
+}
+
 /** split a test source into readable chunks: setup code and one chunk per test */
 export function splitTests(src: string): { name: string | null; code: string }[] {
   const lines = src.replace(/\s+$/, '').split('\n')
@@ -241,6 +260,18 @@ function useLabTimer(labId: string, startedAt: number | null, active: boolean) {
   return { started, running, elapsed }
 }
 
+/** true once `active` has stayed true for `ms` */
+function useSlowBoot(active: boolean, ms: number): boolean {
+  const [slow, setSlow] = useState(false)
+  useEffect(() => {
+    setSlow(false)
+    if (!active) return
+    const t = setTimeout(() => setSlow(true), ms)
+    return () => clearTimeout(t)
+  }, [active, ms])
+  return slow
+}
+
 /** height of the on-screen keyboard (iOS/Android), 0 when closed */
 function useKeyboardInset(): number {
   const [kb, setKb] = useState(0)
@@ -306,7 +337,9 @@ function LabView({ lab, onExit }: { lab: Lab; onExit: () => void }) {
   const current = Math.min(passed, n - 1)
 
   const status = useRunnerStatus()
-  const selfCheck = status === 'unavailable'
+  /** the learner can opt into self-check while a slow download is still going */
+  const [manualCheck, setManualCheck] = useState(false)
+  const selfCheck = status === 'unavailable' || manualCheck
   const runner = getRunner()
 
   const [code, setCode] = useState(() => (progress?.code ? progress.code : lab.starter))
@@ -322,6 +355,7 @@ function LabView({ lab, onExit }: { lab: Lab; onExit: () => void }) {
   const [askReset, setAskReset] = useState(false)
   const [compared, setCompared] = useState<Record<number, boolean>>({})
   const editorRef = useRef<EditorHandle>(null)
+  const testsRef = useRef<HTMLDivElement>(null)
   const codeRef = useRef(code)
   codeRef.current = code
 
@@ -393,6 +427,8 @@ function LabView({ lab, onExit }: { lab: Lab; onExit: () => void }) {
     }
     setRunning(true)
     setCleared(null)
+    // first run: show the Tests tab right away, where the download is explained
+    if (runner.status !== 'ready') setTab('tests')
     const t0 = performance.now()
     try {
       const r = await runner.run(
@@ -420,6 +456,10 @@ function LabView({ lab, onExit }: { lab: Lab; onExit: () => void }) {
       setRunning(false)
     }
   }, [running, current, labId, lab, runner, n, passLevel])
+
+  useEffect(() => {
+    if (cleared) testsRef.current?.scrollTo({ top: 0, behavior: 'smooth' })
+  }, [cleared])
 
   const nextLevel = () => {
     setCleared(null)
@@ -536,6 +576,7 @@ function LabView({ lab, onExit }: { lab: Lab; onExit: () => void }) {
           {tab === 'tests' && (
             <motion.div
               key="tests"
+              ref={testsRef}
               className="lab__panel scroll"
               role="tabpanel"
               id="lab-panel-tests"
@@ -556,7 +597,10 @@ function LabView({ lab, onExit }: { lab: Lab; onExit: () => void }) {
                   code={code}
                   compared={!!compared[current]}
                   onCompare={() => setAskSolution('compare')}
-                  onRetry={() => void runner.retry()}
+                  onRetry={() => {
+                    setManualCheck(false)
+                    void runner.retry()
+                  }}
                   reason={runner.reason}
                   cleared={cleared}
                   onNext={nextLevel}
@@ -576,6 +620,7 @@ function LabView({ lab, onExit }: { lab: Lab; onExit: () => void }) {
                   onNext={nextLevel}
                   onExit={onExit}
                   onGoto={gotoLine}
+                  onSelfCheck={() => setManualCheck(true)}
                 />
               )}
             </motion.div>
@@ -610,7 +655,7 @@ function LabView({ lab, onExit }: { lab: Lab; onExit: () => void }) {
                 <motion.button
                   key="sum"
                   type="button"
-                  className={`lab__sum ${summary.ok === summary.total ? 'lab__sum--good' : 'lab__sum--bad'}`}
+                  className={['lab__sum', summary.ok === summary.total ? 'lab__sum--good' : 'lab__sum--bad', last && last.code !== code && 'lab__sum--stale'].filter(Boolean).join(' ')}
                   onClick={() => switchTab('tests')}
                   initial={{ scale: 0.6, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
@@ -906,6 +951,7 @@ function TestsPanel({
   onNext,
   onExit,
   onGoto,
+  onSelfCheck,
 }: {
   lab: Lab
   last: LastRun | null
@@ -919,9 +965,11 @@ function TestsPanel({
   onNext: () => void
   onExit: () => void
   onGoto: (line: number) => void
+  onSelfCheck: () => void
 }) {
   const n = lab.levels.length
   const r = last?.r
+  const slow = useSlowBoot(running && booting, 10_000)
   const results = r?.results ?? []
   const ok = results.filter((t) => t.ok).length
   const levels = Array.from({ length: ranLevels }, (_, i) => i + 1)
@@ -947,6 +995,11 @@ function TestsPanel({
                   ? `Run tests checks levels 1–${current + 1}. Earlier levels' tests run too, so they must keep passing.`
                   : 'Run tests checks your code against the level 1 tests below.'}
             </p>
+            {slow && (
+              <button type="button" className="lab-link" onClick={onSelfCheck}>
+                <ClipboardCheck size={13} strokeWidth={2.6} /> Taking a while? Check your code by hand instead
+              </button>
+            )}
           </div>
         </div>
       )}
@@ -1029,7 +1082,8 @@ function TestsPanel({
             <ul className="lab-rows">
               {rows.map((t, i) => {
                 const prev = i > 0 ? (rows[i - 1] as TestResult) : null
-                const same = !!prev && !('pending' in t) && !(t as TestResult).ok && prev.error != null && prev.error === (t as TestResult).error
+                const cur = t as TestResult
+                const same = !!prev && !('pending' in t) && !cur.ok && prev.error != null && (prev.error === cur.error || (!!prev.skipped && !!cur.skipped))
                 return <ResultRow key={`${last?.wallMs ?? 'p'}-${t.name}`} t={t} index={i} onGoto={onGoto} same={same} />
               })}
             </ul>
@@ -1080,11 +1134,11 @@ function ResultRow({
       </span>
       <div className="lab-row__body">
         <div className="lab-row__top">
-          <span className="lab-row__name">{t.name}</span>
+          <TestName name={t.name} />
           <span className="visually-hidden">{state === 'ok' ? 'passed' : state === 'fail' ? 'failed' : state === 'skip' ? 'not run' : 'not run yet'}</span>
           {res && !res.skipped && <span className="lab-row__ms tabular">{res.ms < 1 ? '<1' : Math.round(res.ms)} ms</span>}
         </div>
-        {res && !res.ok && res.error && (same ? <span className="lab-row__same">Same error as above</span> : <pre className="lab-row__err">{res.error}</pre>)}
+        {res && !res.ok && res.error && (same ? <span className="lab-row__same">{res.skipped ? 'Not run' : 'Same error as above'}</span> : <pre className="lab-row__err">{res.error}</pre>)}
         {res && !res.ok && !same && (res.line != null || res.trace) && (
           <div className="lab-row__actions">
             {res.line != null && (
@@ -1175,9 +1229,9 @@ function CompletionCard({ lab, ms, onExit, compact }: { lab: Lab; ms: number; on
         <motion.div className="lab-done__badge" initial={{ rotate: -30, scale: 0.3 }} animate={{ rotate: -6, scale: 1 }} transition={{ type: 'spring', stiffness: 260, damping: 12, delay: 0.1 }}>
           <Trophy size={compact ? 26 : 34} strokeWidth={2.6} />
         </motion.div>
-        <div>
-          <div className="eyebrow">Lab complete</div>
-          <h3>{lab.title}</h3>
+        <div className="lab-done__titles">
+          <h3>Lab complete</h3>
+          <p className="lab-done__name">{lab.title}</p>
           <p className="tabular">
             All {lab.levels.length} levels{ms > 0 ? ` in ${formatClock(ms)}` : ''}
             {ms > 0 && <span className={under ? 'lab-done__under' : 'lab-done__over'}> · {under ? 'under' : 'over'} the {lab.minutes} min target</span>}
@@ -1322,7 +1376,7 @@ function SelfCheckPanel({
                   }}
                 >
                   <span className="lab-check__box">{checked[c.name] && <Check size={14} strokeWidth={3.4} />}</span>
-                  <span className="lab-row__name">{c.name}</span>
+                  <TestName name={c.name} />
                   <span className="lab-check__label">{checked[c.name] ? 'Handled' : 'Check'}</span>
                 </button>
                 <Code code={c.code} />

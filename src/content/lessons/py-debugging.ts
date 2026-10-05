@@ -27,7 +27,7 @@ const lesson: Lesson = {
       id: 'hook',
       eyebrow: "Code you didn't write",
       title: 'Fourteen lines of noise, one line of signal',
-      body: "Someone else's report script crashes. Most people read the traceback top to bottom and land first on `main.py`, the frame that tells them least.\n\nPython prints the oldest call first and the newest last, so the exception's type and message are the **final** line. Candidate reports say the hard part of these practical rounds isn't the algorithm. It's reading APIs, debugging and testing.",
+      body: "Someone else's report script crashes. Most people read the traceback top to bottom and land first on `main.py`, the frame that tells them least.\n\nPython prints the oldest call first and the newest last, so the exception's type and message are the **final** line. Candidate reports say BFS and hash maps matter, but the harder parts of these practical rounds are reading APIs, debugging and testing.",
     },
     {
       kind: 'mcq',
@@ -115,7 +115,7 @@ const lesson: Lesson = {
         code: `git bisect start
 git bisect bad             # current commit is broken
 git bisect good v1.4       # this tag worked
-git bisect run pytest -x tests/test_report.py
+git bisect run pytest -x test_report.py
 git bisect reset`,
       },
     },
@@ -180,7 +180,10 @@ git bisect reset`,
       eyebrow: 'Predict',
       prompt: 'A helper from the codebase you inherited. What does this print?',
       code: `def chunks(xs, n):
-    return [xs[i:i + n] for i in range(0, len(xs) - n, n)]
+    out = []
+    for i in range(0, len(xs) - n, n):
+        out.append(xs[i:i + n])
+    return out
 
 print(chunks([1, 2, 3, 4, 5, 6], 3))`,
       answers: ['[[1, 2, 3]]'],
@@ -200,26 +203,29 @@ print(chunks([1, 2, 3, 4, 5, 6], 3))`,
       code: {
         code: `from itertools import groupby
 
-words = ["apple", "bob", "avocado", "bee"]
-print([(k, len(list(g)))
-       for k, g in groupby(words, key=lambda w: w[0])])`,
+def first(w):
+    return w[0]
+
+words = ["ant", "bee", "ape", "bat"]
+for k, g in groupby(words, key=first):
+    print(k, len(list(g)))`,
       },
       choices: [
         {
-          text: "`[('a', 2), ('b', 2)]`",
+          text: 'Two lines: `a 2`, then `b 2`',
           feedback: "That's what a `Counter` or a dict of lists gives. `groupby` only merges *consecutive* items with the same key, which is why the docs ask for sorted input.",
         },
         {
-          text: "`[('a', 1), ('b', 1), ('a', 1), ('b', 1)]`",
+          text: 'Four lines: `a 1`, `b 1`, `a 1`, `b 1`',
           correct: true,
           feedback: 'Right. A new group starts every time the key changes. Sort by the same key first, or use a `defaultdict(list)`.',
         },
         {
-          text: "`ValueError`, because the input isn't sorted",
+          text: "A `ValueError`, because the input isn't sorted",
           feedback: '`groupby` never checks sortedness. It silently does consecutive grouping, which is how this bug survives into production.',
         },
         {
-          text: "`[('a', 1), ('b', 1)]`",
+          text: 'Two lines: `a 1`, then `b 1`',
           feedback: 'Groups are not merged by key. Each run of equal keys becomes its own group, so `a` and `b` each appear twice.',
         },
       ],

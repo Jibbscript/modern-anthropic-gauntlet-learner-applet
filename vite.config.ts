@@ -11,7 +11,7 @@ export default defineConfig(({ mode }) => ({
     __ARTIFACT__: JSON.stringify(mode === 'artifact'),
   },
   build: {
-    outDir: mode === 'artifact' ? 'dist-artifact' : 'dist',
+    outDir: mode === 'artifact' ? 'dist-artifact' : mode === 'smoke' ? 'dist-smoke' : 'dist',
     chunkSizeWarningLimit: 4000,
   },
   test: {

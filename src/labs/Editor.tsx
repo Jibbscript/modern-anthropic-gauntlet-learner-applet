@@ -393,8 +393,11 @@ export function Editor({ value, onChange, onRun, errorLine, label = 'Code editor
           <button type="button" className="ed-keys__key ed-keys__key--wide" tabIndex={-1} aria-label="Indent" onMouseDown={(e) => e.preventDefault()} onClick={() => {
             const ta = taRef.current
             if (!ta) return
-            if (ta.selectionStart !== ta.selectionEnd) shiftLines(1)
-            else insert(' '.repeat(4 - ((ta.selectionStart - lineStart(ta.value, ta.selectionStart)) % 4)))
+            const s = ta.selectionStart
+            const before = ta.value.slice(lineStart(ta.value, s), s)
+            // in leading whitespace it types an indent; elsewhere it indents the line(s)
+            if (s === ta.selectionEnd && /^ *$/.test(before)) insert(' '.repeat(4 - (before.length % 4)))
+            else shiftLines(1)
           }}>
             <IndentIncrease size={17} strokeWidth={2.4} />
           </button>

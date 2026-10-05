@@ -89,8 +89,17 @@
   display: block;
   overflow: visible;
 }
-.tb-jar__glass {
-  fill: color-mix(in srgb, var(--c, var(--select)) 7%, var(--surface));
+.tb-glass0 {
+  stop-color: color-mix(in srgb, var(--c, var(--select)) 13%, var(--surface));
+}
+.tb-glass1 {
+  stop-color: color-mix(in srgb, var(--c, var(--select)) 4%, var(--surface));
+}
+.tb-glass2 {
+  stop-color: color-mix(in srgb, var(--c, var(--select)) 10%, var(--surface));
+}
+.tb-jar__gloss--r {
+  opacity: 0.4;
 }
 .tb-jar__rim {
   fill: none;

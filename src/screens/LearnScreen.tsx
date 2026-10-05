@@ -286,11 +286,7 @@ function GoalSheetBody({ s, today, onClose }: { s: GauntletState; today: string;
 
 function StreakCard({ s, today, onOpen }: { s: GauntletState; today: string; onOpen: () => void }) {
   const live = liveStreak(s.streak, today)
-  const status = live.doneToday
-    ? 'Extended today'
-    : live.count > 0
-      ? 'Do a lesson or 3 reviews today to keep it'
-      : 'Finish a lesson or 3 reviews to start one'
+  const status = live.doneToday ? 'Extended today' : live.count > 0 ? 'Do a lesson to keep it' : 'One lesson starts it'
   return (
     <motion.button
       variants={item}
@@ -328,7 +324,7 @@ function HeroCard({ s, lessonId }: { s: GauntletState; lessonId: string }) {
       <div className="learn-hero__panel">
         <span className="learn-hero__tag">{resume ? 'Jump back in' : 'Up next'}</span>
         <div className="learn-hero__art">
-          <CourseArt course={course} size={150} animated />
+          <CourseArt course={course} size={164} animated />
         </div>
         <div className="learn-hero__pips" aria-hidden="true">
           {course.lessons.map((l, i) => (
@@ -387,13 +383,15 @@ function EndCard({ kind }: { kind: 'complete' | 'waiting' }) {
 }
 
 function ReviewCard({ s, now }: { s: GauntletState; now: number }) {
-  const due = dueCardIds(s, now)
-  if (!due.length) return null
+  // count only cards the catalog still knows, so Start always has something to show
+  const plan = buildSession(s, CATALOG, now)
+  if (!plan.cardIds.length) return null
+  const due = dueCardIds(s, now).filter((id) => CATALOG.cards[id])
   const reviewed = Object.values(s.cards).filter((c) => c.last != null)
   const strength = reviewed.length ? reviewed.reduce((a, c) => a + recallNow(c, now), 0) / reviewed.length : null
   const allNew = due.every((id) => s.cards[id]?.last == null)
-  const n = due.length
-  const mins = Math.max(1, Math.round(Math.min(n, s.settings.sessionSize) * 0.4))
+  const n = plan.due
+  const mins = Math.max(1, Math.round(plan.cardIds.length * 0.4))
   const title = allNew ? `${n} new card${n === 1 ? '' : 's'} to lock in` : `${n} card${n === 1 ? ' is' : 's are'} fading`
   return (
     <motion.section variants={item} className="learn-card learn-review" aria-label="Daily review">

@@ -2,26 +2,26 @@ import type { Lesson } from '../../core/types'
 
 const STATS = `import threading
 
-class Stats:
-    """Count events from many worker threads."""
+# Shared by all worker threads.
+counts: dict[str, int] = {}
+lock = threading.Lock()
 
-    def __init__(self):
-        self.counts: dict[str, int] = {}
-        self.lock = threading.Lock()
+def record(key: str) -> None:
+    # dict ops are atomic under the
+    # GIL, so this needs no lock
+    counts[key] = counts.get(key, 0) + 1
 
-    def record(self, key: str) -> None:
-        # dict get/set are each atomic under the GIL,
-        # so this needs no lock
-        self.counts[key] = self.counts.get(key, 0) + 1
-
-    def snapshot(self) -> dict[str, int]:
-        with self.lock:
-            return dict(self.counts)`
+def snapshot() -> dict[str, int]:
+    with lock:
+        return dict(counts)`
 
 const LOAD_CONFIGS = `import json
 
 def load_configs(paths):
-    """Load every config; skip files that don't exist."""
+    """Load each config file.
+
+    Skips files that don't exist.
+    """
     configs = []
     for p in paths:
         try:
@@ -53,24 +53,30 @@ const lesson: Lesson = {
       code: `import json
 from pathlib import Path
 
-def save_snapshot(data: dict, path: Path) -> None:
-    """Write data as stable, diff-friendly JSON."""
-    path.parent.mkdir(parents=True, exist_ok=True)
+def save_snapshot(data, path: Path):
+    """Stable, diff-friendly JSON."""
+    path.parent.mkdir(parents=True,
+                      exist_ok=True)
+    text = json.dumps(data, sort=True,
+                      indent=2)
     tmp = path.with_suffix(".tmp")
-    tmp.write_text(json.dumps(data, indent=2, sort=True))
-    tmp.replace(path)  # atomic rename on POSIX`,
+    tmp.write_text(text)
+    tmp.replace(path)  # atomic rename`,
       bugLines: [8],
       explanation: "`json.dumps` has no `sort` parameter; it's `sort_keys`. The call raises `TypeError: ... unexpected keyword argument 'sort'`. A hallucinated parameter is the easiest AI bug to catch, but only if you run the code, because it reads perfectly.",
       fix: {
         code: `import json
 from pathlib import Path
 
-def save_snapshot(data: dict, path: Path) -> None:
-    """Write data as stable, diff-friendly JSON."""
-    path.parent.mkdir(parents=True, exist_ok=True)
+def save_snapshot(data, path: Path):
+    """Stable, diff-friendly JSON."""
+    path.parent.mkdir(parents=True,
+                      exist_ok=True)
+    text = json.dumps(data, sort_keys=True,
+                      indent=2)
     tmp = path.with_suffix(".tmp")
-    tmp.write_text(json.dumps(data, indent=2, sort_keys=True))
-    tmp.replace(path)  # atomic rename on POSIX`,
+    tmp.write_text(text)
+    tmp.replace(path)  # atomic rename`,
         highlight: [8],
       },
       hint: 'Check every keyword argument against the real signature.',
@@ -104,13 +110,16 @@ def save_snapshot(data: dict, path: Path) -> None:
       id: 'swallowed',
       prompt: "The docstring says it skips missing files. A teammate's config has a trailing comma, and the service silently starts with defaults. Tap the culprit.",
       code: LOAD_CONFIGS,
-      bugLines: [10],
+      bugLines: [13],
       explanation: "A bare `except:` catches everything: `JSONDecodeError`, typos that raise `NameError`, even `KeyboardInterrupt`. The docstring only promised to skip missing files, so catch exactly that and let parse errors raise with the filename attached.",
       fix: {
         code: `import json
 
 def load_configs(paths):
-    """Load every config; skip files that don't exist."""
+    """Load each config file.
+
+    Skips files that don't exist.
+    """
     configs = []
     for p in paths:
         try:
@@ -119,7 +128,7 @@ def load_configs(paths):
         except FileNotFoundError:
             continue
     return configs`,
-        highlight: [10, 11],
+        highlight: [13, 14],
       },
       hint: 'Which line decides *what* gets swallowed?',
     },
@@ -132,13 +141,14 @@ def load_configs(paths):
 import time
 
 async def fetch_one(session, url):
-    time.sleep(0.5)  # stay under the rate limit
+    time.sleep(0.5)  # rate limit
     async with session.get(url) as r:
         return await r.text()
 
 async def fetch_all(session, urls):
-    return await asyncio.gather(
-        *(fetch_one(session, u) for u in urls))`,
+    tasks = [fetch_one(session, u)
+             for u in urls]
+    return await asyncio.gather(*tasks)`,
       },
       choices: [
         {
@@ -171,7 +181,7 @@ async def fetch_all(session, urls):
     {
       kind: 'spotbug',
       id: 'quadratic-crawl',
-      prompt: 'This BFS is correct, but it takes about a second on 20,000 pages where it should take milliseconds. Two lines each do O(n) work per step. Tap both.',
+      prompt: 'This BFS is correct, but it takes seconds on 20,000 pages where it should take milliseconds. Two lines each do O(n) work per step. Tap both.',
       code: `def crawl(start, get_links):
     queue = [start]
     seen = [start]
@@ -183,7 +193,7 @@ async def fetch_all(session, urls):
                 queue.append(link)
     return seen`,
       bugLines: [5, 7],
-      explanation: '`queue.pop(0)` shifts the whole list and `link not in seen` scans it. Use a `deque` with `popleft()`, and a `set` for membership, keeping a list only if you need discovery order. In a quick benchmark on a 20,000-node graph, the fix took the crawl from about 1 s to under 10 ms.',
+      explanation: '`queue.pop(0)` shifts the whole list and `link not in seen` scans it. Use a `deque` with `popleft()`, and a `set` for membership, keeping a list only if you need discovery order. In quick benchmarks on 20,000-node graphs, the fix took the crawl from seconds to milliseconds, a speedup of over 100x.',
       fix: {
         code: `from collections import deque
 
@@ -208,16 +218,16 @@ def crawl(start, get_links):
       title: 'Tests that agree with the bug',
       body: "Ask an assistant for tests and you often get this: the expected value is computed with the same formula as the implementation. If the formula is wrong, both are wrong together and the test passes. Here the spec said prices round to cents, and neither the code nor its first test does. A test needs an independent oracle: a hand-worked value, a property, or a simpler reference implementation.",
       code: {
-        code: `def apply_discount(price, pct):
+        code: `def discount(price, pct):
     return price - price * pct / 100
 
-def test_apply_discount():
+def test_discount():
     price, pct = 19.99, 15
-    expected = price - price * pct / 100
-    assert apply_discount(price, pct) == expected
+    want = price - price * pct / 100
+    assert discount(price, pct) == want
 
-def test_rounds_to_cents():  # worked by hand
-    assert apply_discount(19.99, 15) == 16.99`,
+def test_rounds_to_cents():  # by hand
+    assert discount(19.99, 15) == 16.99`,
       },
       callout: {
         tone: 'warn',
@@ -261,7 +271,7 @@ def test_rounds_to_cents():  # worked by hand
       id: 'review-comment',
       question: 'Two review comments on the `load_configs` change. Which one gets the bug fixed?',
       a: 'This error handling looks a bit fragile. Maybe tighten it up and add some more tests?',
-      b: 'Line 10: bare `except:` also swallows `JSONDecodeError`, so a config with a trailing comma is skipped silently and we boot with defaults. Suggest `except FileNotFoundError:` and letting parse errors raise with the path. Failing test attached.',
+      b: 'Line 13: bare `except:` also swallows `JSONDecodeError`, so a config with a trailing comma is skipped silently and we boot with defaults. Suggest `except FileNotFoundError:` and letting parse errors raise with the path. Failing test attached.',
       better: 'b',
       explanation: 'B gives the line, a concrete failing input, the consequence and a fix, so the author can verify it in a minute. A is a vibe: the author, human or agent, has to rediscover the bug and may fix the wrong thing. The same shape works when your comment is a prompt to an agent.',
     },
@@ -286,12 +296,12 @@ def test_rounds_to_cents():  # worked by hand
       eyebrow: 'Put it together',
       prompt: "Eight worker threads call `record`. The assistant's comment explains why no lock is needed. Tap the line that loses updates.",
       code: STATS,
-      bugLines: [13],
-      explanation: "Each dict operation is atomic, but line 13 is a read, an add, then a write, and another thread can run in between. In a CPython 3.11 stress run (8 threads × 100,000 calls), one run counted 800,000 and the next 491,463. The comment is half true, which makes it dangerous. The lock already exists; `record` just doesn't use it.",
+      bugLines: [10],
+      explanation: "Each dict operation is atomic, but line 10 is a read, an add, then a write, and another thread can run in between. In a CPython 3.11 stress run (8 threads × 100,000 calls), one run counted 800,000 and the next 491,463. The comment is half true, which makes it dangerous. The lock already exists; `record` just doesn't use it.",
       fix: {
-        code: `    def record(self, key: str) -> None:
-        with self.lock:
-            self.counts[key] = self.counts.get(key, 0) + 1`,
+        code: `def record(key: str) -> None:
+    with lock:
+        counts[key] = counts.get(key, 0) + 1`,
         highlight: [2, 3],
       },
       hint: 'Is the whole line one atomic step, or several?',
@@ -309,15 +319,20 @@ def test_rounds_to_cents():  # worked by hand
       skill: 'agents.review',
       kind: 'spotbug',
       prompt: 'A generated config helper. Which line fails on the first call?',
-      code: `def retry_settings(cfg: dict) -> tuple[int, float]:
-    """Read retry settings with safe defaults."""
-    retries = int(cfg.get("retries", 3))
-    backoff = float(cfg.get("backoff", default=0.5))
-    return retries, backoff`,
+      code: `def retry_settings(cfg: dict):
+    """Retry settings, with defaults."""
+    tries = cfg.get("tries", 3)
+    wait = cfg.get("wait", default=0.5)
+    return int(tries), float(wait)`,
       bugLines: [4],
       explanation: '`dict.get` takes its default positionally. `default=` raises `TypeError: dict.get() takes no keyword arguments`. Line 3 shows the right form. One run would have caught it.',
       fix: {
-        code: `    backoff = float(cfg.get("backoff", 0.5))`,
+        code: `def retry_settings(cfg: dict):
+    """Retry settings, with defaults."""
+    tries = cfg.get("tries", 3)
+    wait = cfg.get("wait", 0.5)
+    return int(tries), float(wait)`,
+        highlight: [4],
       },
     },
     {
@@ -381,16 +396,26 @@ def test_rounds_to_cents():  # worked by hand
       skill: 'py.debugging',
       kind: 'spotbug',
       prompt: 'Generated, documented and validated. Which line is wrong?',
-      code: `def moving_average(xs: list[float], w: int) -> list[float]:
-    """Mean of every window of size w, left to right."""
+      code: `def moving_average(xs, w):
+    """Mean of each size-w window."""
     if w <= 0:
-        raise ValueError("w must be positive")
-    return [sum(xs[i:i + w]) / w
-            for i in range(len(xs) - w)]`,
+        raise ValueError("w must be > 0")
+    out = []
+    for i in range(len(xs) - w):
+        out.append(sum(xs[i:i + w]) / w)
+    return out`,
       bugLines: [6],
       explanation: 'There are `len(xs) - w + 1` windows. `range(len(xs) - w)` drops the last one, so `moving_average([1, 2, 3], 3)` returns `[]` instead of `[2.0]`. Fluent code, tidy validation, classic off-by-one.',
       fix: {
-        code: `            for i in range(len(xs) - w + 1)]`,
+        code: `def moving_average(xs, w):
+    """Mean of each size-w window."""
+    if w <= 0:
+        raise ValueError("w must be > 0")
+    out = []
+    for i in range(len(xs) - w + 1):
+        out.append(sum(xs[i:i + w]) / w)
+    return out`,
+        highlight: [6],
       },
     },
     {

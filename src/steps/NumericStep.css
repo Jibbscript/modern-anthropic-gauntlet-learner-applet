@@ -2,6 +2,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--s-3);
+  container-type: inline-size;
 }
 
 /* ------------------------------------------------------------- field */
@@ -46,17 +47,9 @@
   opacity: 0.55;
   pointer-events: none;
 }
-.numeric__field--xl {
-  font-size: 50px;
-}
-.numeric__field--lg {
-  font-size: 40px;
-}
-.numeric__field--md {
-  font-size: 31px;
-}
-.numeric__field--sm {
-  font-size: 24px;
+/* big by default, shrinking with the digit count so it never clips beside the unit chip */
+.numeric__field {
+  font-size: clamp(20px, calc((100cqi - 2 * var(--s-4) - var(--s-3) - var(--nf-unit, 0px) - 8px) / (var(--nf-chars, 3) * 0.6)), 50px);
 }
 .numeric__field--answer:focus-within {
   --nf-line: var(--select);
@@ -196,9 +189,13 @@
   font-weight: 700;
 }
 .numeric__verdict {
-  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 2px 6px;
   padding: 6px 12px;
   font-size: var(--fs-sm);
+  white-space: normal;
+  text-align: center;
 }
 .numeric__verdict--good {
   background: var(--good-soft);
@@ -293,6 +290,7 @@
 /* ------------------------------------------------------------ answer */
 
 .numeric__answer {
+  container-type: inline-size;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -319,7 +317,7 @@
   gap: var(--s-2) var(--s-3);
   max-width: 100%;
   font-family: var(--font-display);
-  font-size: clamp(28px, 9vw, 44px);
+  font-size: clamp(24px, 13cqi, 44px);
   font-weight: 700;
   letter-spacing: -0.02em;
   line-height: 1.1;

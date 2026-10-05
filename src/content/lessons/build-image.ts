@@ -47,30 +47,32 @@ assert flip_h([[1, 2, 3]]) == [[3, 2, 1]]`,
       code: `def rotate_cw(img: Image) -> Image:
     h, w = len(img), len(img[0])
     out = [[0] * h for _ in range(w)]
-    for y in range(h):
-        for x in range(w):
-            out[x][w - 1 - y] = img[y][x]
+    for y, row in enumerate(img):
+        for x, p in enumerate(row):
+            out[x][w - 1 - y] = p
     return out
 
-assert rotate_cw([[1, 2], [3, 4]]) == [[3, 1], [4, 2]]`,
+square = [[1, 2], [3, 4]]
+assert rotate_cw(square) == [[3, 1], [4, 2]]`,
       bugLines: [6],
       explanation:
         'Rotating clockwise sends row `y` to column `h - 1 - y`: the bottom row becomes the left column. The code uses `w`, which equals `h` only on squares, so the square test passes. On a tall image `w - 1 - y` goes negative and Python\'s negative indexing ==wraps silently==. Test transforms on non-square inputs.',
-      fix: { code: `            out[x][h - 1 - y] = img[y][x]` },
+      fix: { code: `            out[x][h - 1 - y] = p` },
       hint: 'The only test uses a square. Which variable is right only when `h == w`?',
     },
     {
       kind: 'cloze',
       id: 'compose',
-      prompt: 'A pipeline applies transforms left to right. Complete it so `pipeline(grayscale, blur, rotate_cw)(img)` runs `grayscale` first and feeds each result to the next step.',
+      prompt: 'A pipeline applies transforms left to right. Complete it so `pipeline(gray, blur, rotate)(img)` runs `gray` first and feeds each result to the next step.',
       code: `from functools import reduce
 
 def pipeline(*steps):
     def run(img):
-        return reduce(lambda acc, step: {{0}}, steps, {{1}})
+        apply = lambda acc, step: {{0}}
+        return reduce(apply, steps, {{1}})
     return run
 
-thumbnail = pipeline(grayscale, blur, rotate_cw)`,
+thumb = pipeline(gray, blur, rotate)`,
       blanks: [
         { options: ['acc(step)', 'step(acc)', 'step(img)'], answer: 1 },
         { options: ['img', 'steps[0]', 'None'], answer: 0 },
@@ -90,7 +92,7 @@ thumbnail = pipeline(grayscale, blur, rotate_cw)`,
     {
       kind: 'mcq',
       id: 'halo',
-      prompt: 'You process a big image in tiles: a 5×5 box blur, then a 3×3 sharpen. Each tile is cut with an extra border (a *halo*) that is cropped off afterwards. What is the smallest halo, in pixels per side, that makes the stitched result identical to processing the whole image?',
+      prompt: 'You process a big image in tiles: a 5×5 box blur, then a 3×3 sharpen. Each tile gets an extra border (a *halo*) that is cropped off afterwards. What is the smallest halo per side that makes the stitched result match the whole-image result?',
       choices: [
         {
           text: '2 pixels',
@@ -283,14 +285,18 @@ thumbnail = pipeline(grayscale, blur, rotate_cw)`,
       skill: 'build.image',
       kind: 'predict',
       prompt: 'What does this print?',
-      code: `from functools import reduce
-
-def pipeline(*steps):
-    return lambda x: reduce(lambda acc, f: f(acc), steps, x)
+      code: `def pipeline(*steps):
+    def run(x):
+        for step in steps:
+            x = step(x)
+        return x
+    return run
 
 add1 = lambda v: v + 1
 double = lambda v: v * 2
-print(pipeline(add1, double)(3), pipeline(double, add1)(3))`,
+up = pipeline(add1, double)
+down = pipeline(double, add1)
+print(up(3), down(3))`,
       answers: ['8 7'],
       explanation: 'Steps run left to right: (3 + 1) × 2 = 8, then 3 × 2 + 1 = 7. Order matters for transforms too: blur-then-resize is not resize-then-blur.',
     },

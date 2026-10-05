@@ -926,7 +926,7 @@ An empty list is valid.
 **Part 2.** \`to_chrome_trace(threads, pid=1)\` takes \`{tid: events}\`, where each value is a \`stack_to_events\` result, and returns a **JSON string**: \`{"traceEvents": [...], "displayTimeUnit": "ms"}\`.
 
 - Validate each thread's events first.
-- Each output event is \`{"name", "ph", "ts", "pid", "tid"}\`, with \`ts\` in **integer microseconds**: \`round(ts * 1_000_000)\`, since input timestamps are seconds.
+- Each output event is a dict with keys \`name\`, \`ph\`, \`ts\`, \`pid\` and \`tid\`, with \`ts\` in **integer microseconds**: \`round(ts * 1_000_000)\`, since input timestamps are seconds.
 - Drop **zero-length frames**: a \`B\` and its matching \`E\` with the same microsecond timestamp. The viewer can't draw them anyway.
 - Merge all threads into one list sorted by \`ts\`. At equal \`ts\`, **every \`E\` comes before any \`B\`**; remaining ties go by \`tid\` (ascending), then by original order within the thread.
 

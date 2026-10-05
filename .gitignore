@@ -10,3 +10,4 @@ playwright-report/
 screenshots/
 .qa/
 artifact/
+dist-smoke/
