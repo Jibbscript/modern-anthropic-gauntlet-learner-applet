@@ -1,4 +1,5 @@
-import { animate, useMotionValue, useTransform, motion } from 'motion/react'
+import { animate, useMotionValue, useReducedMotion, useTransform, motion } from 'motion/react'
+import { useStore } from '../core/store'
 import { useEffect } from 'react'
 
 /** Number that counts up/down to its value. */
@@ -14,11 +15,19 @@ export function Ticker({
   duration?: number
   format?: (n: number) => string
 }) {
-  const mv = useMotionValue(from ?? value)
+  // call both hooks unconditionally (no short-circuit) to keep hook order stable
+  const osReduce = useReducedMotion()
+  const appReduce = useStore((s) => s.settings.reduceMotion)
+  const reduce = !!osReduce || appReduce
+  const mv = useMotionValue(reduce ? value : (from ?? value))
   const text = useTransform(mv, (v) => format(v))
   useEffect(() => {
+    if (reduce) {
+      mv.set(value)
+      return
+    }
     const c = animate(mv, value, { duration, ease: [0.22, 1, 0.36, 1] })
     return () => c.stop()
-  }, [value, duration, mv])
+  }, [value, duration, mv, reduce])
   return <motion.span className="tabular">{text}</motion.span>
 }

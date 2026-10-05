@@ -36,6 +36,16 @@ select {
   color: inherit;
 }
 
+/* iOS zooms into any focused field under 16px; keep fields at 16px+ on touch
+   screens (the lab editor manages its own 13px textarea while focused) */
+@media (pointer: coarse) {
+  input:not([type='range']):not([type='checkbox']):not([type='radio']),
+  textarea:not(.ed__ta),
+  select {
+    font-size: max(16px, 1em);
+  }
+}
+
 button {
   cursor: pointer;
   background: none;

@@ -11,6 +11,13 @@ self.addEventListener('activate', (e) => {
     caches.keys().then((keys) => Promise.all(keys.filter((k) => k !== VERSION && k !== RUNTIME).map((k) => caches.delete(k)))).then(() => self.clients.claim()),
   )
 })
+// hashed assets from older deploys would otherwise pile up: keep the newest 80
+const MAX_ASSETS = 80
+async function trimAssets(cache) {
+  const keys = (await cache.keys()).filter((r) => new URL(r.url).pathname.includes('/assets/'))
+  for (const old of keys.slice(0, Math.max(0, keys.length - MAX_ASSETS))) await cache.delete(old)
+}
+
 self.addEventListener('fetch', (e) => {
   const req = e.request
   if (req.method !== 'GET') return
@@ -51,7 +58,7 @@ self.addEventListener('fetch', (e) => {
         fetch(req).then((res) => {
           if (res.ok && url.pathname.includes('/assets/')) {
             const copy = res.clone()
-            caches.open(VERSION).then((c) => c.put(req, copy))
+            caches.open(VERSION).then((c) => c.put(req, copy).then(() => trimAssets(c)))
           }
           return res
         }),
