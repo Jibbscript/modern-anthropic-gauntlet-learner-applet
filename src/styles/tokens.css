@@ -83,7 +83,7 @@
   --code-ink: #1f1f1f;
   --code-line: #ebebeb;
   --code-kw: #7c3aed;
-  --code-str: #0f8a5f;
+  --code-str: #0b7a53; /* 5:1 on the code background, 4.8:1 on a highlighted line */
   --code-num: #c2410c;
   --code-fn: #2563eb;
   --code-com: #6b6b7e;
@@ -196,7 +196,7 @@
     --code-str: #6fe0a8;
     --code-num: #ffb27a;
     --code-fn: #8ab8ff;
-    --code-com: #6f6f84;
+    --code-com: #8a8aa0; /* comments carry hints: 5:1 on the dark code background */
     --code-builtin: #ff8fc4;
     --shadow-md: 0 6px 20px rgba(0, 0, 0, 0.4);
     --shadow-lg: 0 18px 50px rgba(0, 0, 0, 0.55);
@@ -257,7 +257,7 @@
   --code-str: #6fe0a8;
   --code-num: #ffb27a;
   --code-fn: #8ab8ff;
-  --code-com: #6f6f84;
+  --code-com: #8a8aa0; /* comments carry hints: 5:1 on the dark code background */
   --code-builtin: #ff8fc4;
   --shadow-md: 0 6px 20px rgba(0, 0, 0, 0.4);
   --shadow-lg: 0 18px 50px rgba(0, 0, 0, 0.55);

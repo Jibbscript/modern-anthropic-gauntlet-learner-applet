@@ -146,7 +146,9 @@ export function App() {
     if (stack.length < prev) {
       const el = openers[stack.length]
       openers.length = stack.length
+      // the opener may be gone (a sheet's button): fall back to the overlay now on top
       if (el instanceof HTMLElement && el.isConnected) el.focus({ preventScroll: true })
+      else document.querySelector<HTMLElement>(`.overlay[data-depth="${stack.length - 1}"]`)?.focus({ preventScroll: true })
     }
   }, [stack.length])
 
