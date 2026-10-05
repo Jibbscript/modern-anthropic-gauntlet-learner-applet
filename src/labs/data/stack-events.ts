@@ -416,7 +416,7 @@ const level2: LabLevel = {
 - **Recursion.** The same name can appear at several depths: \`["main", "walk", "walk", "walk"]\`. A frame is identified by its **position** in the stack, not its name, so going from \`["f", "f"]\` to \`["f", "f", "f"]\` begins exactly one new \`f\`.
 - **Repeated samples.** If a sample's stack equals the previous one, nothing changed: emit nothing.
 - **Empty stacks.** \`[]\` means the program was idle, so everything open ends at that timestamp. Leading or trailing empty samples are fine, and all-empty input gives \`[]\`.
-- **Bad input.** Timestamps must never decrease (equal is fine). If one does, raise \`ValueError\` with a message that includes the bad sample's index.
+- **Bad input.** Timestamps must never decrease (equal is fine). If one does, raise \`ValueError\` with a message that includes the bad sample's index (its 0-based position in \`samples\`).
 - **Ownership.** Don't modify the caller's samples or stacks.
 
 Example:

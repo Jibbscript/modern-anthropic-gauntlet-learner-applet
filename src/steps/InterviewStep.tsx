@@ -70,7 +70,13 @@ export default function InterviewStep({ step, phase, attempt, complete }: StepPr
 
   // option display order per turn (varies per attempt so a retry is not just recall of positions)
   const orders = useMemo(
-    () => turns.map((tr, t) => seededShuffle(tr.options.map((_, i) => i), `${step.id}:${t}:${attempt}`)),
+    () =>
+      turns.map((tr, t) =>
+        seededShuffle(
+          tr.options.map((_, i) => i),
+          `${step.id}:${t}:${attempt}`,
+        ),
+      ),
     [turns, step.id, attempt],
   )
 
@@ -234,12 +240,7 @@ export default function InterviewStep({ step, phase, attempt, complete }: StepPr
 
       <div className="interview-log" role="log" aria-live="polite" aria-label="Interview transcript">
         {step.setup && (
-          <motion.div
-            className="interview-setup"
-            initial={attempt === 0 ? { opacity: 0, y: 6 } : false}
-            animate={{ opacity: 1, y: 0 }}
-            transition={SPRING}
-          >
+          <motion.div className="interview-setup" initial={attempt === 0 ? { opacity: 0, y: 6 } : false} animate={{ opacity: 1, y: 0 }} transition={SPRING}>
             <Rich text={step.setup} inline />
           </motion.div>
         )}
@@ -251,9 +252,7 @@ export default function InterviewStep({ step, phase, attempt, complete }: StepPr
           return (
             <Fragment key={t}>
               <Interviewer text={turn.interviewer} first={t === 0} />
-              {p != null && q && (
-                <Reply text={turn.options[p].text} feedback={turn.options[p].feedback} quality={q} graded={graded > t} reduce={reduce} />
-              )}
+              {p != null && q && <Reply text={turn.options[p].text} feedback={turn.options[p].feedback} quality={q} graded={graded > t} reduce={reduce} />}
               <AnimatePresence initial={false}>
                 {revealed && p != null && q !== 'strong' && (
                   <motion.div
@@ -308,14 +307,20 @@ export default function InterviewStep({ step, phase, attempt, complete }: StepPr
             initial="hidden"
             animate="shown"
             exit={{ opacity: 0, y: 10, transition: { duration: 0.14 } }}
-            variants={{ hidden: {}, shown: { transition: { staggerChildren: 0.05 } } }}
+            variants={{
+              hidden: {},
+              shown: { transition: { staggerChildren: 0.05 } },
+            }}
           >
             <div className="step__instructions interview-options__how">Your reply</div>
             <div className="choices" role="group" aria-label="Pick your reply">
               {orders[current].map((i, k) => (
                 <motion.div
                   key={i}
-                  variants={{ hidden: { opacity: 0, y: 14 }, shown: { opacity: 1, y: 0, transition: SPRING } }}
+                  variants={{
+                    hidden: { opacity: 0, y: 14 },
+                    shown: { opacity: 1, y: 0, transition: SPRING },
+                  }}
                 >
                   <Tile
                     className="interview-option"
@@ -347,22 +352,11 @@ function Avatar() {
 
 function Interviewer({ text, first }: { text: string; first: boolean }) {
   return (
-    <motion.div
-      className="interview-row"
-      data-anchor
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={SPRING}
-    >
+    <motion.div className="interview-row" data-anchor initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={SPRING}>
       <Avatar />
       <div className="interview-col">
         {first && <div className="interview-name">Interviewer</div>}
-        <motion.div
-          className="interview-bubble interview-bubble--them"
-          initial={{ scale: 0.92 }}
-          animate={{ scale: 1 }}
-          transition={POP}
-        >
+        <motion.div className="interview-bubble interview-bubble--them" initial={{ scale: 0.92 }} animate={{ scale: 1 }} transition={POP}>
           <span className="visually-hidden">Interviewer: </span>
           <Rich text={text} />
         </motion.div>
@@ -371,19 +365,7 @@ function Interviewer({ text, first }: { text: string; first: boolean }) {
   )
 }
 
-function Reply({
-  text,
-  feedback,
-  quality,
-  graded,
-  reduce,
-}: {
-  text: string
-  feedback: string
-  quality: Quality
-  graded: boolean
-  reduce: boolean
-}) {
+function Reply({ text, feedback, quality, graded, reduce }: { text: string; feedback: string; quality: Quality; graded: boolean; reduce: boolean }) {
   const { label, Icon } = QUALITY[quality]
   const tone = graded ? quality : 'sent'
   const settle =
@@ -395,13 +377,7 @@ function Reply({
           ? { x: 0, scale: [1, 1.035, 1] }
           : { x: 0, scale: 1 }
   return (
-    <motion.div
-      className="interview-me"
-      data-anchor
-      initial={{ opacity: 0, y: 16, scale: 0.94 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      transition={SPRING}
-    >
+    <motion.div className="interview-me" data-anchor initial={{ opacity: 0, y: 16, scale: 0.94 }} animate={{ opacity: 1, y: 0, scale: 1 }} transition={SPRING}>
       <div className="interview-name interview-name--me">You</div>
       <motion.div
         className={`interview-bubble interview-bubble--me interview-bubble--${tone}`}

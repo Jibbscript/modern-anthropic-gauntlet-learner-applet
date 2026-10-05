@@ -13,11 +13,11 @@ const lesson: Lesson = {
       eyebrow: 'Build round',
       title: 'Level 1 is the trap',
       body:
-        'Candidates report (2025-2026) that the online assessment is a 90-minute CodeSignal project built over four levels, each unlocking when its tests pass. An in-memory key-field-value database is the most reported project.\n\n' +
-        'Level 1 takes ten minutes. What decides levels 3 and 4 is whether your level 1 data model can ==absorb new requirements without a rewrite==.',
+        'Many candidates report (2025-2026) a 90-minute CodeSignal assessment: one project built over four levels, each unlocking when its tests pass. An in-memory key-field-value database is among the most reported projects.\n\n' +
+        'Level 1 takes about ten minutes. What decides levels 3 and 4 is whether your level 1 data model can ==absorb new requirements without a rewrite==.',
       callout: {
         tone: 'warn',
-        text: 'The specs here are prep-site reconstructions, not Anthropic’s text. Level 4 varies by report (backup/restore or historical reads), and some 2026 reports describe six levels. Practise the shape.',
+        text: 'The specs here are prep-site reconstructions, not Anthropic’s text, and CodeSignal reuses these projects across companies. Level 4 varies by report (backup/restore or historical reads), and some 2026 reports describe six levels. Practice the shape, not a script.',
       },
     },
     {
@@ -189,14 +189,7 @@ def get_at(self, key, field, ts):
     e = self.data.get(key, {}).get(field)
     if e and self._alive(e, ts):
         return e.value
-    return None
-
-def scan_at(self, key, ts):
-    rec = self.data.get(key, {})
-    live = {f: e.value
-            for f, e in rec.items()
-            if self._alive(e, ts)}
-    return self._fmt(live)`,
+    return None`,
       bugLines: [4],
       explanation:
         '`expires` is `t + ttl`, the first timestamp at which the field is dead, so the check must be strict. Because every read goes through `_alive`, one character fixes get, scan and backup together. That is the payoff of keeping time logic in one place.',
@@ -226,7 +219,7 @@ def scan_at(self, key, ts):
             snap[key] = live
     self.backups.append((ts, snap))
     return len(snap)`,
-        caption: 'Returns the number of non-empty records saved, a common spec detail.',
+        caption: 'Returns the count of records saved. Reconstructed specs differ here: some return a backup id instead.',
       },
     },
     {
@@ -270,7 +263,7 @@ def scan_at(self, key, ts):
         'Rerun every earlier level’s tests before moving on',
       ],
       explanation:
-        'Reading first stops you building the wrong thing. A minimal model change (wrap the value in an `Entry`) keeps earlier levels passing. Candidates describe tests shipping with each OA level, so treat them as the real spec and read failures closely; in live rounds you write them yourself.',
+        'Reading first stops you building the wrong thing. A minimal model change (wrap the value in an `Entry`) keeps earlier levels passing. Candidates describe tests shipping with each OA level, so treat them as the real spec and read failures closely; in live rounds you often write your own.',
       hint: 'Understand before you change; check for regressions last.',
     },
     {
@@ -289,10 +282,10 @@ def scan_at(self, key, ts):
                 'A reasonable second step, but now the dict of locks needs guarding, and scans and backups span keys. Lead with the simple correct version.',
             },
             {
-              text: 'Nothing. The GIL makes dict operations thread-safe.',
+              text: 'Not much. The GIL makes each dict operation atomic, and every method here is only a few dict operations.',
               quality: 'weak',
               feedback:
-                'Single dict operations are atomic in CPython, but `delete` is check-then-act: another thread can run between `field in rec` and `del rec[field]`.',
+                'Each dict operation is atomic in CPython, but a few in a row are not. `delete` is check-then-act: another thread can delete between `field in rec` and `del rec[field]`, and yours raises `KeyError`.',
             },
             {
               text: 'Compound operations like delete’s check-then-remove can interleave. First, one lock around each public method. It is obviously correct; I would measure contention before going finer.',
@@ -310,7 +303,7 @@ def scan_at(self, key, ts):
               feedback: 'Off-by-one bugs live at the boundary, and these cases pin it from both sides.',
             },
             {
-              text: 'Set a 2-second TTL, `time.sleep(2)`, and check the value is gone.',
+              text: 'Set a TTL of 2, `time.sleep(2)`, then check the value is gone, so the test exercises real expiry end to end.',
               quality: 'weak',
               feedback: 'Slow, flaky, and pointless: the API takes timestamps as arguments, so there is no clock to wait for.',
             },
@@ -362,7 +355,7 @@ def scan_at(self, key, ts):
       id: 'build-kvstore.levels',
       skill: 'py.progressive',
       kind: 'order',
-      prompt: 'Order the levels of the classic in-memory store exercise.',
+      prompt: 'Order the levels of the in-memory store practice problem (the commonly reconstructed version).',
       items: [
         'Records with fields: set, get, delete',
         'Sorted scans and prefix scans',

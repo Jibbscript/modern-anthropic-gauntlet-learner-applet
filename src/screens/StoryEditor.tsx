@@ -290,7 +290,9 @@ export default function StoryEditor({ slot }: { slot: StorySlotId }) {
                 <div key={r.key} className="sed-refl">
                   <div className="sed-refl__head">
                     <BookOpenText size={15} strokeWidth={2.6} />
-                    From the lesson <b>{r.lesson}</b>
+                    <span>
+                      From the lesson <b>{r.lesson}</b>
+                    </span>
                   </div>
                   <p className="sed-refl__text">{text}</p>
                   <Button

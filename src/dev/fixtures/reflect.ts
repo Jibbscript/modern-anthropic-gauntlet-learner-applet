@@ -12,7 +12,12 @@ const steps: Step[] = [
     eyebrow: 'Your story',
     prompt: 'Draft your answer to: “Tell me about a time you disagreed with your team’s direction.”',
     guidance: 'Write what you **actually thought at the time**, what you did about it, and how you see it now. Rough is fine; you will rehearse it later.',
-    rubric: ['Says what I thought at the time', 'Names what I did and through which channel', 'Says what happened, including if I lost', 'Ends with how I see it now'],
+    rubric: [
+      'Says what I thought at the time',
+      'Names what I did and through which channel',
+      'Says what happened, including if I lost',
+      'Ends with how I see it now',
+    ],
     slot: 'disagree-company',
     placeholder: 'In 2023 my team decided to…',
   },

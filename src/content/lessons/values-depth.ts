@@ -64,7 +64,7 @@ const lesson: Lesson = {
       body:
         'A plausible answer to *Tell me about something that went badly and was your fault*:\n\n' +
         '> I once ran a migration that caused a latency spike. I rolled it back quickly, wrote a postmortem, and we added load testing to our process. It taught me to never skip testing.\n\n' +
-        "Every sentence is true. It's all rung 1 plus a moral, and the moral invites the obvious probe: *so why did you skip it?*",
+        "All true, and all rung 1 plus a moral. The moral invites the obvious probe: *so why did you skip it?*",
     },
     {
       kind: 'mcq',
@@ -183,7 +183,7 @@ const lesson: Lesson = {
               feedback: 'A dodge dressed as a virtue. The question asked for a time you felt strongly; this says you never do.',
             },
             {
-              text: 'I was sure our job scheduler needed a rewrite in Go, and argued for it for a month. Then a teammate profiled it: 80% of the latency was one unindexed query. I dropped the rewrite.',
+              text: 'I argued for a month that our job scheduler needed a Go rewrite. Then a teammate profiled it: 80% of the latency was one unindexed query. I dropped the rewrite.',
               quality: 'strong',
               feedback: 'What you believed, how hard you held it, and what evidence moved you. Short, with room for the follow-up.',
             },
@@ -193,17 +193,17 @@ const lesson: Lesson = {
           interviewer: 'Hold on. Before the profile came back, what did *you* think was going on?',
           options: [
             {
-              text: 'That the Python workers were choking on the GIL under load. I was maybe 80% sure. And honestly, part of it was that I wanted an excuse to write Go.',
+              text: 'That the Python workers were choking on the GIL. I was maybe 80% sure. Honestly, part of it was that I wanted an excuse to write Go.',
               quality: 'strong',
               feedback: 'Your hypothesis, your confidence, and an unflattering motive. That last detail is what makes the update believable.',
             },
             {
-              text: "I thought the scheduler was just too slow and needed a serious overhaul, which is why I'd proposed the rewrite in the first place.",
+              text: "I thought the scheduler was just too slow for our load and needed a serious overhaul, which is why I'd proposed the rewrite in the first place.",
               quality: 'okay',
               feedback: "That's your conclusion, not your diagnosis. What did you think was causing it, and how sure were you?",
             },
             {
-              text: 'The team generally felt the scheduler had performance issues, and there was broad agreement that we should explore our options.',
+              text: 'The team generally felt the scheduler had performance issues under load, and there was broad agreement that we should explore all of our options.',
               quality: 'weak',
               feedback: 'Back into *we*, when the question leaned on *you*. This is the hiding the follow-up was meant to flush out.',
             },
@@ -213,17 +213,17 @@ const lesson: Lesson = {
           interviewer: 'How do you see it now?',
           options: [
             {
-              text: 'Honestly, I still think the rewrite would have been better long-term. I just went along with it to keep the team moving.',
+              text: "Honestly, I still think the rewrite would have been better for us long-term. I just went along with the team's decision to keep things moving.",
               quality: 'weak',
               feedback: 'This contradicts your own story, since you said your mind changed. Coaches list a mismatch between what you say and what you did as a red flag.',
             },
             {
-              text: "I was right that it was slow and wrong about why. I'd reached for the fun fix. Now I ask for a profile before I argue for any rewrite, mine first. I'd still enjoy Go, but that's a preference, not evidence.",
+              text: "Right that it was slow, wrong about why. I'd reached for the fun fix. Now I ask for a profile before arguing for any rewrite, mine first. Go is still a preference, not evidence.",
               quality: 'strong',
               feedback: 'A split verdict, a named blind spot, a concrete habit change, and a clean line between preference and evidence.',
             },
             {
-              text: "It taught me how important it is to make decisions based on data, and I've tried to apply that on every project since then.",
+              text: "It taught me how important it is to make decisions based on data rather than instinct, and I've tried to apply that on every project since.",
               quality: 'okay',
               feedback: 'True, but it fits any story. Which habit changed, and how would a teammate notice?',
             },

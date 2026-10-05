@@ -12,12 +12,12 @@ const lesson: Lesson = {
       id: 'hook',
       eyebrow: 'Warm-up',
       title: 'Correct is not done',
-      body: "Candidates report that practical rounds rarely stop at \"it works\". The next prompt is \"now make it scale\" or \"now make it concurrent\". What breaks first is rarely the algorithm. It's a container doing something linear inside a loop you assumed was cheap.\n\nThe same few characters can hide very different costs:",
+      body: "Candidates report that practical rounds rarely stop at \"it works\". The next prompt is \"now make it scale\" or \"now make it concurrent\". What breaks first is often not the algorithm but a container doing something linear inside a loop you assumed was cheap.\n\nThe same few characters can hide very different costs:",
       code: {
-        code: `# list: compares against every element
+        code: `# list: a linear scan, O(n)
 x in items
 
-# set: one hash lookup, on average
+# set: one hash lookup, O(1) on average
 x in seen`,
       },
     },
@@ -40,7 +40,7 @@ x in seen`,
     return order`,
       bugLines: [6],
       explanation:
-        '`list.pop(0)` removes the first slot and shifts every remaining element left: O(n) per pop, O(n²) for the crawl. A performance bug is still a bug. In a quick test, a 400,000-page frontier took about 20 s this way and under 0.1 s with a deque. `seen` is already a set, so membership is fine.',
+        '`list.pop(0)` removes the first slot and shifts every remaining element left: O(n) per pop, O(n²) for the crawl. A performance bug is still a bug. On one test machine, draining a 400,000-page frontier took about 19 s this way and under 0.1 s with a deque. `seen` is already a set, so membership is fine.',
       fix: {
         code: `from collections import deque
 
@@ -60,7 +60,7 @@ page = queue.popleft()   # O(1)`,
       tolerance: 0.1,
       unit: 'moves',
       explanation:
-        '9,999 + 9,998 + … + 0 = n(n − 1)/2 = 49,995,000: about 50 million moves for 10,000 pops. A `deque` is a doubly linked list of fixed-size blocks, so `append`, `appendleft`, `pop` and `popleft` are all O(1) and draining costs 10,000 steps. Use it for every FIFO queue and BFS frontier.',
+        '9,999 + 9,998 + … + 0 = n(n − 1)/2 = 49,995,000: about 50 million moves for 10,000 pops. A `deque` is a doubly linked list of fixed-size blocks, so `append`, `appendleft`, `pop` and `popleft` are all O(1) and draining costs 10,000 steps. Use it for every FIFO queue and BFS frontier; between threads, `queue.Queue` adds blocking and backpressure on top.',
       hint: "Add up 9,999 + 9,998 + … + 1. There's a formula for that.",
     },
     {
@@ -75,8 +75,7 @@ by_host = defaultdict(list)
 for url in urls:
     by_host[host(url)].append(url)
 
-first = (ln.split()[0] for ln in log)
-codes = Counter(first)
+codes = Counter(r.status for r in rows)
 codes.most_common(3)  # [(code, n), ...]`,
       },
       callout: {
@@ -158,6 +157,10 @@ class LRU:
         self.data.move_to_end(key)
         if len(self.data) > self.capacity:
             self.data.popitem(last=False)`,
+      },
+      callout: {
+        tone: 'insight',
+        text: 'Candidates report an LRU cache question, keyed on `*args`/`**kwargs`, then made to survive a restart. Mention `functools.lru_cache`, then expect to build it anyway.',
       },
     },
     {
@@ -293,14 +296,20 @@ membership     set          O(1) avg`,
       explanation: '0 + 1 + … + 999 = 999 × 1000 / 2 = 499,500. `deque.appendleft` does each insert in O(1).',
     },
     {
-      id: 'py-collections.counter-sub',
+      id: 'py-collections.counter-update',
       skill: 'py.collections',
       kind: 'predict',
       prompt: 'What does this print?',
       code: `from collections import Counter
-print(Counter("aab") - Counter("abc"))`,
-      answers: ["Counter({'a': 1})"],
-      explanation: 'Counter subtraction keeps only positive counts: a is 2 − 1 = 1; b drops to 0 and c to −1, so both are discarded.',
+
+c = Counter(x=2)
+c.update({"x": 3})
+d = {"x": 2}
+d.update({"x": 3})
+print(c["x"], d["x"], c["y"])`,
+      answers: ['5 3 0'],
+      explanation:
+        '`Counter.update` *adds* counts; `dict.update` replaces values. A missing key in a `Counter` reads as 0 without being inserted.',
     },
     {
       id: 'py-collections.heap-ties',
@@ -352,24 +361,24 @@ while h:
         { left: 'Word frequencies in a document', right: '`Counter(words)`' },
       ],
       explanation:
-        'A list is a fine stack: both ends of the action happen at the tail, O(1). `&` intersects sets. `nsmallest` keeps a small heap, O(n log k). `Counter` counts in one pass.',
+        'A list is a fine stack: push and pop both happen at the tail, O(1). `&` intersects sets. `nsmallest` keeps a small heap, O(n log k). `Counter` counts in one pass.',
     },
     {
       id: 'py-collections.defaultdict',
       skill: 'py.collections',
       kind: 'cloze',
-      prompt: 'Group URLs by host in one pass.',
+      prompt: 'Collect the *distinct* status codes (strings like `"404"`) seen for each host, in one pass.',
       code: `from collections import defaultdict
 
-by_host = defaultdict({{0}})
-for url in urls:
-    by_host[host(url)].{{1}}(url)`,
+codes = defaultdict({{0}})
+for host, status in responses:
+    codes[host].{{1}}(status)`,
       blanks: [
-        { options: ['[]', 'list', 'list()'], answer: 1 },
-        { options: ['add', 'extend', 'append'], answer: 2 },
+        { options: ['set()', '{}', 'set', 'dict'], answer: 2 },
+        { options: ['append', 'update', 'add'], answer: 2 },
       ],
       explanation:
-        '`defaultdict` needs a *callable* factory: `list`, not `[]` or `list()` (both raise `TypeError`). Lists `append`; `add` is for sets, and `extend` would add the URL one character at a time.',
+        '`defaultdict` needs a *callable* factory: `set`, not `set()` or `{}` (both raise `TypeError`, and `{}` is a dict anyway). Sets `add`; `update` would treat `"404"` as an iterable and add `"4"` and `"0"`.',
     },
   ],
 }

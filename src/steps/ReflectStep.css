@@ -36,7 +36,9 @@
   transition: box-shadow var(--dur-2);
 }
 .reflect-field:focus-within {
-  box-shadow: inset 0 0 0 2px var(--select), 0 0 0 4px var(--select-soft);
+  box-shadow:
+    inset 0 0 0 2px var(--select),
+    0 0 0 4px var(--select-soft);
 }
 .reflect-input {
   display: block;
@@ -98,7 +100,9 @@
   gap: 6px;
 }
 .reflect-rubric__count {
-  transition: background var(--dur-2), color var(--dur-2);
+  transition:
+    background var(--dur-2),
+    color var(--dur-2);
 }
 .reflect-checks {
   display: flex;
@@ -119,15 +123,22 @@
   margin-bottom: var(--edge-h);
   border-radius: var(--r-md);
   background: var(--k-bg);
-  box-shadow: inset 0 0 0 2px var(--k-line), 0 var(--edge-h) 0 0 var(--k-edge);
+  box-shadow:
+    inset 0 0 0 2px var(--k-line),
+    0 var(--edge-h) 0 0 var(--k-edge);
   text-align: left;
   user-select: none;
   -webkit-user-select: none;
-  transition: background var(--dur-2), box-shadow var(--dur-2), transform 90ms var(--ease-out);
+  transition:
+    background var(--dur-2),
+    box-shadow var(--dur-2),
+    transform 90ms var(--ease-out);
 }
 .reflect-check:active {
   transform: translateY(2px);
-  box-shadow: inset 0 0 0 2px var(--k-line), 0 2px 0 0 var(--k-edge);
+  box-shadow:
+    inset 0 0 0 2px var(--k-line),
+    0 2px 0 0 var(--k-edge);
 }
 @media (hover: hover) and (pointer: fine) {
   .reflect-check:not(.reflect-check--on):hover {
@@ -149,7 +160,9 @@
   background: var(--surface);
   box-shadow: inset 0 0 0 2px var(--line-strong);
   color: #fff;
-  transition: background var(--dur-2), box-shadow var(--dur-2);
+  transition:
+    background var(--dur-2),
+    box-shadow var(--dur-2);
 }
 .reflect-check--on .reflect-check__box {
   background: var(--good);

@@ -146,7 +146,7 @@ const level1: LabLevel = {
 - \`ADD\`, \`SUB\` and \`MUL\` pop \`b\` (the top), then \`a\`, and push \`a + b\`, \`a - b\` or \`a * b\`.
 - \`PRINT\` pops the top value and appends \`str(value)\` to the output.
 
-Instructions are uppercase. Extra spaces and indentation are fine, blank lines are ignored, and \`#\` starts a comment that runs to the end of the line.
+Instructions are uppercase. Extra spaces, tabs and indentation are fine, blank lines are ignored, and \`#\` starts a comment that runs to the end of the line. Each call to \`run\` starts with an empty stack and empty output.
 
 Example:
 
@@ -905,7 +905,7 @@ const level4: LabLevel = {
 
 The call stack is **separate from the data stack**. Arguments and results travel on the data stack; return addresses never do. So a subroutine that pops everything it was given still returns to the right place, and \`POP\` on an empty data stack is still a \`stack underflow\`, even inside a call.
 
-\`CALL\` targets are checked before running, like jump targets. \`CALL\`, \`RET\` and \`HALT\` each count as one step. Don't use Python recursion for \`CALL\`: a program 3,000 calls deep must work (given a big enough \`max_steps\`).
+\`CALL\` takes exactly one label; \`RET\` and \`HALT\` take no arguments. The level 3 checks apply to them too, so \`RET 1\` is a \`bad argument\` and \`CALL\` targets are checked before running, like jump targets. \`CALL\`, \`RET\` and \`HALT\` each count as one step. Don't use Python recursion for \`CALL\`: a program 3,000 calls deep must work (given a big enough \`max_steps\`).
 
 Example, a recursive factorial:
 

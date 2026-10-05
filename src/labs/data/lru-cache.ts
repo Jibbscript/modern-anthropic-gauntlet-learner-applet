@@ -214,7 +214,7 @@ const level1: LabLevel = {
 - \`len(cache)\` is the number of cached entries.
 - \`capacity\` must be at least 1: raise \`ValueError\` otherwise.
 
-Both \`get\` and \`put\` should be **O(1)**. Keys are hashable. Values are never \`None\`, but may be falsy, like \`0\` or \`""\`.
+Both \`get\` and \`put\` should be **O(1)**. Keys are hashable. Values are never \`None\`, but may be falsy, like \`0\` or \`""\`. Every \`LRUCache\` has its own storage: two caches never share entries.
 
 Example with \`cache = LRUCache(2)\`:
 
@@ -1041,6 +1041,7 @@ const level4: LabLevel = {
 - doesn't cache exceptions: if the function raises, nothing is stored and the exception propagates;
 - raises \`TypeError\` for unhashable arguments such as lists (a dict-based cache does this for free);
 - keeps the wrapped function's \`__name__\` and \`__doc__\`;
+- has a cache of its own: two decorated functions never share entries or counters;
 - has \`cache_info()\`, returning a dict with keys \`hits\`, \`misses\`, \`evictions\`, \`maxsize\` and \`currsize\` (entries cached now), and \`cache_clear()\`, which empties the cache and resets the counters.
 
 \`maxsize\` must be at least 1; raise \`ValueError\` otherwise.

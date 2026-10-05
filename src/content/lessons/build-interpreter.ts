@@ -13,7 +13,7 @@ const lesson: Lesson = {
       eyebrow: 'Build round',
       title: 'A loop and a dict',
       body:
-        'Instruction interpreters turn up in candidate reports, less often than crawlers or file dedup: a made-up instruction set, a short spec, make it run.\n\n' +
+        'Small interpreters show up in a handful of candidate reports, far fewer than crawlers or file dedup: a made-up instruction set, a short spec, make it run.\n\n' +
         "This isn't compiler work. A clean interpreter is three pieces: a parser that turns lines into `(op, args, line_no)`, a dict of handlers, and a loop with a program counter. The test is building them cleanly, then ==extending them without a rewrite==.",
       code: {
         lang: 'text',
@@ -37,7 +37,7 @@ HALT`,
         {
           text: '`  push 5` (indented, lower case)',
           correct: true,
-          feedback: 'Strip whitespace and normalize case. Rejecting this is pedantry, not rigor.',
+          feedback: 'Unless the spec says otherwise, strip whitespace and normalize case. Rejecting this is pedantry, not rigor.',
         },
         {
           text: 'Blank lines and `# comment` lines',
@@ -142,7 +142,7 @@ DISPATCH = {"PUSH": op_push,
         { options: ['labels[target]', 'target + 1', 'pc + 1'], answer: 0 },
       ],
       explanation:
-        '`.get` returns `None` for unknown ops; `.pop` would delete the handler after its first use. With no jump the counter advances by one; with a jump it moves to the index the label maps to.',
+        '`.get` returns `None` for unknown ops. `.pop` would delete the handler after its first use, and `.setdefault` would quietly write `op: None` into the shared table. With no jump the counter advances by one; with a jump it moves to the index the label maps to.',
       hint: 'Which dict method looks something up without changing the dict?',
     },
     {
@@ -295,9 +295,10 @@ OPS = {"ADD": operator.add,
                 'Keeps values and control flow apart and designs the error path up front. The loop changes in one place: handlers may now return an index as well as a label.',
             },
             {
-              text: 'Copy the main loop into a `run_subroutine` function and call it recursively.',
+              text: 'Have CALL recursively invoke `run()` from the label, so Python’s own call stack tracks return addresses for free.',
               quality: 'weak',
-              feedback: 'Two loops to keep in sync, and Python’s recursion limit now caps how deep programs can call.',
+              feedback:
+                'Clever, but the loop now nests inside itself: Python’s recursion limit caps call depth, and a `JMP` out of the subroutine has nowhere sane to land.',
             },
           ],
         },
@@ -310,7 +311,7 @@ OPS = {"ADD": operator.add,
               feedback: 'One happy path proves little. It cannot tell you what happens on a bad RET.',
             },
             {
-              text: 'One test where a CALL returns correctly.',
+              text: 'A test program where main CALLs a subroutine that returns, asserting on the printed output.',
               quality: 'okay',
               feedback: 'A start, but nested calls and the error path are where the bugs live.',
             },
@@ -330,14 +331,15 @@ OPS = {"ADD": operator.add,
               feedback: 'Measures before changing anything, then moves work out of the hot loop.',
             },
             {
-              text: 'Run instructions on several threads in parallel.',
+              text: 'Split the program into chunks and run them on a thread pool, since each instruction is small and does its own work.',
               quality: 'weak',
-              feedback: 'Each instruction depends on the stack the previous one left. There is nothing independent to run in parallel.',
+              feedback:
+                'Each instruction reads the stack the previous one left, so nothing is independent. And pure-Python threads do not run bytecode in parallel under the GIL anyway.',
             },
             {
-              text: 'Try PyPy and see if that is enough.',
+              text: 'Switch to PyPy; its JIT usually speeds up dispatch loops like this one a lot.',
               quality: 'okay',
-              feedback: 'Might help, but it skips understanding where the time goes. Lead with a profile.',
+              feedback: 'Might help, but it skips finding out where the time goes. Lead with a profile.',
             },
           ],
         },
@@ -456,15 +458,15 @@ def op_dup(vm):
       id: 'build-interpreter.call-ret',
       skill: 'build.interpreter',
       kind: 'flash',
-      front: 'How would you add `CALL label` and `RET` to a stack VM?',
-      back: 'A separate call stack. CALL pushes `pc + 1` and jumps to the label; RET pops and jumps there. RET on an empty call stack raises with the line number.',
+      front: 'Why give `CALL`/`RET` their own call stack instead of pushing return addresses onto the data stack?',
+      back: 'On a shared stack, a subroutine that leaves one extra value makes `RET` jump to data. Separate stacks keep a data bug from becoming a control-flow bug, and `RET` with no caller becomes a clean error.',
     },
     {
       id: 'build-interpreter.revisit',
       skill: 'build.interpreter',
       kind: 'mcq',
       prompt:
-        'An instruction set has only `acc x` (add x to an accumulator), `nop`, and `jmp x` (jump x instructions; no conditional jumps). Why does reaching an already-executed instruction prove the program loops forever?',
+        'An instruction set has only `plus x` (add x to an accumulator), `next x` (do nothing), and `jump x` (move `pc` by x). There are no conditional jumps. Why does reaching an already-executed instruction prove the program loops forever?',
       choices: [
         {
           text: 'The next `pc` depends only on the current `pc`, so the path repeats',
@@ -476,7 +478,7 @@ def op_dup(vm):
           feedback: 'It usually holds a different value. The loop is proven by control flow, not by data.',
         },
         {
-          text: 'Every `jmp` in such programs points backward',
+          text: 'Every `jump` in such programs points backward',
           feedback: 'Forward jumps are allowed. A cycle can include any mix of directions.',
         },
         {
@@ -485,7 +487,7 @@ def op_dup(vm):
         },
       ],
       explanation:
-        'Track a set of visited indices and stop on the first repeat. A rarely reported variant ("repair the bootloader") builds on this: find the one swapped `jmp`/`nop` that makes the program terminate.',
+        'Track a set of visited indices and stop on the first repeat. A rarely reported problem ("repair the bootloader", a few 2026 reports) builds on this: find the one swapped `next`/`jump` that makes the program terminate.',
     },
   ],
 }

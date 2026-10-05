@@ -175,7 +175,7 @@ const lesson: Lesson = {
           interviewer: "Take a minute to read it, then tell me how you'd start.",
           options: [
             {
-              text: "Sounds good. I'll start with a BFS from the start URL and a visited set.",
+              text: "Sounds good. I'll start with a BFS from the start URL and a visited set, then go from there.",
               quality: 'okay',
               feedback:
                 "Not dishonest, and the code will probably be clean. But a replayed solution shows little about how you think, and reports say interviewers notice memorized answers.",
@@ -187,7 +187,7 @@ const lesson: Lesson = {
                 "Strong. One candidate reported admitting they'd seen the crawler before. An extra round with a fresh problem was added, and they got an offer, though a level below the one they applied for (the report doesn't say why). Saying so can cost you a round; hiding it gives no real signal and puts trust at risk.",
             },
             {
-              text: 'Hmm, crawlers. Let me think about this from scratch. Maybe some kind of search?',
+              text: 'Hmm, crawlers. Let me think about this from scratch. Maybe some kind of search over the links?',
               quality: 'weak',
               feedback: "Staged discovery is the worst of both: it's dishonest, and if the act slips, you've lost the interviewer's trust for the rest of the hour.",
             },

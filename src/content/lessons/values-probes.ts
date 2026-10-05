@@ -248,7 +248,7 @@ const lesson: Lesson = {
               feedback: 'Specific, with the reservation stated plainly. It also leaves an honest loose end, *raised it once*, that invites the next question.',
             },
             {
-              text: "I've been lucky there, honestly. I've never had to build anything I didn't believe in, because I choose teams whose values match mine.",
+              text: "I've been lucky there, honestly. I've never had to build anything I didn't believe in, because I'm careful to pick teams and companies whose values match mine.",
               quality: 'weak',
               feedback: 'A dodge. Candidates report versions of this question being asked directly, and *never* reads as either no reflection or no candor.',
             },
@@ -263,12 +263,12 @@ const lesson: Lesson = {
               feedback: 'This restates what you did and how it turned out. The question was what you *thought*.',
             },
             {
-              text: "I thought it was somewhat risky for user trust. But the data was on the PM's side, so going ahead seemed like a reasonable call to me.",
+              text: "I thought it was somewhat risky for user trust. But the data was on the PM's side and opt-outs were flat, so going ahead seemed like a reasonable call to me.",
               quality: 'okay',
               feedback: 'Closer. *Somewhat risky* is still vague, though. How risky, how sure were you, and why stop at one objection?',
             },
             {
-              text: 'That we were optimizing a metric against what users had told us. But I was maybe 60% sure, and opt-outs were flat, which cut against me. Honestly, part of me was relieved not to have the fight.',
+              text: 'That we were optimizing a metric against what users had told us. I was maybe 60% sure, and flat opt-outs cut against me. Honestly, part of me was relieved to skip the fight.',
               quality: 'strong',
               feedback: 'The real thought, a calibrated confidence, the evidence on the other side, and an unflattering motive. That last part is what makes it credible.',
             },
@@ -278,17 +278,17 @@ const lesson: Lesson = {
           interviewer: 'How do you feel about it now?',
           options: [
             {
-              text: "Mixed. Opt-outs stayed flat, so I was partly wrong about harm. But I'd now ask for a guardrail metric, like complaint rate, before launch, instead of arguing from instinct. And I'd push twice, not once.",
+              text: "Mixed. Opt-outs stayed flat, so I was partly wrong about harm. But next time I'd ask for a guardrail metric, like complaint rate, up front, and I'd push twice, not once.",
               quality: 'strong',
               feedback: "Where you were wrong, where you still stand, and what you changed. That's updating, not regret or self-justification.",
             },
             {
-              text: "I'd do exactly the same thing again. The launch hit its numbers, the team was happy with it, and nobody really complained.",
+              text: "I'd do exactly the same thing again. The launch hit its numbers, the team was happy with it, nobody really complained, and the feature is still running today.",
               quality: 'weak',
               feedback: "A good outcome isn't evidence your reasoning was right. And *exactly the same* tells them you haven't reflected.",
             },
             {
-              text: "Pretty good overall. It worked out fine, though next time I'd probably communicate my concerns a bit more clearly to the team.",
+              text: "Pretty good overall. It worked out fine in the end, though next time I'd probably communicate my concerns a bit more clearly, and a bit earlier, to the team.",
               quality: 'okay',
               feedback: 'Generic. *Communicate more clearly* fits any story. What, specifically, would you do differently?',
             },
@@ -364,15 +364,15 @@ const lesson: Lesson = {
           feedback: 'Agreement you can defend is a view, not flattery. The objection and the mind-changer prove you thought about it.',
         },
         {
-          text: "Invent a disagreement, so you don't come across as sycophantic.",
+          text: "Invent a mild disagreement anyway, so that you don't come across as sycophantic.",
           feedback: 'A manufactured critique collapses at the first follow-up, and it misrepresents what you think.',
         },
         {
-          text: 'Avoid the topic, since any agreement will read as flattery.',
+          text: 'Steer away from the topic, since any agreement at all will read as flattery.',
           feedback: 'Avoidance reads as having no view. Agreement is only a problem when it is unexamined.',
         },
         {
-          text: 'Agree briefly and move on; elaborating will look like sucking up.',
+          text: 'Agree briefly and move on; elaborating on why will just look like sucking up.',
           feedback: 'The elaboration is what separates a view from a nod. Brevity hides your reasoning.',
         },
       ],

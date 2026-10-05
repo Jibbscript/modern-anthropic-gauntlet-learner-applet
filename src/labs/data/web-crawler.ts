@@ -827,12 +827,13 @@ async def test_l4_retries_then_succeeds():
 async def test_l4_backoff_doubles():
     pages = {"https://a.com/": "ok"}
     visited, errors, web, _ = await _l4_crawl(
-        pages, ["https://a.com/"], latency=0.0, failures={"https://a.com/": [503, 503]}, min_interval=0.1,
+        pages, ["https://a.com/"], latency=0.0, failures={"https://a.com/": [503, 503, 503]}, min_interval=0.1, retries=3,
     )
     gaps = _l4_gaps([t for t, _ in web.log])
-    assert len(gaps) == 2, f"expected 3 attempts, log was {web.log}"
-    assert abs(gaps[0] - 0.5) < 0.05 and abs(gaps[1] - 1.0) < 0.05, (
-        f"wait backoff * 2 ** k before retry k + 1 (0.5 s, then 1.0 s); gaps were {[round(g, 3) for g in gaps]}"
+    assert len(gaps) == 3, f"expected 4 attempts, log was {web.log}"
+    want = [0.5, 1.0, 2.0]
+    assert all(abs(g - w) < 0.05 for g, w in zip(gaps, want)), (
+        f"wait backoff * 2 ** k before retry k + 1 (0.5 s, 1 s, 2 s); gaps were {[round(g, 3) for g in gaps]}"
     )
     assert visited == ["https://a.com/"] and errors == {}, f"visited {visited!r}, errors {errors!r}"
 

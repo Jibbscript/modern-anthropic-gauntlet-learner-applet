@@ -22,14 +22,20 @@ const steps: Step[] = [
     eyebrow: 'Explore',
     prompt: 'Send a burst of requests and watch the bucket absorb it, then start rejecting.',
     goal: 'See a burst absorbed, then throttled',
-    widget: { id: 'tokenbucket', config: { capacity: 5, rate: 1, goal: 'burst' } },
+    widget: {
+      id: 'tokenbucket',
+      config: { capacity: 5, rate: 1, goal: 'burst' },
+    },
     requireComplete: false,
   },
   {
     kind: 'widget',
     id: 'fx-widget-deadlock',
     prompt: 'A takes L1 then L2; B takes L2 then L1. Step them into a deadlock.',
-    widget: { id: 'deadlock', config: { scenario: 'opposite', goal: 'deadlock' } },
+    widget: {
+      id: 'deadlock',
+      config: { scenario: 'opposite', goal: 'deadlock' },
+    },
   },
 ]
 

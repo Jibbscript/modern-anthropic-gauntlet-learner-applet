@@ -169,7 +169,7 @@ Example:
 \`db.delete("user:1", "name")\` → \`True\`
 \`db.delete("user:1", "name")\` → \`False\`
 
-An empty string is a real value: after \`db.set("k", "f", "")\`, \`get\` returns \`""\`, not \`None\`.`,
+An empty string is a real value: after \`db.set("k", "f", "")\`, \`get\` returns \`""\`, not \`None\`. Each \`InMemoryDB()\` is a separate database: two instances never share records.`,
   tests: L1_TESTS,
   hints: [
     'A dict of dicts fits exactly: `key -> {field: value}`. Create it in `__init__` so every instance gets its own.',
@@ -637,9 +637,9 @@ def test_l4_restore_picks_latest_backup_at_or_before():
     db.restore(50, 10)
     got = db.get_at("A", "v", 51)
     assert got == "one", f"restore(50, 10) should use the backup taken exactly at 10; got {got!r}"
-    db.restore(60, 99)
-    got = db.get_at("A", "v", 61)
-    assert got == "three", f"restore(60, 99) should use the latest backup (30); got {got!r}"
+    db.restore(100, 99)
+    got = db.get_at("A", "v", 101)
+    assert got == "three", f"restore(100, 99) should use the latest backup (30); got {got!r}"
 
 
 def test_l4_restore_without_backup_raises():
@@ -842,7 +842,7 @@ const lab: Lab = {
   title: 'In-memory database',
   area: 'builds',
   summary:
-    'The progressive build candidates report most often: a record store that grows **TTLs** and **point-in-time backups** over four levels. Earlier levels keep their tests, so every refactor has to keep them green.',
+    'A record store that grows **TTLs** and **point-in-time backups** over four levels: the progressive build candidates report most often. Earlier levels keep their tests, so every refactor has to keep them green.',
   minutes: 90,
   starter: STARTER,
   levels: [level1, level2, level3, level4],

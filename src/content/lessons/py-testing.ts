@@ -12,7 +12,11 @@ const lesson: Lesson = {
       id: 'hook',
       eyebrow: 'The last level',
       title: 'It passed the example',
-      body: "You wrote `top_k`, ran the prompt's example, and got the right answer. Then the interviewer asks: *how do you know it works?*\n\nCandidates report that Anthropic's practical rounds often end right there: build it, extend it, make it concurrent, then test it yourself. There's no hidden test suite. The prompt's example is your weakest test, because it's the case you were already thinking about.",
+      body: "You wrote `top_k`, ran the prompt's example, and got the right answer. Then the interviewer asks: *how do you know it works?*\n\nCandidates describe a recurring shape for the practical rounds: build it, extend it, make it concurrent, test it yourself. Some prompts, file dedup among them, reportedly ship with no tests at all. And the prompt's example is your weakest test: it's the case you were already thinking about.",
+      callout: {
+        tone: 'source',
+        text: 'Candidate accounts, e.g. a [March 2026 onsite write-up](https://prachub.com/interview-experiences/anthropic-software-engineer-interview-experience-onsite-loop-with-a-1-on-1-chat-system-design-file-dedup-coding-and-a-culture-round-i-couldnt-read), plus prep guides. Not an official format; it varies by role.',
+      },
       code: {
         code: `from collections import Counter
 
@@ -169,7 +173,7 @@ def test_matches_reference():
     xs = ["q", "p", "q"]
     assert dedupe(xs) == dedupe(xs)`,
       bugLines: [8, 16],
-      explanation: "Line 8 asserts a tuple, and a non-empty tuple is always truthy. pytest does warn *assertion is always true*, but warnings scroll past. Line 16 compares `dedupe` with itself, so the code under test is also the oracle. Line 12 is a weak but real property test: it fails for the identity bug.",
+      explanation: "Line 8 asserts a tuple, and a non-empty tuple is always truthy. Python and pytest both warn *assertion is always true*, but warnings scroll past. Line 16 compares `dedupe` with itself, so the code under test is also the oracle. Lines 4 and 12 are weak but real: each fails for *some* wrong `dedupe`, and line 12 catches the identity bug.",
       fix: {
         code: `def test_keeps_first():
     out = dedupe(["b", "a", "b"])
@@ -180,7 +184,7 @@ def test_matches_reference():
     assert dedupe(xs) == ["q", "p"]`,
         highlight: [3, 7],
       },
-      hint: 'Imagine `dedupe = lambda xs: xs`. Which asserts still hold?',
+      hint: 'A test with teeth fails for *some* wrong `dedupe`. Which asserts hold no matter what `dedupe` returns?',
     },
     {
       kind: 'concept',
@@ -239,13 +243,51 @@ def test_expires_at_ttl():
       body: "A race might show up once in 10,000 runs, so one green run proves little. Three tools:\n\n- **Stress loop**: many threads and iterations, then assert an invariant. It raises the odds; it never proves absence.\n- **Forced interleaving**: a test seam (a hook, a `threading.Barrier`) makes both threads read before either writes, every run.\n- **Pure core**: keep the logic single-threaded and testable, and the threaded shell thin.",
     },
     {
-      kind: 'widget',
-      id: 'be-the-scheduler',
-      eyebrow: 'Be the scheduler',
-      prompt: 'Here you choose the interleaving, which is exactly what a deterministic test does. Make two increments produce the wrong count.',
-      goal: 'Lose an update',
-      widget: { id: 'race', config: { threads: 2, goal: 'lose-update' } },
-      explanation: 'A stress loop hopes the scheduler does what you just did. A forced-interleaving test does it on purpose: put `Barrier(2)` between the read and the write and both threads read `0` before either stores `1`, every run. Without that, a stress test of this pattern on CPython can pass one run and lose a third of its updates the next.',
+      kind: 'mcq',
+      id: 'forced-interleaving',
+      eyebrow: 'Force the race',
+      prompt: '`incr` reads, calls a hook, then writes. Production leaves the hook as a no-op; this test passes a two-party `Barrier`. What does it print?',
+      code: {
+        code: `import threading
+
+count = 0
+
+def incr(after_read=lambda: None):
+    global count
+    v = count
+    after_read()  # test seam
+    count = v + 1
+
+gate = threading.Barrier(2)
+job = lambda: incr(gate.wait)
+
+t1 = threading.Thread(target=job)
+t2 = threading.Thread(target=job)
+t1.start(); t2.start()
+t1.join(); t2.join()
+print(count)`,
+      },
+      choices: [
+        {
+          text: '`1`, on every run',
+          correct: true,
+          feedback: 'Right. Neither thread can write until both have read `0`, so both store `1`. The scheduler gets no say.',
+        },
+        {
+          text: '`2`, on every run',
+          feedback: "That's the answer without the hook. The barrier parks each thread between its read and its write until the other has read too.",
+        },
+        {
+          text: '`1` or `2`, depending on thread scheduling',
+          feedback: "That's what a stress loop gives you. The barrier removes the choice: both reads always land before either write.",
+        },
+        {
+          text: 'Nothing: both threads hang on the barrier',
+          feedback: 'A `Barrier(2)` opens as soon as two threads are waiting. Each thread calls `wait()` once, so both get through.',
+        },
+      ],
+      explanation: "The hook is a **test seam**: a no-op in production, a `Barrier` in the test. The lost update now happens on every run instead of once in a thousand, so a test asserting `count == 2` fails reliably against the racy code. After you add a lock, the seam flips: the second thread can't read while the first holds the lock, so the barrier never fills. Give it a `timeout` and assert that it breaks.",
+      hint: 'Where is each thread when the barrier finally opens?',
     },
     {
       kind: 'sort',
@@ -275,17 +317,17 @@ def test_expires_at_ttl():
           interviewer: 'How would you test this?',
           options: [
             {
-              text: "I'd write tests for get and put with a few different keys and check the results.",
+              text: "I'd write tests for get and put with a few different keys and capacities, and check each result against what I expect.",
               quality: 'okay',
               feedback: "Fine but generic. It doesn't say which cases are risky or why, so the interviewer learns little about your judgment.",
             },
             {
-              text: "Riskiest first: eviction at exactly capacity, `get` refreshing recency, overwriting a key, capacity 1. One parametrized table for those, then a threaded stress test.",
+              text: 'Riskiest first: eviction at exactly capacity, `get` refreshing recency, overwriting a key, capacity 1. One parametrized table, then a threaded stress test.',
               quality: 'strong',
               feedback: "Strong. You named cases, ranked them by risk and said how you'd structure them, all in one breath.",
             },
             {
-              text: "The logic is simple and I traced it carefully, so I'm fairly confident it's correct.",
+              text: "The logic is simple and I traced a couple of examples by hand while writing it, so I'm fairly confident it's already correct.",
               quality: 'weak',
               feedback: 'Confidence is not evidence. Testing your own code is a reported stage of these rounds, so skipping it skips the signal.',
             },
@@ -300,12 +342,12 @@ def test_expires_at_ttl():
               feedback: "Strong. Invariants instead of exact outputs, plus an honest statement of what a stress test can't prove.",
             },
             {
-              text: "Concurrency bugs can't really be unit tested, so I'd rely on a careful code review of the locking instead.",
+              text: "Concurrency bugs can't really be caught by unit tests, so rather than write one I'd rely on a careful line-by-line review of the locking.",
               quality: 'weak',
               feedback: 'Half true and fully unhelpful. Stress tests raise the odds, and test seams can force a specific interleaving every run.',
             },
             {
-              text: 'Start a bunch of threads hammering get and put at once, and check that nothing crashes or hangs.',
+              text: 'Start a bunch of threads hammering get and put at once for a few seconds, and check that nothing crashes, raises or hangs.',
               quality: 'okay',
               feedback: "A start, but 'nothing crashed' misses lost updates and corrupted state. Assert invariants, not just survival.",
             },
@@ -315,17 +357,17 @@ def test_expires_at_ttl():
           interviewer: 'Your stress test failed once in 30 runs. What now?',
           options: [
             {
-              text: "Rerun it a few times to confirm it's a real failure before digging in.",
+              text: "Rerun it a few more times to confirm it's a real failure and not a fluke of the machine before I start digging.",
               quality: 'okay',
               feedback: 'A reasonable instinct, but you already have the signal. More reruns spend time without adding information.',
             },
             {
-              text: 'Add a retry so CI stays green, and note it as flaky.',
+              text: 'Add a retry so CI stays green, file a ticket marking it flaky, and come back to it once the feature work is done.',
               quality: 'weak',
               feedback: 'A threaded test that fails 1 in 30 is usually reporting a real race. Retrying teaches everyone to ignore it.',
             },
             {
-              text: "Treat it as a real race: log the broken invariant, look for a shared-state path outside the lock, then write a test that forces that interleaving so the fix is provable.",
+              text: 'Treat it as a real race: log the broken invariant, find shared state touched outside the lock, then force that interleaving in a test.',
               quality: 'strong',
               feedback: 'Strong. Turning a probabilistic failure into a deterministic test is the only way to know the fix worked.',
             },

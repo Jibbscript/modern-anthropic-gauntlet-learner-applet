@@ -694,19 +694,22 @@ def test_l4_no_duplicates():
 
 def test_l4_groups_ordered_by_waste():
     fs = FakeFS({
-        "/small1": b"s" * 10, "/small2": b"s" * 10, "/small3": b"s" * 10, "/small4": b"s" * 10,
         "/big1": b"b" * 500, "/big2": b"b" * 500,
-        "/mid1": b"m" * 100, "/mid2": b"m" * 100,
+        "/many1": b"m" * 200, "/many2": b"m" * 200, "/many3": b"m" * 200, "/many4": b"m" * 200,
+        "/mid1": b"x" * 300, "/mid2": b"x" * 300,
     })
     got = report(fs, "/")["groups"]
-    want = [["/big1", "/big2"], ["/mid1", "/mid2"], ["/small1", "/small2", "/small3", "/small4"]]
-    assert got == want, f"largest waste first (500, 100, 30)\n  got:  {got!r}\n  want: {want!r}"
+    want = [["/many1", "/many2", "/many3", "/many4"], ["/big1", "/big2"], ["/mid1", "/mid2"]]
+    assert got == want, (
+        f"order by wasted bytes, largest first: 3 extra copies of 200 bytes (600) beat 1 extra of 500 "
+        f"and 1 extra of 300\n  got:  {got!r}\n  want: {want!r}"
+    )
 
 
 def test_l4_ties_broken_by_first_path():
-    fs = FakeFS({"/q1": b"q" * 40, "/q2": b"q" * 40, "/b1": b"b" * 40, "/b2": b"b" * 40})
+    fs = FakeFS({"/z1": b"q" * 40, "/a1": b"q" * 40, "/c1": b"b" * 40, "/b1": b"b" * 40})
     got = report(fs, "/")["groups"]
-    assert got == [["/b1", "/b2"], ["/q1", "/q2"]], f"equal waste: order by first path; got {got!r}"
+    assert got == [["/a1", "/z1"], ["/b1", "/c1"]], f"equal waste: order by each group's first path; got {got!r}"
 
 
 def test_l4_keep_smallest_path_delete_rest():

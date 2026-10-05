@@ -12,10 +12,10 @@ const lesson: Lesson = {
       id: 'hook',
       eyebrow: 'Warm-up',
       title: 'The spec grows under you',
-      body: "Candidates report a progressive format for some coding assessments: one problem, delivered in levels, each extending the last. A typical example is an in-memory database:\n\n1. `set`, `get`, `delete`\n2. scans, e.g. by key prefix\n3. keys that expire (TTL)\n4. backup and restore\n\nYour level-1 choices decide whether level 3 is a ten-minute change or a rewrite against the clock.",
+      body: "Candidates (2025-2026) commonly describe the online assessment as one CodeSignal problem in four levels, usually revealed one at a time, within 90 minutes. The most reported: an in-memory database.\n\n1. `set`, `get`, `delete`\n2. scans, e.g. by prefix\n3. timestamps and TTL expiry\n4. varies: backup/restore or past-time reads\n\nYour level-1 choices decide whether level 3 is a ten-minute change or a rewrite against the clock.",
       callout: {
-        tone: 'warn',
-        text: 'Candidate-reported, not official. Formats vary by role and change over time. Live rounds are reportedly shaped the same way: build it, extend it, make it concurrent or scalable, test it.',
+        tone: 'source',
+        text: 'Candidate reports, not official: [Hello Interview\'s Anthropic guide](https://www.hellointerview.com/guides/anthropic/swe) (2026). Level specs are prep-site reconstructions, some 2026 reports describe six levels, and formats change. Live coding rounds reportedly follow the same arc: build, extend, make it concurrent or scalable, test.',
       },
     },
     {
@@ -84,7 +84,7 @@ times = (5, 14, 15, 16)
 print([t for t in times if e.alive(t)])`,
       answers: ['[5, 14]'],
       explanation:
-        '`now < expires_at` makes the lifetime half-open: alive for [5, 15), gone at exactly 15. Specs differ on this boundary, so read the examples and test the exact edge. It is the most common place for a TTL off-by-one.',
+        '`now < expires_at` makes the lifetime half-open: alive for [5, 15), gone at exactly 15. That is the commonly reported rule, but check the examples and test the exact edge: it is where TTL off-by-ones live.',
       hint: 'Is the comparison `<` or `<=`?',
     },
     {
@@ -92,7 +92,7 @@ print([t for t in times if e.alive(t)])`,
       id: 'scan',
       eyebrow: 'Fill in',
       prompt:
-        'Level 2: `scan_by_prefix(prefix, now)` returns `"key(value)"` strings for live keys that start with `prefix`, sorted by key. Fill the blanks.',
+        'Level 2: `scan_by_prefix(prefix, now)` returns `"key(value)"` strings for live keys that start with `prefix`, sorted by key. (Reported versions nest fields under each key; one level keeps the idea visible.)',
       code: `def scan_by_prefix(self, prefix, now):
     items = {{0}}(self._data.items())
     return [
@@ -107,7 +107,7 @@ print([t for t in times if e.alive(t)])`,
         { options: ['alive', 'expires_at', 'get'], answer: 0 },
       ],
       explanation:
-        "`sorted(items)` sorts by key; keys are unique, so two `Entry`s are never compared. `startswith` is the prefix test. `find` returns 0 on a match, which is falsy, so it would invert the filter. Expiry goes through `alive`, the one place that knows the rule. Note the order is string order: `user:10` sorts before `user:2`.",
+        "`sorted` orders by key (keys are unique, so two `Entry`s are never compared). `startswith` is the prefix test; `find` returns 0 for a prefix match, which is falsy, so it would drop exactly the keys you want. Expiry goes through `alive`, the one place that knows the rule. Mind string order: `user:10` sorts before `user:2`.",
       hint: 'Dict iteration order is insertion order, not key order.',
     },
     {
@@ -131,6 +131,10 @@ def test_level3_ttl_boundary():
     assert db.get("k", now=14) == "v"
     assert db.get("k", now=15) is None`,
       },
+      callout: {
+        tone: 'source',
+        text: 'A [public practice repo](https://github.com/PaulLockett/CodeSignal_Practice_Industry_Coding_Framework) budgets 10-15 min for level 1, 20-30 for level 2 and 30-60 each for levels 3 and 4: more than 90 minutes in total, on purpose. Prep guides name time management as the main failure mode.',
+      },
     },
     {
       kind: 'order',
@@ -138,7 +142,7 @@ def test_level3_ttl_boundary():
       eyebrow: 'Order',
       prompt: 'Put one level of a progressive build in a good order.',
       items: [
-        "Read the level's spec and examples; note the exact return formats",
+        "Read the level's spec, examples and tests; note the exact return formats",
         'Decide what changes in the data model, if anything',
         'Write the simplest code that passes this level',
         'Run every test so far, plus one edge case of your own',
@@ -258,7 +262,7 @@ def test_level3_ttl_boundary():
             {
               text: 'Set `k` with ttl=10 at t=0, back up at t=4, restore at t=100: `get` returns it at 105 and `None` at 106. Then a key that expired before the backup, and an unknown `backup_ts`.',
               quality: 'strong',
-              feedback: "Concrete numbers, the exact boundary (6 remaining ticks, half-open), and two edge cases. That's what testing it yourself looks like.",
+              feedback: "Concrete numbers, the exact boundary (6 remaining ticks, so alive until 106, half-open), and two edge cases. That's what testing it yourself looks like.",
             },
           ],
         },
@@ -266,15 +270,15 @@ def test_level3_ttl_boundary():
           interviewer: 'Now several threads call these methods at once. What changes?',
           options: [
             {
-              text: 'One `threading.Lock`, taken by every public method, reads included. All access already goes through a few methods, so it is a small change. Then a test with threads hammering `set`/`backup` while checking invariants.',
+              text: 'One `threading.Lock` held for the body of every public method, reads included; private helpers assume it is held. All access already goes through a few methods, so it is a small change. Then a test with threads hammering `set`/`backup` while checking invariants.',
               quality: 'strong',
-              feedback: 'Simple, correct, and it cashes in the small-API design. Reach for finer-grained locking only if contention actually shows up.',
+              feedback: 'Simple, correct, and it cashes in the small-API design. Keeping helpers lock-free avoids a public method deadlocking when it calls another. Go finer-grained only if contention actually shows up.',
             },
             {
               text: 'Nothing. The GIL makes dict operations atomic.',
               quality: 'weak',
               feedback:
-                'A single dict operation is atomic in CPython, but a method is many operations. A snapshot that loops over `_data` in Python can raise "dictionary changed size during iteration" if another thread inserts mid-loop. And free-threaded builds (optional since 3.13) drop the GIL entirely.',
+                'The GIL makes many single dict operations atomic in CPython, but a method is several operations. A snapshot that loops over `_data` in Python can raise "dictionary changed size during iteration" if another thread inserts mid-loop. And free-threaded builds (optional since 3.13) have no GIL at all.',
             },
             {
               text: "Lock `set`, `delete` and `restore`. Reads don't change anything, so they can skip the lock.",
@@ -301,24 +305,27 @@ def test_level3_ttl_boundary():
       id: 'py-progressive.model',
       skill: 'build.kvstore',
       kind: 'mcq',
-      prompt: 'Level 1 of a leveled key-value problem. Which choice best protects you against a later "keys can expire" level?',
+      prompt: "Level 1 of a leveled problem; later levels are hidden. What's the cheapest hedge against them?",
       choices: [
         {
-          text: 'Map each key to a small record object: the value now, more fields later',
+          text: 'A small record per key, even though level 1 only needs the value',
           correct: true,
-          feedback: 'A new requirement becomes a new field plus one check.',
+          feedback: 'Two lines now, and an unknown requirement like expiry becomes a new field plus one check.',
         },
         {
-          text: 'Map each key straight to its value, and add a second dict for expiry if needed',
-          feedback: 'It works, but every delete, scan and backup must keep two dicts in sync.',
+          text: 'An abstract storage interface, so the backend can be swapped later',
+          feedback: 'It hedges against a change these problems rarely ask for, and costs time you need to finish levels.',
         },
-        { text: 'Keep a list of (key, value) pairs in insertion order', feedback: 'Linear lookups, awkward deletes, and no easier scans.' },
         {
-          text: 'Design a plugin system so any future feature can be added',
-          feedback: "Over-building for levels you can't see spends the time you need to finish them.",
+          text: 'Guess the likely later levels and build them now',
+          feedback: 'Guesses are often wrong in the details (return formats, boundaries), and unasked work earns nothing until a level asks.',
+        },
+        {
+          text: 'The bare minimum now: rewriting at each level is fine',
+          feedback: 'A rewrite under the clock is how levels go unfinished. Cheap flexibility in the data model costs almost nothing.',
         },
       ],
-      explanation: 'Cheap flexibility in the data model beats speculative architecture.',
+      explanation: 'Cheap flexibility in the data model beats speculative architecture and guesswork.',
     },
     {
       id: 'py-progressive.time-param',
@@ -338,7 +345,7 @@ def test_level3_ttl_boundary():
 print(alive(104, 100, 5))
 print(alive(105, 100, 5))`,
       answers: ['True\nFalse'],
-      explanation: '`now < set_at + ttl` is half-open: alive for [100, 105), gone at exactly 105. Test that boundary explicitly; specs differ.',
+      explanation: '`now < set_at + ttl` is half-open: alive for [100, 105), gone at exactly 105. That is the commonly reported rule, but test the boundary against the examples anyway.',
     },
     {
       id: 'py-progressive.next-level',
@@ -359,22 +366,22 @@ print(alive(105, 100, 5))`,
       id: 'py-progressive.history-alias',
       skill: 'py.progressive',
       kind: 'spotbug',
-      prompt: 'Write "ab", write "c", then undo: the text is still "abc". Tap the bug.',
+      prompt: '`write("a")`, `write("b")`, `undo()`: `lines` is still `["a", "b"]`. A renderer holds a reference to `lines`, so every method updates it in place. Tap the bug.',
       code: `class Editor:
     def __init__(self):
-        self.state = {"text": ""}
+        self.lines = []
         self.history = []
 
-    def write(self, s):
-        self.history.append(self.state)
-        self.state["text"] += s
+    def write(self, line):
+        self.history.append(self.lines)
+        self.lines.append(line)
 
     def undo(self):
-        self.state = self.history.pop()`,
+        self.lines[:] = self.history.pop()`,
       bugLines: [7],
       explanation:
-        '`history` stores references to the same dict that `write` keeps mutating, so every saved "state" is the current state. Snapshot it instead.',
-      fix: { code: `self.history.append(dict(self.state))` },
+        '`history` stores references to the one list that `write` keeps mutating, so every saved "snapshot" is the current state. Copy when you save.',
+      fix: { code: `self.history.append(list(self.lines))` },
     },
     {
       id: 'py-progressive.defer',

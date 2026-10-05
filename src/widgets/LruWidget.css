@@ -641,6 +641,9 @@
   justify-content: space-between;
   gap: var(--s-2);
 }
+.lru-foot > .btn {
+  flex: none;
+}
 .lru-foot__note {
   min-width: 0;
   font-size: var(--fs-xs);

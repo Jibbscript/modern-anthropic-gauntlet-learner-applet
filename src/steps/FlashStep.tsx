@@ -19,7 +19,12 @@ const GRADES: { g: Grade; label: string; variant: ButtonVariant }[] = [
   { g: 4, label: 'Easy', variant: 'select' },
 ]
 
-const FLIP = { type: 'spring', stiffness: 260, damping: 26, mass: 0.9 } as const
+const FLIP = {
+  type: 'spring',
+  stiffness: 260,
+  damping: 26,
+  mass: 0.9,
+} as const
 
 function useReduce(): boolean {
   const cfg = useReducedMotionConfig()
@@ -98,9 +103,9 @@ export default function FlashStep({ step, complete }: StepProps<T & { id: string
   const back = (
     <>
       <div className="flash-face__label flash-face__label--back">Answer</div>
-      <Rich text={step.front} className="flash-context" />
-      <div className="flash-rule" aria-hidden />
       <div className="flash-face__main flash-face__main--back">
+        <Rich text={step.front} className="flash-context" />
+        <div className="flash-rule" aria-hidden />
         <Rich text={step.back} className="flash-back" />
       </div>
     </>
@@ -108,49 +113,42 @@ export default function FlashStep({ step, complete }: StepProps<T & { id: string
 
   return (
     <div className="step flash">
-      <div
-        className={`flash-card${flipped ? ' flash-card--flipped' : ''}${reduce ? ' flash-card--fade' : ''}`}
-        onClick={flipped ? undefined : flip}
-      >
-        <motion.div
-          className="flash-card__inner"
-          initial={false}
-          animate={reduce ? { rotateY: 0 } : { rotateY: flipped ? 180 : 0 }}
-          transition={FLIP}
-        >
-          <motion.div
-            className="flash-face flash-face--front"
-            aria-hidden={flipped}
-            initial={false}
-            animate={reduce ? { opacity: flipped ? 0 : 1 } : { opacity: 1 }}
-            transition={{ duration: 0.2 }}
-          >
-            {front}
+      <div className="flash-stage">
+        <div className={`flash-card${flipped ? ' flash-card--flipped' : ''}${reduce ? ' flash-card--fade' : ''}`} onClick={flipped ? undefined : flip}>
+          <motion.div className="flash-card__inner" initial={false} animate={reduce ? { rotateY: 0 } : { rotateY: flipped ? 180 : 0 }} transition={FLIP}>
+            <motion.div
+              className="flash-face flash-face--front"
+              aria-hidden={flipped}
+              initial={false}
+              animate={reduce ? { opacity: flipped ? 0 : 1 } : { opacity: 1 }}
+              transition={{ duration: 0.2 }}
+            >
+              {front}
+            </motion.div>
+            <motion.div
+              ref={backRef}
+              className="flash-face flash-face--back"
+              role="region"
+              aria-label="Answer"
+              aria-hidden={!flipped}
+              tabIndex={-1}
+              initial={false}
+              animate={reduce ? { opacity: flipped ? 1 : 0 } : { opacity: 1 }}
+              transition={{
+                duration: 0.2,
+                delay: reduce && flipped ? 0.08 : 0,
+              }}
+            >
+              {back}
+            </motion.div>
           </motion.div>
-          <motion.div
-            ref={backRef}
-            className="flash-face flash-face--back"
-            role="region"
-            aria-label="Answer"
-            aria-hidden={!flipped}
-            tabIndex={-1}
-            initial={false}
-            animate={reduce ? { opacity: flipped ? 1 : 0 } : { opacity: 1 }}
-            transition={{ duration: 0.2, delay: reduce && flipped ? 0.08 : 0 }}
-          >
-            {back}
-          </motion.div>
-        </motion.div>
+        </div>
       </div>
 
       <div className="flash-controls">
         <AnimatePresence mode="wait" initial={false}>
           {!flipped ? (
-            <motion.div
-              key="show"
-              className="flash-show"
-              exit={{ opacity: 0, y: 6, transition: { duration: 0.12 } }}
-            >
+            <motion.div key="show" className="flash-show" exit={{ opacity: 0, y: 6, transition: { duration: 0.12 } }}>
               <Button block onClick={flip} icon={<RotateCw size={19} strokeWidth={2.8} />} aria-keyshortcuts="Space">
                 Show answer
               </Button>
@@ -164,7 +162,12 @@ export default function FlashStep({ step, complete }: StepProps<T & { id: string
               className="flash-grades"
               initial="hidden"
               animate="shown"
-              variants={{ hidden: {}, shown: { transition: { staggerChildren: 0.04, delayChildren: 0.12 } } }}
+              variants={{
+                hidden: {},
+                shown: {
+                  transition: { staggerChildren: 0.04, delayChildren: 0.12 },
+                },
+              }}
             >
               <div className="step__instructions flash-grades__how" id={`${step.id}-how`}>
                 How well did you remember it?
@@ -174,7 +177,18 @@ export default function FlashStep({ step, complete }: StepProps<T & { id: string
                   <motion.div
                     key={g}
                     className="flash-grades__cell"
-                    variants={{ hidden: { opacity: 0, y: 14 }, shown: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 520, damping: 30 } } }}
+                    variants={{
+                      hidden: { opacity: 0, y: 14 },
+                      shown: {
+                        opacity: 1,
+                        y: 0,
+                        transition: {
+                          type: 'spring',
+                          stiffness: 520,
+                          damping: 30,
+                        },
+                      },
+                    }}
                   >
                     <Button
                       block

@@ -13,7 +13,7 @@ const lesson: Lesson = {
       eyebrow: 'Build round',
       title: 'Two terabytes, one question',
       body:
-        'File dedup is one of the most frequent practical questions in 2025-2026 candidate reports, as a phone screen and onsite. The obvious answer is one line: hash every file, group by hash.\n\n' +
+        'In one aggregator’s 2026 catalog of candidate reports, file dedup is the second most reported coding question, used as a phone screen and onsite. The obvious answer is one line: hash every file, group by hash.\n\n' +
         "On a 2 TB drive that line reads 2 TB: over an hour at 500 MB/s, mostly wasted. A file whose size no other file shares can't have a duplicate. The real problem is ==avoiding reads==.",
       callout: {
         tone: 'tip',
@@ -118,7 +118,7 @@ def by_size(paths):
       id: 'stream',
       title: "Stream, don't slurp",
       body:
-        "`f.read()` pulls the whole file into memory. On a 40 GB disk image that's a `MemoryError`, or a machine deep in swap. Hash in fixed-size chunks instead: memory stays at one buffer whatever the file size, and 64 KiB to 1 MiB chunks keep per-call overhead negligible.\n\n" +
+        "`f.read()` pulls the whole file into memory. On a 40 GB disk image that means a `MemoryError` or a visit from the OOM killer. Hash in fixed-size chunks instead: memory stays at one buffer whatever the file size, and 64 KiB to 1 MiB chunks keep per-call overhead negligible.\n\n" +
         'Python 3.11 added `hashlib.file_digest` to run that loop for you. Your interview environment may be older, so know the loop by hand.',
       code: {
         code: `def head_hash(path, n=4096):
@@ -189,7 +189,7 @@ def find_candidates(paths):
       id: 'walk',
       title: 'Walk lazily, skip what lies',
       body:
-        'Write the walk as a generator over `os.scandir`: it yields files as it reads each directory, so a million-file folder never becomes a million-item list. Skip symlinks; follow one and its target gets hashed twice and flagged as its own duplicate. Catch `PermissionError` per directory and keep going. Note that `os.walk` skips unreadable directories silently unless you pass `onerror`.',
+        'Write the walk as a generator over `os.scandir`: it yields files as it reads each directory, so a million-file folder never becomes a million-item list. Skip symlinks: a followed link double-counts its target, and a link to a parent directory loops forever. Catch `OSError` per directory (unreadable, or deleted mid-walk), log it, keep going. `os.walk` skips unreadable directories silently unless you pass `onerror`.',
       code: {
         code: `def walk(top):
     stack = [top]
@@ -197,8 +197,8 @@ def find_candidates(paths):
         d = stack.pop()
         try:
             it = os.scandir(d)
-        except PermissionError:
-            log.warning("skip %s", d)
+        except OSError as err:
+            log.warning("skip %s: %s", d, err)
             continue
         with it:
             for e in it:
@@ -316,14 +316,15 @@ def hash_all(paths, workers=8):
               feedback: 'Separates the real risk from the imagined one, and prices the cost.',
             },
             {
-              text: "No. And I'd switch to MD5 to make hashing faster.",
+              text: "No. I'd also switch to MD5: it's faster, and we're only comparing files we already have, so its collision weaknesses don't matter here.",
               quality: 'weak',
-              feedback: 'MD5 has practical collision attacks, so crafted files can match. And IO, not hashing, is usually the bottleneck.',
+              feedback:
+                'MD5 collisions can be crafted, so a planted file can match a real one and get the real one deleted. And IO, not hashing, is usually the bottleneck.',
             },
             {
-              text: 'Yes, always. Hashes can collide.',
+              text: 'Yes, always byte-compare before deleting, since any hash can collide in principle.',
               quality: 'okay',
-              feedback: 'Safe, but it doubles the IO on every duplicate and misplaces the risk.',
+              feedback: 'Safe, but it doubles the IO on every duplicate and points at the wrong risk.',
             },
           ],
         },
@@ -331,9 +332,9 @@ def hash_all(paths, workers=8):
           interviewer: 'How do you test this?',
           options: [
             {
-              text: "The logic is simple. I'd run it on my Downloads folder and eyeball the output.",
+              text: "Run it on a big real folder like my Downloads, which has thousands of files and plenty of genuine duplicates, and check the groups look right.",
               quality: 'weak',
-              feedback: "A smoke test isn't a test: you can't tell a silent miss from a clean folder.",
+              feedback: "Volume isn't coverage. You can't tell a silent miss from a clean folder, and none of the traps are guaranteed to be in there.",
             },
             {
               text: 'Two identical files and one different file in a temp dir; assert one group.',
@@ -381,12 +382,11 @@ def hash_all(paths, workers=8):
       id: 'build-dedup.slurp',
       skill: 'build.dedup',
       kind: 'spotbug',
-      prompt: 'Correct on small files, but the process is killed for memory on a folder holding a 40 GB VM image. Tap the line to change.',
+      prompt: 'Correct on small files, but the process runs out of memory on a folder holding a 40 GB VM image. Tap the line to change.',
       code: `def full_hash(path):
     h = hashlib.sha256()
     with open(path, "rb") as f:
-        data = f.read()
-        h.update(data)
+        h.update(f.read())
     return h.hexdigest()
 
 def hash_group(paths):
@@ -395,7 +395,7 @@ def hash_group(paths):
         out[full_hash(p)].append(p)
     return out`,
       bugLines: [4],
-      explanation: '`f.read()` with no size loads the whole file. Read fixed-size chunks in a loop and update the hash with each one.',
+      explanation: '`f.read()` with no size materializes the whole file as one `bytes` object before hashing starts. Read fixed-size chunks in a loop and update the hash with each one.',
       fix: {
         code: `        while chunk := f.read(1 << 16):
             h.update(chunk)`,
@@ -431,11 +431,11 @@ def hash_group(paths):
       id: 'build-dedup.naive-cost',
       skill: 'build.dedup',
       kind: 'numeric',
-      prompt: 'Naive dedup hashes every byte. About how many minutes does that take for a 1 TB drive read at 250 MB/s?',
-      answer: 66.7,
+      prompt: 'Naive dedup hashes every byte. About how many minutes does that take for 4 TB on NVMe storage read at a sustained 2 GB/s?',
+      answer: 33.3,
       tolerance: 0.15,
       unit: 'min',
-      explanation: '10¹² bytes ÷ 2.5 × 10⁸ bytes/s = 4,000 s ≈ 67 minutes. A size-first funnel often cuts that to a few minutes.',
+      explanation: '4 × 10¹² bytes ÷ 2 × 10⁹ bytes/s = 2,000 s ≈ 33 minutes, even on fast storage. A size-first funnel usually reads a small fraction of that.',
     },
     {
       id: 'build-dedup.skip-or-hash',

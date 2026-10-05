@@ -12,7 +12,7 @@ const lesson: Lesson = {
       id: 'hook',
       eyebrow: 'Warm-up',
       title: 'Fewer places to hide',
-      body: "In a practical round the interviewer reads your code as you type it. Both versions below do the same job. The second has no index arithmetic, no accumulator to forget, and fails loudly if the two lists ever disagree in length.\n\nIdioms aren't style points. They're fewer places for bugs to hide, and less to explain.",
+      body: "In a live coding round the interviewer reads your code as you type it. Both versions below do the same job. The second has no index arithmetic, no accumulator to forget, and fails loudly if the two lists ever disagree in length.\n\nIdioms aren't style points. They're fewer places for bugs to hide, and less to explain.",
       code: {
         code: `# index juggling
 passed = []
@@ -403,9 +403,39 @@ print(len({a, b, c}))`,
     {
       id: 'py-idioms.ctx-finally',
       skill: 'py.idioms',
-      kind: 'flash',
-      front: 'In a `@contextmanager` function, why wrap the `yield` in `try`/`finally`?',
-      back: 'If the `with` body raises, the exception is re-raised at the `yield`. Without `finally`, your teardown (close, unlock, restore) never runs.',
+      kind: 'mcq',
+      prompt: 'The `with` body raises `KeyError`. What happens?',
+      code: {
+        code: `@contextmanager
+def locked(lock):
+    lock.acquire()
+    yield
+    lock.release()
+
+with locked(lock):
+    cache[key]  # raises KeyError`,
+      },
+      choices: [
+        {
+          text: 'The `KeyError` propagates and the lock stays held',
+          correct: true,
+          feedback: 'Right. The exception is re-raised at the `yield`, so nothing after it runs. Wrap the `yield` in `try`/`finally`.',
+        },
+        {
+          text: 'The lock is released, then the `KeyError` propagates',
+          feedback: 'That is what `try`/`finally` around the `yield` would buy you. Without it, the line after `yield` never runs.',
+        },
+        {
+          text: 'The `KeyError` is swallowed and the lock is released',
+          feedback: 'A `@contextmanager` only suppresses an exception if the generator catches it, and this one catches nothing.',
+        },
+        {
+          text: '`RuntimeError`: the generator did not stop',
+          feedback: 'That error is for a generator that yields a second time. Here the exception just escapes the generator.',
+        },
+      ],
+      explanation:
+        'Inside a `@contextmanager`, an exception from the `with` body is thrown into the generator at the `yield`. Teardown runs only if a `finally` (or `except`) is around it, and a lock that is never released deadlocks the next caller.',
     },
   ],
 }
