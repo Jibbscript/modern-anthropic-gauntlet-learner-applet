@@ -157,14 +157,12 @@ export default function NumericStep({ step, phase, attempt, setController, onHin
       ready: value != null,
       check: () => {
         const v = judge(value ?? NaN, step.answer, tol)
-        if (v.correct)
-          return { correct: true, feedback: v.err < 1e-9 ? `Exactly ${withUnit(fmtNum(step.answer))}.` : `Within ${fmtPct(v.err * 100)} of ${withUnit(fmtNum(step.answer))}.` }
+        const target = unit ? `${fmtNum(step.answer)} ${unit}` : fmtNum(step.answer)
+        if (v.correct) return { correct: true, feedback: v.err < 1e-9 ? `Exactly ${target}.` : `Within ${fmtPct(v.err * 100)} of ${target}.` }
         const dir = v.dir === 'high' ? 'high' : 'low'
-        return { correct: false, feedback: v.far ? `Too ${dir}: ${v.far} too ${dir}.` : `Too ${dir}.` }
+        return { correct: false, feedback: v.far ? `${v.far[0].toUpperCase()}${v.far.slice(1)} too ${dir}.` : `Too ${dir}.` }
       },
     })
-    // withUnit only depends on unit
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value, step.answer, tol, unit, setController])
 
   const suffix = SUFFIX.exec(raw)?.[1]?.toUpperCase()
@@ -312,18 +310,9 @@ export default function NumericStep({ step, phase, attempt, setController, onHin
         </motion.div>
       )}
 
-      {phase === 'correct' && (
-        <motion.div
-          className="numeric__exact"
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-        >
-          {verdict && verdict.err >= 1e-9 && (
-            <>
-              Exact answer: <b className="tabular">{withUnit(fmtNum(step.answer))}</b>
-            </>
-          )}
+      {phase === 'correct' && verdict && verdict.err >= 1e-9 && (
+        <motion.div className="numeric__exact" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+          Exact answer: <b className="tabular">{withUnit(fmtNum(step.answer))}</b>
         </motion.div>
       )}
 
