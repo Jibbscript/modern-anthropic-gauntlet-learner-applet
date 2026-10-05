@@ -23,6 +23,7 @@ function userVars(u: User): CSSProperties {
     ['--u-edge' as string]: `var(--c-${h}-edge)`,
     ['--u-soft' as string]: `var(--c-${h}-soft)`,
     ['--u-ink' as string]: `var(--c-${h}-ink)`,
+    ['--u-on' as string]: `var(--c-${h}-on)`,
   }
 }
 

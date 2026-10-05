@@ -10,6 +10,9 @@ const Root = isGallery
   ? lazy(() => import('./dev/Gallery').then((m) => ({ default: m.Gallery })))
   : lazy(() => import('./app/App').then((m) => ({ default: m.App })))
 
+// the artifact host supplies its own <html>: keep the language set for screen readers and CSS hyphenation
+if (!document.documentElement.lang) document.documentElement.lang = 'en'
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <Suspense fallback={null}>

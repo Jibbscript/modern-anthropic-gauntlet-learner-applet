@@ -310,7 +310,7 @@
   padding: 1px 8px;
   border-radius: var(--r-pill);
   background: var(--c, var(--select));
-  color: #fff;
+  color: var(--c-on-sm, #fff);
 }
 .dd-bin--dup.is-ok {
   cursor: default;

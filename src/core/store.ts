@@ -41,6 +41,8 @@ export interface LessonProgress {
   resumeStep: number
   /** tally of the run in progress, so a resumed lesson keeps its accuracy and never pays a step twice */
   run?: LessonRun | null
+  /** when the lesson last saved a resume point (ms), so the most recent unfinished lesson resumes first */
+  updatedAt?: number | null
 }
 
 export interface LessonRun {
@@ -355,6 +357,7 @@ function normLesson(v: unknown): LessonProgress | null {
     completions: count(v.completions),
     resumeStep: count(v.resumeStep),
     run,
+    ...(fin(v.updatedAt) ? { updatedAt: v.updatedAt } : {}),
   }
 }
 
@@ -496,7 +499,7 @@ export const useStore = create<Store>()(
         set((s) => {
           const prev = s.lessons[lessonId] ?? emptyLesson()
           const resumeStep = Number.isFinite(step) ? Math.max(0, Math.floor(step)) : 0
-          return { lessons: { ...s.lessons, [lessonId]: { ...prev, resumeStep, run: run ?? prev.run ?? null } } }
+          return { lessons: { ...s.lessons, [lessonId]: { ...prev, resumeStep, run: run ?? prev.run ?? null, updatedAt: now() } } }
         }),
 
       answerStep: (correctFirstTry, solved = true) => {
@@ -538,6 +541,7 @@ export const useStore = create<Store>()(
               completions: prev.completions + 1,
               resumeStep: 0,
               run: null,
+              updatedAt: t,
             },
           },
           cards,

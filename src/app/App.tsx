@@ -1,5 +1,5 @@
 import { AnimatePresence, MotionConfig, motion } from 'motion/react'
-import { Suspense, lazy, useEffect, useMemo } from 'react'
+import { Suspense, lazy, useEffect, useMemo, useRef } from 'react'
 import { useClock } from './clock'
 import { useHistorySync } from './nav'
 import { Trophy } from 'lucide-react'
@@ -8,7 +8,7 @@ import { CATALOG } from '../content'
 import { dueCardIds } from '../core/adaptive'
 import { rehearsalsDue } from '../screens/StoriesScreen'
 import { ACHIEVEMENTS, newlyEarned } from '../core/achievements'
-import { COVERS, useNav, type Overlay } from './nav'
+import { COVERS, openers, useNav, type Overlay } from './nav'
 import { TabBar } from '../ui/TabBar'
 import { sfx } from '../ui/fx'
 import { LessonPlayer } from '../lesson/LessonPlayer'
@@ -35,6 +35,11 @@ function useTheme() {
     if (theme === 'system') delete root.dataset.theme
     else root.dataset.theme = theme
     root.dataset.reduceMotion = String(reduce)
+    // browser chrome (Safari's bar, Android's status bar) follows a forced theme too
+    for (const m of document.querySelectorAll<HTMLMetaElement>('meta[name="theme-color"]')) {
+      m.dataset.system ??= m.content
+      m.content = theme === 'system' ? m.dataset.system : getComputedStyle(root).getPropertyValue('--bg').trim() || m.dataset.system
+    }
   }, [theme, reduce])
   return reduce
 }
@@ -126,6 +131,41 @@ export function App() {
     if (fresh.length) useStore.getState().unlockAchievements(fresh)
   }, [state.lessons, state.days, state.streak, state.stories, state.labs, state.xp])
 
+  // keyboard focus follows the overlay stack: into a new top overlay, back to its opener when it closes
+  const depth = useRef(stack.length)
+  useEffect(() => {
+    const prev = depth.current
+    depth.current = stack.length
+    if (stack.length > prev) {
+      const id = requestAnimationFrame(() => {
+        const top = document.querySelector<HTMLElement>(`.overlay[data-depth="${stack.length - 1}"]`)
+        if (top && !top.contains(document.activeElement)) top.focus({ preventScroll: true })
+      })
+      return () => cancelAnimationFrame(id)
+    }
+    if (stack.length < prev) {
+      const el = openers[stack.length]
+      openers.length = stack.length
+      if (el instanceof HTMLElement && el.isConnected) el.focus({ preventScroll: true })
+    }
+  }, [stack.length])
+
+  // desktop: Escape steps back out of a page (course, story, settings, achievements); full-screen
+  // covers keep their own exit flow, and an open sheet or a focused text field gets Escape first
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape' || e.defaultPrevented || e.repeat) return
+      const { stack } = useNav.getState()
+      const top = stack[stack.length - 1]
+      if (!top || COVERS.has(top.kind) || document.querySelector('.sheet-layer')) return
+      const t = e.target as HTMLElement | null
+      if (t?.closest('input, textarea, select, [contenteditable="true"]')) return
+      useNav.getState().pop()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
+
   const badges = useMemo(
     () => ({ practice: dueCardIds(state, now, CATALOG).length, stories: rehearsalsDue(state, now).length }),
     [state, now],
@@ -146,7 +186,8 @@ export function App() {
   return (
     <MotionConfig reducedMotion={reduce ? 'always' : 'user'}>
       <div className="app-frame">
-        <div className="app-main">
+        {/* everything under an open overlay is inert: Tab and screen readers stay on the top layer */}
+        <div className="app-main" inert={stack.length > 0}>
           <AnimatePresence mode="wait" initial={false}>
             <motion.div
               key={tab}
@@ -160,7 +201,7 @@ export function App() {
             </motion.div>
           </AnimatePresence>
         </div>
-        <TabBar badges={badges} />
+        <TabBar badges={badges} inert={stack.length > 0} />
         <AnimatePresence>
           {stack.map((o, i) => {
             const cover = COVERS.has(o.kind)
@@ -169,6 +210,9 @@ export function App() {
                 key={`${i}:${o.kind}`}
                 className={`overlay ${cover ? 'overlay--cover' : 'overlay--page'}`}
                 style={{ zIndex: 30 + i }}
+                data-depth={i}
+                tabIndex={-1}
+                inert={i < stack.length - 1}
                 initial={cover ? { y: '100%' } : { x: '100%' }}
                 animate={cover ? { y: 0 } : { x: 0 }}
                 exit={cover ? { y: '100%' } : { x: '100%' }}

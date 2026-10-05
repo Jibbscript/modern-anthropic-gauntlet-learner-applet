@@ -43,9 +43,9 @@ Never hard-code colours. Use tokens:
 - canvas/ink: `--bg --surface --surface-2 --surface-3 --ink --ink-2 --ink-3 --line --line-strong --edge`
 - action: `--action --action-edge --action-ink` (primary button: near-black in light, near-white in dark)
 - selection: `--select --select-soft --select-edge`
-- feedback: `--good --good-soft --good-edge --good-ink`, `--retry --retry-soft --retry-edge --retry-ink` (wrong-but-retryable), `--neutral-fb --neutral-fb-ink` (revealed), `--bad ...` (reserve red for simulations: lost updates, deadlocks, 429s), `--warn --warn-soft`
+- feedback: `--good --good-soft --good-edge --good-ink --good-on`, `--retry --retry-soft --retry-edge --retry-ink` (wrong-but-retryable), `--neutral-fb --neutral-fb-ink` (revealed), `--bad ...` (reserve red for simulations: lost updates, deadlocks, 429s), `--warn --warn-soft`
 - gamification: `--streak --streak-2 --xp --freeze`
-- course hue (set by `courseStyle(color)` on a container): `--c --c-soft --c-edge --c-ink`
+- course hue (set by `courseStyle(color)` on a container): `--c --c-soft --c-edge --c-ink --c-on --c-on-sm`
 - code: `--code-bg --code-ink --code-kw --code-str --code-num --code-fn --code-com --code-builtin`
 - type: `--font-ui --font-display --font-serif --font-code`, sizes `--fs-xs..--fs-3xl`
 - shape: `--r-sm --r-md --r-lg --r-xl --r-pill --edge-h`
@@ -67,6 +67,23 @@ Both themes must work: light is bare `:root`, dark comes from
 - Icons: `lucide-react` (stroke width 2.2-2.8). No emoji in UI chrome.
 - Animation: `motion/react` (`motion`, `AnimatePresence`, `layout`, springs).
 - CSS classes available globally: `.chip .chip--course|good|bad|warn`, `.eyebrow`, `.tabular`, `.scroll`, `.screen`, `.safe-top`, `.safe-bottom`.
+
+## Contrast on hue faces
+
+White on a hue-500 face measures 3.5-6:1 on violet, blue, indigo and slate,
+but only 2.1-2.7:1 on green, teal, orange and rose (1.6:1 on amber). The rule:
+
+- **Button labels at 16px+ bold** (`Button` md/lg in `course`/`good`) stay
+  white, as in Brilliant: short, bold, and the action also reads from shape and
+  position. Amber gets dark ink through `--c-on`.
+- **Everything smaller on a hue face** (badges, avatars, chips, counters, sort
+  bucket labels, which drop to 13px, `Button` sm, the VM's stack top) uses `--c-on-sm` (set by
+  `courseStyle`; per hue `--c-<hue>-on`): white on the dark hues, a deep shade
+  of the hue on the light ones (5-8:1), and on slate in dark mode, where the
+  face lightens to 3:1 against white. On the green feedback face use
+  `--good-on`. Widgets that colour threads or users by hue expose the same
+  token (`--th-on`, `--u-on`).
+- **Body text never sits on a hue-500 face.** Use `--c-soft` with `--c-ink`.
 
 ## Layout rules
 

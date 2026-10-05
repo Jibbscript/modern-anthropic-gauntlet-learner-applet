@@ -43,6 +43,9 @@ declare const __ARTIFACT__: boolean
 const historyOn = () => typeof window !== 'undefined' && typeof history !== 'undefined' && !__ARTIFACT__
 const depthOf = (st: unknown) => (st && typeof st === 'object' && typeof (st as { g?: unknown }).g === 'number' ? (st as { g: number }).g : 0)
 
+/** the element that had focus when each overlay opened (by depth), so App can hand focus back on close */
+export const openers: (Element | null)[] = []
+
 export const useNav = create<Nav>((set, get) => ({
   tab: 'learn',
   stack: [],
@@ -53,6 +56,7 @@ export const useNav = create<Nav>((set, get) => ({
   },
   push: (o) => {
     const stack = [...get().stack, o]
+    openers[stack.length - 1] = typeof document === 'undefined' ? null : document.activeElement
     set({ stack })
     if (historyOn()) {
       try {

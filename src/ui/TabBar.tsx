@@ -11,11 +11,11 @@ const TABS: { id: Tab; label: string; Icon: typeof BookOpen }[] = [
   { id: 'me', label: 'Me', Icon: User },
 ]
 
-export function TabBar({ badges }: { badges?: Partial<Record<Tab, number>> }) {
+export function TabBar({ badges, inert }: { badges?: Partial<Record<Tab, number>>; inert?: boolean }) {
   const tab = useNav((s) => s.tab)
   const setTab = useNav((s) => s.setTab)
   return (
-    <nav className="tabbar safe-bottom" aria-label="Main">
+    <nav className="tabbar safe-bottom" aria-label="Main" inert={inert}>
       {TABS.map(({ id, label, Icon }) => {
         const active = tab === id
         const badge = badges?.[id]

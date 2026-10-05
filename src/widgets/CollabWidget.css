@@ -127,7 +127,7 @@
   height: 22px;
   border-radius: 7px;
   background: var(--u);
-  color: #fff;
+  color: var(--u-on, #fff);
   font-size: var(--fs-xs);
   font-weight: 700;
   box-shadow: 0 2px 0 0 var(--u-edge);
@@ -372,7 +372,7 @@
 }
 .collab-order__opt.is-on .collab-order__badge {
   background: var(--u);
-  color: #fff;
+  color: var(--u-on, #fff);
   box-shadow: none;
 }
 

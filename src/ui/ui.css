@@ -107,6 +107,13 @@
   --face-ink: var(--c-on, #ffffff);
   --face-edge: var(--c-edge, var(--select-edge));
 }
+/* small labels on a hue face follow the small-text rule (DESIGN.md, Contrast) */
+.btn--sm.btn--course {
+  --face-ink: var(--c-on-sm, var(--c-on, #ffffff));
+}
+.btn--sm.btn--good {
+  --face-ink: var(--good-on);
+}
 
 .btn:disabled {
   --face: var(--surface-3);
@@ -216,7 +223,7 @@
 }
 .tile--correct .tile__badge {
   background: var(--good);
-  color: #fff;
+  color: var(--good-on);
   box-shadow: none;
 }
 .tile--incorrect .tile__badge {
@@ -291,6 +298,10 @@
   border-radius: var(--r-xl) var(--r-xl) 0 0;
   padding: var(--s-2) var(--gutter) var(--s-5);
   box-shadow: var(--shadow-lg);
+}
+/* the sheet itself takes focus on open (so Tab starts inside it); only its controls show a ring */
+.sheet:focus {
+  outline: none;
 }
 .sheet__grip {
   width: 40px;

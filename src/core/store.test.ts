@@ -101,6 +101,12 @@ describe('store actions', () => {
     expect(store().lessons.l1.run).toEqual({ graded: ['a', 'b'], firstTry: 1, xp: 20, ms: 3000 })
   })
 
+  it('checkpointLesson stamps when the lesson was last saved', () => {
+    const before = Date.now()
+    store().checkpointLesson('l1', 2)
+    expect(store().lessons.l1.updatedAt).toBeGreaterThanOrEqual(before)
+  })
+
   it('a third story rehearsal counts toward the streak like a third card review', () => {
     store().saveStory('failure', { layers: { 0: 'x'.repeat(40) } })
     store().reviewCard('c1', 3, 1000)

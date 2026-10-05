@@ -158,7 +158,9 @@
 
 /* -------------------------------------------------------------- welcome */
 .onb-welcome {
-  flex: 1;
+  /* grow to centre in a tall screen, never shrink: on a 568px phone the content is taller than the
+     scroller, and a shrunk, centred box would push the logo above the top where it can't be scrolled to */
+  flex: 1 0 auto;
   display: flex;
   flex-direction: column;
   align-items: center;

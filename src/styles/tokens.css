@@ -72,6 +72,11 @@
   --c-rose: #ff775c;  --c-rose-soft: #fff0ed; --c-rose-edge: #d9512f; --c-rose-ink: #b33d1f;
   --c-indigo: #6f7cff;  --c-indigo-soft: #eef0ff; --c-indigo-edge: #4b57d6; --c-indigo-ink: #3c46b3;
   --c-slate: #5c6370;  --c-slate-soft: #f0f1f3; --c-slate-edge: #3f4550; --c-slate-ink: #353a43;
+  /* small text (badges, avatars, sort labels, under 18px) on a hue-500 face: white on the dark hues,
+     a deep shade on the light ones, where white measures only 1.6-2.7:1 (see DESIGN.md, Contrast) */
+  --c-violet-on: #ffffff; --c-blue-on: #ffffff; --c-indigo-on: #ffffff; --c-slate-on: #ffffff;
+  --c-teal-on: #04312c; --c-green-on: #063d18; --c-amber-on: #3d2e00; --c-orange-on: #432000; --c-rose-on: #4a1206;
+  --good-on: #063d18;
 
   /* code */
   --code-bg: #f8f8f8;
@@ -183,6 +188,7 @@
     --c-indigo-soft: #1e2147; --c-indigo-ink: #a5adff;
     --c-slate-soft: #232836;  --c-slate-ink: #c8cfdc;
     --c-slate: #8a96ad; --c-slate-edge: #5f6a80;
+    --c-slate-on: #11151c;
     --code-bg: #1a1a1a;
     --code-ink: #ececec;
     --code-line: #2c2c2c;
@@ -243,6 +249,7 @@
   --c-indigo-soft: #1e2147; --c-indigo-ink: #a5adff;
   --c-slate-soft: #232836;  --c-slate-ink: #c8cfdc;
   --c-slate: #8a96ad; --c-slate-edge: #5f6a80;
+  --c-slate-on: #11151c;
   --code-bg: #1a1a1a;
   --code-ink: #ececec;
   --code-line: #2c2c2c;

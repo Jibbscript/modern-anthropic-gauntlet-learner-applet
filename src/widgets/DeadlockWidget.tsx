@@ -17,6 +17,7 @@ function threadVars(t: number): CSSProperties {
     ['--th-edge' as string]: `var(--c-${h}-edge)`,
     ['--th-soft' as string]: `var(--c-${h}-soft)`,
     ['--th-ink' as string]: `var(--c-${h}-ink)`,
+    ['--th-on' as string]: `var(--c-${h}-on)`,
     ['--c' as string]: `var(--c-${h})`,
     ['--c-edge' as string]: `var(--c-${h}-edge)`,
   }

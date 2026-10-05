@@ -25,7 +25,7 @@
   padding: 4px 9px;
   border-radius: var(--r-pill);
   background: var(--good);
-  color: #fff;
+  color: var(--good-on);
   font-weight: 700;
   font-size: var(--fs-sm);
   box-shadow: 0 3px 0 0 var(--good-edge);

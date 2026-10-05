@@ -342,11 +342,11 @@
 }
 .lru-card__pop.is-hit .lru-pill {
   background: var(--good);
-  color: #fff;
+  color: var(--good-on);
 }
 .lru-card__pop.is-update .lru-pill {
   background: var(--c, var(--select));
-  color: #fff;
+  color: var(--c-on-sm, #fff);
 }
 .lru-card__next .lru-pill {
   background: var(--bad-soft);

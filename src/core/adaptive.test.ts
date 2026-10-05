@@ -105,6 +105,20 @@ describe('mastery', () => {
     s.lessons['py-2'] = { completedAt: null, bestAccuracy: 0, completions: 0, resumeStep: 3 }
     expect(recommendedLesson(s, CAT, NOW)).toBe('py-2')
   })
+
+  it('resumes the unfinished lesson saved most recently, not the first one listed', () => {
+    const s = initialState()
+    s.lessons['py-1'] = { completedAt: null, bestAccuracy: 0, completions: 0, resumeStep: 2, updatedAt: NOW - 3_600_000 }
+    s.lessons['conc-1'] = { completedAt: null, bestAccuracy: 0, completions: 0, resumeStep: 1, updatedAt: NOW - 60_000 }
+    s.lessons['py-2'] = { completedAt: null, bestAccuracy: 0, completions: 0, resumeStep: 4 }
+    expect(recommendedLesson(s, CAT, NOW)).toBe('conc-1')
+    // a lesson whose content was removed is skipped, however recent
+    s.lessons['gone'] = { completedAt: null, bestAccuracy: 0, completions: 0, resumeStep: 1, updatedAt: NOW }
+    expect(recommendedLesson(s, CAT, NOW)).toBe('conc-1')
+    // a finished lesson is never resumed
+    s.lessons['conc-1'] = { ...s.lessons['conc-1'], completedAt: NOW - 1000 }
+    expect(recommendedLesson(s, CAT, NOW)).toBe('py-1')
+  })
 })
 
 describe('due counts and forecast', () => {

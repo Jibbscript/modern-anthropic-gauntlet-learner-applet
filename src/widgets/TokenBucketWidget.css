@@ -187,7 +187,7 @@
 }
 .tb-req.is-ok .tb-req__status {
   background: var(--good);
-  color: #fff;
+  color: var(--good-on);
   box-shadow: 0 4px 10px color-mix(in srgb, var(--good) 40%, transparent);
 }
 .tb-req.is-bad .tb-req__status {

@@ -16,6 +16,10 @@
   display: flex;
   flex-direction: column;
 }
+/* an overlay takes focus when it opens (so Tab starts inside it); only its controls show a ring */
+.overlay:focus {
+  outline: none;
+}
 .overlay--page {
   box-shadow: -20px 0 40px rgba(0, 0, 0, 0.08);
 }

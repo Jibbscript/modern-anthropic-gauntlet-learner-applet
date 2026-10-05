@@ -147,8 +147,10 @@ const lesson: Lesson = {
       eyebrow: 'Calibration',
       prompt: 'Sort each statement.',
       buckets: [
-        { id: 'cal', label: 'Calibrated' },
-        { id: 'over', label: 'Overclaimed' },
+        // \u00AD = soft hyphen: at 320px three buttons are ~88px wide, so these words must break, and
+        // not every browser ships a hyphenation dictionary for CSS hyphens: auto (Chromium on Linux doesn't)
+        { id: 'cal', label: 'Cali\u00ADbrated' },
+        { id: 'over', label: 'Over\u00ADclaimed' },
         { id: 'hedge', label: 'Empty hedge' },
       ],
       items: [

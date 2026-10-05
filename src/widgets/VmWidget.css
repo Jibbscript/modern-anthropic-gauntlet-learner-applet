@@ -286,7 +286,7 @@
 }
 .vm-block.is-top {
   background: var(--c, var(--select));
-  color: var(--c-on, #fff);
+  color: var(--c-on-sm, var(--c-on, #fff));
   box-shadow:
     0 3px 0 0 var(--c-edge, var(--select-edge)),
     0 6px 14px color-mix(in srgb, var(--c, var(--select)) 35%, transparent);

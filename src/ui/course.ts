@@ -13,5 +13,7 @@ export function courseStyle(color: CourseColor): CSSProperties {
     ['--c-ink' as string]: `var(--c-${color}-ink)`,
     // text on a course-coloured face: white fails contrast on amber
     ['--c-on' as string]: color === 'amber' ? '#3d2e00' : '#ffffff',
+    // small text (under 18px) on the face: dark on the light hues too (see DESIGN.md, Contrast)
+    ['--c-on-sm' as string]: `var(--c-${color}-on)`,
   }
 }

@@ -52,8 +52,15 @@ export function courseProgress(s: GauntletState, course: Course): { done: number
  * self-rated confidence with measured mastery), falling back to path order.
  */
 export function recommendedLesson(s: GauntletState, cat: Catalog, now: number): string | null {
-  const inProgress = Object.entries(s.lessons).find(([, p]) => !p.completedAt && p.resumeStep > 0)
-  if (inProgress && cat.lessons[inProgress[0]]) return inProgress[0]
+  // resume the unfinished lesson the learner touched last (older saves without updatedAt rank first-come)
+  let resume: string | null = null
+  let at = -Infinity
+  for (const [id, p] of Object.entries(s.lessons)) {
+    if (p.completedAt || p.resumeStep <= 0 || !cat.lessons[id]) continue
+    const t = p.updatedAt ?? 0
+    if (t > at) [resume, at] = [id, t]
+  }
+  if (resume) return resume
 
   const mastery = areaMastery(s, cat, now)
   const candidates = cat.courses

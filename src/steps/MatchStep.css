@@ -141,7 +141,7 @@
 }
 .tile--correct .match-socket__dot {
   background: var(--good);
-  color: #fff;
+  color: var(--good-on);
 }
 .tile--incorrect .match-socket__dot {
   background: var(--retry-edge);
@@ -149,7 +149,7 @@
 }
 .tile--reveal .match-socket__dot {
   background: var(--good);
-  color: #fff;
+  color: var(--good-on);
 }
 
 @media (max-width: 360px) {
