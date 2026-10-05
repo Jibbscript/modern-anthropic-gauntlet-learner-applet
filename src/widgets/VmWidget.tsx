@@ -41,11 +41,13 @@ function Source({ line }: { line: Line }) {
 export default function VmWidget({ config, onComplete }: WidgetProps<VmConfig>) {
   const reduce = useReduced()
   const uid = useId()
-  const source = useMemo(() => (Array.isArray(config.program) && config.program.length ? config.program.map(String) : DEFAULT_PROGRAM), [config.program])
-  const prog: Program = useMemo(() => parseProgram(source), [source])
+  // keyed by value, not identity: a parent re-render with an equal config must not restart the machine
+  const programKey = JSON.stringify(Array.isArray(config.program) && config.program.length ? config.program.map(String) : DEFAULT_PROGRAM)
+  const prog: Program = useMemo(() => parseProgram(JSON.parse(programKey) as string[]), [programKey])
 
   // predict: the line index (0-based) where the machine pauses to ask
-  const predict = config.predict
+  const predictKey = JSON.stringify(config.predict ?? null)
+  const predict = useMemo(() => JSON.parse(predictKey) as VmConfig['predict'] | null, [predictKey])
   const predictIdx = useMemo(() => {
     if (!predict || !Number.isFinite(predict.line)) return -1
     const i = nextExec(prog, Math.max(0, Math.round(predict.line) - 1))

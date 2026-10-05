@@ -59,7 +59,7 @@ const lesson: Lesson = {
       title: 'org_id on every row',
       body: "Put `org_id` on every tenant-owned row, even when a join could find it. Filters, indexes, partitions and security policies are then one column away.\n\nThen let queries pick indexes. *A prompt's recent runs* wants `(org_id, prompt_id, created_at)`. *A version's children* wants `(parent_id)`. An index no query uses is write cost for nothing.",
       code: {
-        code: 'orgs      id, name, plan\nusers     id, email\nmembers   org_id, user_id, role\nprompts   id, org_id, title, head_version_id\nversions  id, org_id, prompt_id, parent_id,\n          content_hash, body_ref, model, params\nruns      id, org_id, prompt_id, version_id,\n          eval_id, status, tokens_in, tokens_out,\n          cost_micros, output_ref, created_at\ndatasets  id, org_id, file_ref, row_count\nevals     id, org_id, version_id, dataset_id,\n          status, score',
+        code: 'orgs: id, name, plan\nusers: id, email\nmembers: org_id, user_id, role\nprompts: id, org_id, title,\n  head_version_id\nversions: id, org_id, prompt_id,\n  parent_id, content_hash,\n  body_ref, model, params\nruns: id, org_id, prompt_id,\n  version_id, eval_id, status,\n  tokens_in, tokens_out,\n  cost_micros, output_ref, created_at\ndatasets: id, org_id, file_ref\nevals: id, org_id, version_id,\n  dataset_id, status, score',
         lang: 'text',
       },
     },
@@ -70,22 +70,22 @@ const lesson: Lesson = {
       prompt: '`runs` will reach billions of rows. Its queries: a prompt\'s recent runs, and monthly usage per org. Runs are deleted after 90 days. How do you partition it in Postgres?',
       choices: [
         {
-          text: 'Range-partition by `created_at`, one partition per month, with `(org_id, prompt_id, created_at)` indexes inside each',
+          text: 'Range-partition by `created_at`, one per month, indexed on `(org_id, prompt_id, created_at)`',
           correct: true,
           feedback:
             'Yes. Recent-run queries touch the newest partition or two, and retention becomes dropping a whole partition instead of deleting billions of rows.',
         },
         {
-          text: 'Hash-partition by `org_id`, so every tenant\'s runs sit together',
+          text: 'Hash-partition by `org_id`, so each tenant\'s runs stay together in one partition',
           feedback:
             'Tempting: tenant queries prune well, and org is the right key for *sharding across machines* later. But retention is still a giant DELETE in every partition, and one huge customer makes one partition huge.',
         },
         {
-          text: 'Hash-partition by `run_id`, to spread writes evenly',
+          text: 'Hash-partition by `run_id`, so writes spread evenly across every partition',
           feedback: 'Even writes, but every org or prompt query now touches every partition, and retention is still a giant DELETE.',
         },
         {
-          text: 'List-partition by `status`, so active runs sit in a small partition',
+          text: 'List-partition by `status`, so active runs stay in one small, hot partition',
           feedback:
             'Every status change moves the row to another partition (a delete plus an insert), and finished runs pile into one giant partition anyway.',
         },
@@ -109,7 +109,7 @@ const lesson: Lesson = {
       id: 'cache-leak',
       eyebrow: 'Find the bug',
       prompt: "Row-level security is on and the SQL filters by org. Users still report seeing another org's prompts in their list. Tap the line.",
-      code: 'def list_prompts(user, page):\n    key = f"prompts:page:{page}"\n    if (hit := cache.get(key)) is not None:\n        return hit\n    rows = db.fetchall(\n        "SELECT id, title FROM prompts WHERE org_id = %s"\n        " ORDER BY updated_at DESC LIMIT 20 OFFSET %s",\n        (user.org_id, page * 20),\n    )\n    cache.set(key, rows, ttl=60)\n    return rows',
+      code: 'def list_prompts(user, page):\n    key = f"prompts:page:{page}"\n    hit = cache.get(key)\n    if hit is not None:\n        return hit\n    rows = db.fetchall(\n        "SELECT id, title FROM prompts"\n        " WHERE org_id = %s"\n        " ORDER BY updated_at DESC"\n        " LIMIT 20 OFFSET %s",\n        (user.org_id, page * 20),\n    )\n    cache.set(key, rows, ttl=60)\n    return rows',
       bugLines: [2],
       explanation:
         "The query is perfectly isolated; the cache is not. Org A's page 0 is cached under `prompts:page:0`, and for the next minute every org's page 0 is Org A's list. Row-level security can't help: the leak never reaches the database.",
@@ -151,15 +151,15 @@ const lesson: Lesson = {
       kind: 'cloze',
       id: 'outputs-tradeoff',
       prompt: 'Now write one yourself. Fill the blanks so this tradeoff is honest and checkable.',
-      code: "We chose {{0}} for run outputs over\n{{1}}, because outputs are written once,\nread whole, and are most of our bytes.\nIt costs us a second round trip when a\nrun page loads. We'd revisit if\n{{2}}.",
+      code: 'We chose\n{{0}}\nfor run outputs over\n{{1}}\nbecause outputs are written once,\nread whole, and most of our bytes.\nIt costs a second round trip per\nrun page. We\'d revisit if\n{{2}}.',
       lang: 'text',
       blanks: [
         { options: ['object storage', 'Postgres TEXT columns', 'the cache'], answer: 0 },
         { options: ['Postgres TEXT columns', 'object storage', 'a CDN'], answer: 0 },
-        { options: ['users need full-text search across outputs', 'it ever becomes a problem', 'a better database comes out'], answer: 0 },
+        { options: ['users need search inside outputs', 'it ever becomes a problem', 'a better database comes out'], answer: 0 },
       ],
       explanation:
-        'Postgres really can hold a 10 MB value (it moves large values out of line), so it is a fair alternative, not a straw man; it loses on backup size and replication cost. And *users need full-text search across outputs* is a trigger you would notice, where the other two never fire.',
+        'Postgres really can hold a 10 MB value (it moves large values out of line), so it is a fair alternative, not a straw man; it loses on backup size and replication cost. And *users need search inside outputs* is a trigger you would notice, where the other two never fire.',
       hint: 'The *because* clause describes which store? And which trigger could you actually observe?',
     },
     {
@@ -172,17 +172,17 @@ const lesson: Lesson = {
           interviewer: 'Traffic is 100x. Where does your design break first?',
           options: [
             {
-              text: '"I\'d shard everything by `org_id` now, so we never have to worry about it."',
+              text: '"I\'d shard Postgres by `org_id` right away and add read replicas, since the database is usually what breaks first."',
               quality: 'okay',
               feedback: 'Sharding by org may well come, but you skipped the step that shows judgment: which component runs out of headroom first, and by how much.',
             },
             {
-              text: '"Put it on Kubernetes with autoscaling, and it scales out."',
+              text: '"Move every service to Kubernetes with autoscaling, so each tier scales out on its own as load grows."',
               quality: 'weak',
               feedback: "Autoscaling stateless servers doesn't scale a database primary or a provider's rate limit. That's naming a tool, not finding a bottleneck.",
             },
             {
-              text: '"Let me do the numbers. About 7,000 runs a second means roughly 20 million model tokens a second, so provider capacity and quotas are the first wall. Next, three status writes per run is about 20,000 row writes a second on one primary: batch those updates, then shard by `org_id`. Object storage barely notices."',
+              text: '"Let me do the numbers. 7,000 runs a second is about 20 million model tokens a second, so provider capacity is the first wall. Next, ~20,000 status writes a second on one primary: batch them, then shard by `org_id`."',
               quality: 'strong',
               feedback: 'Strong. You ranked bottlenecks by arithmetic and fixed them in order. Being right about *which* thing breaks matters more than knowing many fixes.',
             },
@@ -192,17 +192,17 @@ const lesson: Lesson = {
           interviewer: 'You shard by org. One customer is 40% of all runs.',
           options: [
             {
-              text: '"Give the big tenant its own shard, and keep an `org → shard` directory so tenants can move. Inside that shard, monthly partitions still apply, and their quota protects everyone else."',
+              text: '"Give that tenant its own shard, and keep an `org → shard` directory so tenants can move later. Their quota still protects everyone else."',
               quality: 'strong',
               feedback: 'Strong. A directory, not a hash, makes the whale a placement decision you can change later.',
             },
             {
-              text: '"Switch the shard key to a hash of `run_id`, so load spreads evenly."',
+              text: '"Switch the shard key to a hash of `run_id`, so load spreads evenly across shards no matter who sends it."',
               quality: 'okay',
               feedback: 'Even load, but every per-org query now fans out to every shard. You fixed one tenant by taxing all of them.',
             },
             {
-              text: '"Ask them to reduce their usage."',
+              text: '"Ask the customer to cut their usage, or cap their account until we have more capacity."',
               quality: 'weak',
               feedback: 'Your largest customer is the one you can least afford to throttle by email. Design for skew; it is normal.',
             },
@@ -212,17 +212,17 @@ const lesson: Lesson = {
           interviewer: 'A customer says their runs have been slow since Tuesday. What do you look at?',
           options: [
             {
-              text: '"The database CPU graphs and the error logs from Tuesday."',
+              text: '"The database CPU graphs and error logs from Tuesday, then the deploys that went out that day."',
               quality: 'okay',
               feedback: 'Reasonable places to look, but system-wide graphs can look healthy while one tenant suffers. Start from their runs.',
             },
             {
-              text: '"Their runs\' traces. Every run carries a trace with spans for the API, the limit check, queue wait, time to first token and the output write. Compare spans before and after Tuesday: longer queue waits mean capacity or fairness, longer time to first token means the provider, longer API time means our database."',
+              text: '"Their runs\' traces: spans for the API, limit check, queue wait, time to first token and storage. Whichever span grew since Tuesday names the owner."',
               quality: 'strong',
-              feedback: 'Strong. A trace per run turns *slow* into *which stage got slow*, and each answer points at a different owner.',
+              feedback: 'Strong. A trace per run turns *slow* into *which stage got slow*: longer queue waits mean capacity or fairness, a longer time to first token means the provider, a slower API span means your database.',
             },
             {
-              text: '"Run a few prompts myself and see whether they feel slow."',
+              text: '"Run a few prompts myself from my own account and see whether they feel slow."',
               quality: 'weak',
               feedback: "An anecdote from a different org, prompt and time. You'd be debugging your experience, not theirs.",
             },
@@ -290,10 +290,10 @@ const lesson: Lesson = {
       skill: 'design.storage',
       kind: 'spotbug',
       prompt: "Every table has row-level security on `app.org_id`. A user still reads another org's data. Tap the line.",
-      code: 'def run_in_tenant(request, query, params):\n    user = authenticate(request)\n    org_id = request.headers["X-Org-Id"]\n    with db.transaction() as tx:\n        tx.execute(\n            "SELECT set_config(\'app.org_id\', %s, true)",\n            (org_id,),\n        )\n        return tx.execute(query, params).fetchall()',
+      code: 'def as_tenant(request, sql, args):\n    user = authenticate(request)\n    org = request.headers["X-Org-Id"]\n    with db.transaction() as tx:\n        tx.execute(\n            "SELECT set_config("\n            "\'app.org_id\', %s, true)",\n            (org,),\n        )\n        cur = tx.execute(sql, args)\n        return cur.fetchall()',
       bugLines: [3],
       explanation: "The tenant comes from a header the client controls, so anyone can claim any org and RLS faithfully shows them that org's rows. Take the org from the authenticated session, or verify membership before setting it.",
-      fix: { code: 'org_id = request.headers["X-Org-Id"]\nif org_id not in user.org_ids:\n    raise Forbidden(org_id)' },
+      fix: { code: 'org = request.headers["X-Org-Id"]\nif org not in user.org_ids:\n    raise Forbidden(org)' },
     },
     {
       id: 'design-scale.cache-tradeoff',

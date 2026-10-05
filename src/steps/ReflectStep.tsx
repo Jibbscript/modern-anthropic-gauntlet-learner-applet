@@ -84,7 +84,11 @@ export default function ReflectStep({ step, setController, lessonId }: StepProps
           pending.current = null
         }
         const value = latest.current
-        if (!value.trim()) return { correct: true }
+        // "Skip for now": nothing goes to the Story Bank, but a draft the learner just emptied stays emptied
+        if (!value.trim()) {
+          saveDraft(value)
+          return { correct: true }
+        }
         const s = useStore.getState()
         s.saveReflection(key, value)
         if (step.slot) {
@@ -95,16 +99,23 @@ export default function ReflectStep({ step, setController, lessonId }: StepProps
         return { correct: true }
       },
     })
-  }, [ready, key, step.slot, setController])
+  }, [ready, key, step.slot, setController, saveDraft])
 
   // ---- autosize
   const area = useRef<HTMLTextAreaElement>(null)
-  useLayoutEffect(() => {
+  const fit = useCallback(() => {
     const el = area.current
     if (!el) return
     el.style.height = 'auto'
     el.style.height = `${el.scrollHeight + 2}px`
-  }, [text])
+  }, [])
+  useLayoutEffect(fit, [text, fit])
+  useEffect(() => {
+    // line wrapping changes when the width or the web font changes
+    window.addEventListener('resize', fit)
+    document.fonts?.ready.then(fit).catch(() => {})
+    return () => window.removeEventListener('resize', fit)
+  }, [fit])
 
   const toggle = (i: number) => {
     setTicked((t) => {

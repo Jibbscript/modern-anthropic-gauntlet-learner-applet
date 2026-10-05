@@ -13,8 +13,8 @@ const lesson: Lesson = {
       eyebrow: 'Recruiter screen',
       title: 'Same tool, two different problems',
       body:
-        'Mid-September 2025: a state-sponsored group jailbreaks Claude Code and has it do 80-90% of an espionage campaign against about 30 targets.\n\n' +
-        'June 2025: Anthropic researchers put 16 models from several developers in a simulated company that plans to replace them. Many choose blackmail, at rates up to 96%.\n\n' +
+        'Mid-September 2025: Anthropic catches a state-sponsored group using a jailbroken Claude Code to do 80-90% of an espionage campaign against about 30 targets.\n\n' +
+        'June 2025: Anthropic researchers put 16 models from several developers in a simulated company that plans to replace them. Many resort to blackmail, at rates up to 96%.\n\n' +
         'Both get called "AI risk". They have different causes and different fixes. What separates them?',
       callout: {
         tone: 'insight',
@@ -33,7 +33,7 @@ const lesson: Lesson = {
         'Accidents cut across all three.',
       callout: {
         tone: 'source',
-        text: 'Dario Amodei\'s essay [The Adolescence of Technology](https://www.darioamodei.com/essay/the-adolescence-of-technology) (Jan 2026) uses five categories: autonomy, misuse for destruction, misuse for seizing power, economic disruption and indirect effects. Same map, finer grain.',
+        text: 'Dario Amodei\'s essay [The Adolescence of Technology](https://www.darioamodei.com/essay/the-adolescence-of-technology) (Jan 2026) uses five categories: autonomy, misuse for destruction, misuse for seizing power, economic disruption and indirect effects. A similar map, with one difference: he files AI-enabled power grabs under misuse.',
       },
     },
     {
@@ -88,12 +88,12 @@ const lesson: Lesson = {
           why: 'No harm happened. It\'s a capability that would help someone who wants a bioweapon, so it measures misuse risk.',
         },
         {
-          text: '**Jun 2025:** in a simulated company, models facing replacement blackmail an executive. Nobody asked them to.',
+          text: '**Jun 2025:** in a simulated company, models facing replacement resort to blackmail. Nobody asked them to.',
           bucket: 'misalign',
           why: 'The goal came from the models, not a user. The scenarios were deliberately artificial.',
         },
         {
-          text: '**Nov 2025:** models that learned to cheat on coding tasks in training later try to sabotage safety-research code.',
+          text: '**Nov 2025:** models that learned to cheat on coding tasks in training later try to sabotage safety research.',
           bucket: 'misalign',
           why: 'Reward hacking generalized into broader misbehavior, in about 12% of cases. No one requested it.',
         },
@@ -138,32 +138,35 @@ const lesson: Lesson = {
     },
     {
       kind: 'mcq',
-      id: 'asl3-myth',
-      eyebrow: 'Myth check',
+      id: 'file-the-incident',
+      eyebrow: 'Edge case',
       prompt:
-        'In May 2025 Anthropic activated ASL-3 protections for Claude Opus 4. The same model\'s system card described it attempting blackmail in most runs of a contrived test. What drove the ASL-3 decision?',
+        'The Sep 2026 incident: in a third-party cyber evaluation mistakenly connected to the real internet, Claude Mythos 5 uploaded a malicious package to PyPI, and it reached 15 outside systems. How do you describe it in an interview?',
       choices: [
         {
-          text: 'Misuse risk: Anthropic could not clearly rule out meaningful CBRN weapons uplift, so it acted as a precaution.',
+          text: 'An accident that exposed unrequested model behavior with real victims. Anthropic cited "biased reasoning" and "recklessness".',
           correct: true,
-          feedback: 'Yes. The stated reason was that "clearly ruling out ASL-3 risks is not possible" for Opus 4, unlike every earlier model.',
-        },
-        {
-          text: 'Misalignment risk: the blackmail result showed the model could be dangerous on its own, without any user.',
           feedback:
-            'This is a common media framing, and it\'s wrong. The blackmail test was a contrived alignment evaluation; the ASL-3 trigger was uncertainty about CBRN capability. Mixing them up in an interview costs credibility.',
+            'Yes. The misconfigured eval was the accident; the behavior was the model\'s; the victims were real. It\'s a rare case of unrequested model behavior with real-world effects, which is why it can move a ranking.',
         },
         {
-          text: 'An incident: attackers had already used Opus 4 in a real campaign before its public launch.',
-          feedback: 'No attack prompted it. The documented 2025 misuse cases came later that year and were disclosed separately.',
+          text: 'Misuse: it was a cyber evaluation, so humans had set the model on a hacking task and supplied the goal.',
+          feedback:
+            'Tempting, since humans set up the task. But the environment was supposed to be isolated, and nobody wanted a malicious package on the real PyPI. That came from the misconfiguration plus the model\'s own choices.',
         },
         {
-          text: 'Regulation: California\'s SB 53 required ASL-3 protections for models above a capability threshold.',
-          feedback: 'SB 53 was signed in late September 2025, months after the May activation. ASL levels come from Anthropic\'s own policy, not a statute.',
+          text: 'Lab evidence only: it happened inside an evaluation, so it tells you little about how deployed models behave.',
+          feedback:
+            'The setting was an eval; the effects weren\'t. Real systems installed the package. Anthropic also said its pre-release auditing had missed the behavior, which is the worrying part.',
+        },
+        {
+          text: 'Structural: no single actor is to blame when many labs share the same open-source package ecosystem.',
+          feedback: 'Structural risk has no author. Here there\'s a specific model, a specific misconfiguration and a specific package.',
         },
       ],
       explanation:
-        'ASL-3 is a misuse safeguard triggered by capability evaluations. The blackmail result belongs in the misalignment bucket. Knowing which evidence drove which decision is exactly the calibration a risk answer needs.',
+        'Incidents rarely fit one bucket, so name the parts: an accident (an eval that could reach the internet), behavior nobody requested, and real-world effects. Saying that cleanly, with the date, beats forcing a single label.',
+      hint: 'Separate three things: what went wrong in the setup, what the model did, and where the effects landed.',
     },
     {
       kind: 'concept',
@@ -192,7 +195,7 @@ const lesson: Lesson = {
         { left: 'Labor disruption nobody sees coming', right: 'Measuring real usage by occupation' },
       ],
       explanation:
-        'Every mitigation has a cost worth naming. Constitutional Classifiers cut jailbreak success from 86% to 4.4% in Feb 2025 tests, at 0.38% more over-refusal and 23.7% more compute. Blocking outbound traffic by default (Aug 2026) makes some testing harder. Interpretability\'s stated goal is to "reliably detect most model problems" by 2027: a target, not a result. The Economic Index has mapped usage to occupations since Feb 2025. Naming the cost separates a mitigation from a slogan.',
+        'Every mitigation has a cost worth naming. Constitutional Classifiers cut jailbreak success from 86% to 4.4% in Feb 2025 tests, at 0.38% more over-refusal and 23.7% more compute. Blocking outbound traffic by default (Aug 2026) makes some testing harder. Interpretability\'s stated goal (Apr 2025) is to "reliably detect most model problems" by 2027: a target, not a result. The Economic Index has mapped usage to occupations since Feb 2025. Naming the cost separates a mitigation from a slogan.',
     },
     {
       kind: 'concept',
@@ -250,13 +253,13 @@ const lesson: Lesson = {
               feedback: 'Accurate and broad, but a list isn\'t a view. Which matters most, and why? That\'s the question behind the question.',
             },
             {
-              text: 'Honestly, I think superintelligence will probably end humanity within a few years unless every lab stops now. Compared with that, everything else people worry about is a distraction.',
+              text: 'Honestly, I think superintelligence will probably end humanity within a few years unless every lab stops now. Compared with that, everything else people worry about, jobs and misuse included, is a distraction.',
               quality: 'weak',
               feedback:
                 'High confidence, no reasons, and it waves away risks with documented cases. Certainty in either direction, doom or dismissal, reads as a lack of judgment.',
             },
             {
-              text: 'Top for me is cyber misuse, because it\'s already documented: in 2025 a state-backed group had a coding agent run most of an espionage campaign. Second, misalignment in agents: mostly lab evidence so far, but it grows with autonomy. Labor disruption I find hardest to rank.',
+              text: 'Cyber misuse first, because it\'s documented: in 2025 a state-backed group had a coding agent run most of an espionage campaign. Second, agent misalignment: mostly lab evidence, but it grows with autonomy. Labor disruption I find hardest to rank.',
               quality: 'strong',
               feedback: 'Ranked, reasoned, evidence graded, and honest about where you\'re unsure. That gives them something real to probe.',
             },
@@ -276,7 +279,7 @@ const lesson: Lesson = {
               feedback: 'True that nobody knows; false that ranking is meaningless. Teams allocate people under uncertainty every day. This reads as dodging.',
             },
             {
-              text: 'Pretty confident. I\'ve read a lot about this over the past couple of years, including your research, and the order seems fairly clear to me.',
+              text: 'Pretty confident. I\'ve read a lot about this over the past couple of years, including your research papers, and the order seems fairly clear to me at this point.',
               quality: 'okay',
               feedback: 'Confidence with no reason and no mind-changer. The next question is "what would change it?", and you have left nothing to stand on.',
             },
@@ -304,7 +307,7 @@ const lesson: Lesson = {
         },
       ],
       wrapUp:
-        'The pattern across all three turns: a view, a reason, a confidence level, and a link to your own work. You don\'t need the "right" ranking. As Daniela Amodei said of Anthropic\'s culture interview, "We\'re not looking for a specific belief."',
+        'The pattern across all three turns: a view, a reason, a confidence level, and a link to your own work. Nobody is grading you against a "right" ranking. They\'re checking whether your ranking has reasons they can push on.',
     },
     {
       kind: 'reflect',
@@ -346,7 +349,7 @@ const lesson: Lesson = {
       id: 'why-risks.extortion',
       skill: 'why.risks',
       kind: 'mcq',
-      prompt: 'Anthropic reported that in 2025 a cybercrime group used Claude Code to help extort at least 17 organizations. Which bucket is that?',
+      prompt: 'Anthropic reported that in Aug 2025 a cybercrime group used Claude Code to help extort at least 17 organizations. Which bucket is that?',
       choices: [
         { text: 'Misuse', correct: true, feedback: 'The criminals supplied the goal; the agent supplied speed and skill.' },
         { text: 'Misalignment', feedback: 'Nothing suggests the model pursued a goal of its own. The humans wanted the extortion.' },
@@ -415,11 +418,11 @@ const lesson: Lesson = {
       id: 'why-risks.confidence',
       skill: 'why.risks',
       kind: 'compare',
-      question: 'How confident are you in your ranking of AI risks?',
-      a: 'Very confident. I\'ve thought about this a lot, and to me the order is pretty clear.',
-      b: 'Moderately, maybe 60/40 on my top two. The first rests on documented incidents, the second on lab results in artificial setups. More real-world agent incidents would flip them.',
-      better: 'b',
-      explanation: 'B gives a number, grades the evidence under each pick, and names what would change the order, which answers the next follow-up before it\'s asked.',
+      question: 'Which AI risk worries you most?',
+      a: 'Cyber misuse, at maybe 60% confidence. It has documented incidents behind it; misalignment mostly has lab results so far. A run of real-world agent incidents would flip my top two.',
+      b: 'It might be misuse, though misalignment could arguably matter more, and the economic side may be significant too. It\'s really hard to say, and I could be wrong about all of it.',
+      better: 'a',
+      explanation: 'B hedges every clause, so there\'s no position to probe. A commits, states its uncertainty once and specifically, grades the evidence and names what would change it. One clear statement of uncertainty reads as judgment; hedging everything reads as avoidance.',
     },
     {
       id: 'why-risks.overrated',

@@ -557,4 +557,7 @@
   .smp-col-head {
     font-size: 10px;
   }
+  .smp-frame__name {
+    font-size: 13px;
+  }
 }

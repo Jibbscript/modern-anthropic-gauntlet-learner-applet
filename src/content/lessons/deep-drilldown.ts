@@ -13,11 +13,11 @@ const lesson: Lesson = {
       eyebrow: 'Project deep dive',
       title: 'The talk is the easy part',
       body:
-        'You control the first twenty minutes. After that, the interviewer does.\n\n' +
+        'You control the presentation, about twenty minutes in candidate reports. After that, the interviewer does.\n\n' +
         'Whatever the wording, drill-downs tend to reduce to four questions: **Why not X?** **What breaks at 10x?** **What did you personally do?** **How did you measure that?** Each tests something different, and each has an answer shape that survives the follow-up after it.',
       callout: {
         tone: 'insight',
-        text: 'Candidate reports describe about 20 minutes of presenting, then discussion. Reported probes include Decision A vs Decision B, scaling, sharding, reliability, how agreement was reached across teams, and, in one July 2026 report, who decided the business metric.',
+        text: 'Not every drill-down is technical. One Staff infra candidate said their deep dive mostly judged collaboration: how they reached agreement across teams and won buy-in.',
       },
     },
     {
@@ -55,11 +55,11 @@ const lesson: Lesson = {
       id: 'why-redis',
       eyebrow: 'Which is stronger?',
       question: "Your project: a rate limiter for a public API. *Why keep the counters in Redis, rather than in each API node's memory?*",
-      a: "Per-node counters are simpler and skip a network hop. But we ran 40 nodes behind a round-robin load balancer, so a 100-per-second limit on each node let one client reach 4,000 a second. A shared counter fixed that, at about a millisecond per request. With sticky routing, I'd revisit it.",
+      a: "Per-node counters skip a network hop. But we ran 40 nodes behind round-robin, so a 100-per-second limit per node let one client reach 4,000. Dividing the limit by node count broke whenever autoscaling changed the count. Redis fixed both, for about a millisecond a check. With sticky routing, I'd revisit it.",
       b: "Redis is the standard tool for rate limiting, and plenty of big companies use it for exactly this. Our team already ran it, so it was the natural choice. It's fast and reliable, and it worked really well for us in production, so we never needed to look at alternatives.",
       better: 'a',
       explanation:
-        'A credits the alternative, names the constraint (round-robin across 40 nodes), quantifies the cost of the choice, and says what would change it. B is the team-default answer: *standard*, *already had it*, *worked well*. The follow-up, *so why not per-node?*, finds nothing behind it.',
+        'A credits the alternative, names the constraint (round-robin across 40 nodes), pre-empts the obvious fix (divide the limit by 40), puts a price on the choice and says what would change it. B is the team-default answer: *standard*, *already had it*, *worked well*. The follow-up, *so why not per-node?*, finds nothing behind it.',
     },
     {
       kind: 'mcq',
@@ -68,12 +68,12 @@ const lesson: Lesson = {
       prompt: '*What breaks at 10x?* You know the Redis primary peaked at 15k operations a second, at 30% CPU. Best answer?',
       choices: [
         {
-          text: "Redis goes first: 30% CPU times ten is 300%. I'd shard counters by client ID, then load-test that estimate.",
+          text: "Redis, first: ten times 30% of its one core is 300%. I'd shard counters by client ID, then load-test it.",
           correct: true,
           feedback: 'You walked the path to the first resource that saturates, put a number on it, and labelled the estimate as one.',
         },
         {
-          text: 'Nothing, really. Redis is famously fast, and handles hundreds of thousands of operations a second.',
+          text: 'Nothing, really. Redis is famously fast, and handles hundreds of thousands of operations a second on one box.',
           feedback: 'Maybe on a benchmark. Your own data says 30% CPU at 15k, with a script per check, on one main thread. Use your numbers, not the brochure.',
         },
         {
@@ -186,12 +186,12 @@ const lesson: Lesson = {
         "*How did you know the limiter wasn't blocking legitimate traffic?* You don't remember the exact false-positive rate. Best reply?",
       choices: [
         {
-          text: 'Two weeks of shadow mode, logging every would-be rejection. The exact rate is in those logs; I recall well under 1%.',
+          text: "Two weeks in shadow mode, logging every would-be rejection. The exact rate's in those logs; I recall well under 1%.",
           correct: true,
           feedback: 'Method first, then an honest gap, a labelled estimate and a way to check. That holds up under any follow-up.',
         },
         {
-          text: 'Our false-positive rate came in at 0.04%, comfortably inside the target we had agreed for the launch.',
+          text: 'Our false-positive rate came in at 0.04%, comfortably inside the target we had agreed with product for the launch.',
           feedback: "Precise and unsourced. If they ask *how was that measured?*, it collapses, and takes your other numbers with it.",
         },
         {
@@ -199,7 +199,7 @@ const lesson: Lesson = {
           feedback: "Honest, but silence isn't evidence. A client that got a 429 may have quietly retried, or left.",
         },
         {
-          text: "The data team owned all the measurement for that launch, so I'd need to check the details with them.",
+          text: "The data team owned all of the measurement for that launch, so I'd need to check the details with them first.",
           feedback: 'Maybe true, but it hands off the question. Say what you know about how it was measured, then what you would check.',
         },
       ],
@@ -215,7 +215,7 @@ const lesson: Lesson = {
         "The good move: say what's right in their point, separate what you knew then from what you know now, and state what changes and what doesn't. Update as far as the argument earns, and no further.",
       callout: {
         tone: 'insight',
-        text: "Reports on Anthropic's culture round describe the same signal: your own judgment, honestly explained, and visible updating when the argument is better. Caving isn't updating.",
+        text: "The values round probes this too. A September 2026 candidate was asked for *a time someone changed your mind on something you felt strongly about*; prep write-ups also list holding unpopular convictions. Both halves count.",
       },
     },
     {
@@ -249,7 +249,7 @@ const lesson: Lesson = {
           interviewer: "Why not just use the API gateway's built-in rate limiting?",
           options: [
             {
-              text: "We looked: gateway limits are free to run and need no code. But they were static per route, and ours vary by plan and change with billing. I'd recheck newer gateways.",
+              text: "Gateway limits need no code and no extra hop. But they were static per route, and ours vary by plan and change with billing. I'd recheck newer gateways.",
               quality: 'strong',
               feedback: 'Credit, constraint, and what would change your mind. The gateway gets its real advantages on the table.',
             },
@@ -259,29 +259,30 @@ const lesson: Lesson = {
               feedback: 'Plausible, but *flexibility* is a door with nothing behind it. Flexible how, and what did building cost you?',
             },
             {
-              text: 'Built-in gateway limiting is pretty basic, and as a team we generally prefer to build that kind of core infrastructure in-house.',
+              text: 'Built-in gateway limiting is pretty basic, and as a team we generally prefer to own core infrastructure like that in-house, where we control it.',
               quality: 'weak',
               feedback: 'A team default posing as a decision, plus a dig at the alternative and no constraint named.',
             },
           ],
         },
         {
-          interviewer: "How did you know it wasn't blocking legitimate traffic?",
+          interviewer:
+            'You mentioned two weeks of shadow mode. That shows what the limiter *would* have rejected. How did you tell abuse from legitimate traffic?',
           options: [
             {
-              text: 'We watched error rates and support tickets closely after launch. Nothing unusual spiked, so we were confident it was fine.',
+              text: "We matched the would-be rejections against security's list of known bad clients, and treated everyone else as legitimate traffic.",
               quality: 'okay',
-              feedback: 'Real monitoring, but it only catches loud failures. Rejected clients may have retried quietly, or left.',
+              feedback: 'A real method, but you skipped its blind spot: new abusers are not on any list yet. Say what the method could not see.',
             },
             {
-              text: 'Our false-positive rate was 0.04%, comfortably under target, so legitimate traffic was essentially unaffected by the limiter.',
+              text: "It was obvious from the traffic patterns which clients were abusive. Real customers never come anywhere near limits like ours.",
               quality: 'weak',
-              feedback: 'Precise and unsourced. If you cannot say how 0.04% was measured, it hurts you more than no number at all.',
+              feedback: 'Asserts the conclusion. *Never* is a claim you cannot back, and *how do you know?* was the question.',
             },
             {
-              text: 'Two weeks of shadow mode: we logged every request it would have rejected and checked the top clients by hand. Most were real abuse.',
+              text: 'I checked the top 20 by hand: 17 were scrapers or retry loops, 3 were real customers on the wrong plan. The long tail I only sampled.',
               quality: 'strong',
-              feedback: 'Method, then evidence from it. This survives both *how?* and *what did you find?*',
+              feedback: 'Method, result, and the blind spot named before they find it. The 3 real customers make the story more credible, not less.',
             },
           ],
         },
@@ -294,20 +295,20 @@ const lesson: Lesson = {
               feedback: 'A real reason, but it skips their point. They named a gap; say whether it is real.',
             },
             {
-              text: "Partly fair. Failing closed rejects every customer during a blip, so I'd still fail open. But we left no floor: a coarse per-node fallback would cap the damage. I'd add that.",
+              text: "Partly fair. Failing closed rejects every customer in a blip, so I'd still fail open. But we had no floor: a per-node fallback limit would cap abuse. I'd add it.",
               quality: 'strong',
               feedback: 'You took what was right in the challenge, kept what still holds, and said exactly what you would change. That is updating, not caving.',
             },
             {
-              text: "You're right, that was a mistake. Looking back, we should have failed closed. Safety should always come first, whatever it costs.",
+              text: "You're right, that was a mistake, and looking back we should have failed closed. Safety has to come first, even when customers pay for it.",
               quality: 'weak',
-              feedback: 'Caving. Failing closed rejects every customer whenever Redis blips, so you swapped one risk for another without weighing it. Agreeing is not the same as updating.',
+              feedback: 'Caving. A slogan is not a weighing: failing closed takes down every paying customer whenever Redis blips, so you swapped one risk for another. Agreeing is not updating.',
             },
           ],
         },
       ],
       wrapUp:
-        'Every turn rewarded the same thing: specific edges. What was yours, what the alternative offered, how the number was measured, and what the challenge got right. The strong answers were not the most confident ones. They were the most checkable.',
+        'Every turn rewarded the same thing: specific edges. What was yours, what the alternative offered, what your method could not see, and what the challenge got right. The strong answers were not the most confident ones. They were the most checkable.',
     },
     {
       kind: 'reflect',
@@ -352,7 +353,7 @@ const lesson: Lesson = {
         'You used eventual consistency for inventory counts. The interviewer says that is why you oversold during a flash sale, and they have a point. Best response?',
       choices: [
         {
-          text: "Fair for flash sales, where we oversold. I'd keep it for normal traffic and reserve stock synchronously for hot items.",
+          text: "Fair for flash sales. I'd keep it for normal traffic, and reserve stock synchronously for hot items.",
           correct: true,
           feedback: 'Concedes the right part, keeps what still holds, and names the change.',
         },

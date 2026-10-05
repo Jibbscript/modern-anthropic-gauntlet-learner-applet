@@ -29,9 +29,15 @@ const isPermutation = (a: number[], n: number) => a.length === n && range(n).eve
 export default function OrderStep({ step, phase, attempt, setController, onHint, lessonId, mode }: StepProps<T>) {
   const n = step.items.length
   const memKey = `${lessonId ?? mode}:${step.id}`
+  /** is item v right at position pos? Compared by text, so duplicate items are interchangeable */
+  const fits = (v: number, pos: number) => v === pos || step.items[v] === step.items[pos]
   const [order, setOrder] = useState<number[]>(() => {
     const saved = attempt > 0 ? memory.get(memKey) : undefined
-    return saved && isPermutation(saved, n) ? saved : shuffleNotIdentity(range(n), step.id)
+    if (saved && isPermutation(saved, n)) return saved
+    const s = shuffleNotIdentity(range(n), step.id)
+    // with duplicate items a shuffle can still read as solved; rotate it until it doesn't
+    for (let k = 0; k < n && s.every((v, i) => fits(v, i)); k++) s.push(s.shift()!)
+    return s
   })
   const [moved, setMoved] = useState(false)
   const [sel, setSel] = useState<number | null>(null)
@@ -50,7 +56,7 @@ export default function OrderStep({ step, phase, attempt, setController, onHint,
     setController({
       ready: moved,
       check: () => {
-        const right = order.filter((v, i) => v === i).length
+        const right = order.filter((v, i) => fits(v, i)).length
         if (right === n) return { correct: true }
         return {
           correct: false,
@@ -61,7 +67,7 @@ export default function OrderStep({ step, phase, attempt, setController, onHint,
         }
       },
     })
-  }, [order, moved, n, setController])
+  }, [order, moved, n, step, setController])
 
   // revealed: pause a beat so the learner sees their order, then glide into the right one
   useEffect(() => {
@@ -115,8 +121,9 @@ export default function OrderStep({ step, phase, attempt, setController, onHint,
   const stateOf = (v: number, pos: number): CardState => {
     if (phase === 'answer') return activeSel === v ? 'selected' : 'idle'
     if (phase === 'correct') return 'correct'
-    if (phase === 'incorrect') return v === pos ? 'correct' : 'incorrect'
-    return order[v] === v ? 'correct' : 'reveal'
+    if (phase === 'incorrect') return fits(v, pos) ? 'correct' : 'incorrect'
+    // revealed: solid green where the learner already had this card right, striped where it moved
+    return fits(order[v], v) ? 'correct' : 'reveal'
   }
 
   const how =

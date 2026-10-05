@@ -289,13 +289,13 @@ OPS = {"ADD": operator.add,
                 'It can work, but a subroutine that leaves an extra value behind makes RET jump to garbage. Name that risk if you choose it.',
             },
             {
-              text: 'A separate call stack: CALL pushes `pc + 1` and jumps, RET pops and jumps there. RET on an empty call stack is a `VMError` with the line.',
+              text: 'A separate call stack: CALL pushes `pc + 1` and jumps; RET pops it. RET with an empty call stack is a `VMError` with the line.',
               quality: 'strong',
               feedback:
                 'Keeps values and control flow apart and designs the error path up front. The loop changes in one place: handlers may now return an index as well as a label.',
             },
             {
-              text: 'Have CALL recursively invoke `run()` from the label, so Python’s own call stack tracks return addresses for free.',
+              text: 'Have CALL recursively invoke `run()` starting at the label, so Python’s own call stack tracks return addresses for free.',
               quality: 'weak',
               feedback:
                 'Clever, but the loop now nests inside itself: Python’s recursion limit caps call depth, and a `JMP` out of the subroutine has nowhere sane to land.',
@@ -306,17 +306,17 @@ OPS = {"ADD": operator.add,
           interviewer: 'How do you know CALL and RET work?',
           options: [
             {
-              text: 'Run the sample program; if it prints the right answer, it works.',
+              text: 'Run the sample program from the spec that uses CALL; if it prints the expected answer, the feature works end to end.',
               quality: 'weak',
               feedback: 'One happy path proves little. It cannot tell you what happens on a bad RET.',
             },
             {
-              text: 'A test program where main CALLs a subroutine that returns, asserting on the printed output.',
+              text: 'A test program where main CALLs a subroutine that returns, asserting on the printed output and the final stack.',
               quality: 'okay',
               feedback: 'A start, but nested calls and the error path are where the bugs live.',
             },
             {
-              text: 'Table tests: a call that returns, nested calls, RET with an empty call stack, recursion hitting the step limit. Then rerun every earlier op test.',
+              text: 'Table tests: a return, nested calls, RET on an empty call stack, runaway recursion hitting the step limit. Then every earlier op test.',
               quality: 'strong',
               feedback: 'Covers the happy path, the depth case, the error path, and regressions.',
             },
@@ -326,18 +326,18 @@ OPS = {"ADD": operator.add,
           interviewer: 'A user says big programs run slowly. Where do you look first?',
           options: [
             {
-              text: 'Profile first. The likely win is doing name lookups once at load time: store each handler and jump index in the instruction, so the loop does no dict lookups.',
+              text: 'Profile first. Likely fix: resolve names at load time, storing each handler and jump index in the instruction, so the hot loop does no lookups.',
               quality: 'strong',
               feedback: 'Measures before changing anything, then moves work out of the hot loop.',
             },
             {
-              text: 'Split the program into chunks and run them on a thread pool, since each instruction is small and does its own work.',
+              text: 'Split the program into chunks and run them on a thread pool, since each instruction is small and does its own work, then combine the results in order.',
               quality: 'weak',
               feedback:
                 'Each instruction reads the stack the previous one left, so nothing is independent. And pure-Python threads do not run bytecode in parallel under the GIL anyway.',
             },
             {
-              text: 'Switch to PyPy; its JIT usually speeds up dispatch loops like this one a lot.',
+              text: 'Switch to PyPy; its tracing JIT usually speeds up dispatch loops like this one a lot, with no code changes at all.',
               quality: 'okay',
               feedback: 'Might help, but it skips finding out where the time goes. Lead with a profile.',
             },

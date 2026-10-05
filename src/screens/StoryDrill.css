@@ -429,6 +429,12 @@
   grid-template-columns: repeat(4, 1fr);
   gap: var(--s-2);
 }
+.drl-grade__note {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-3);
+  text-align: center;
+}
 @container drlfoot (max-width: 330px) {
   .drl-grade__row {
     grid-template-columns: repeat(2, 1fr);

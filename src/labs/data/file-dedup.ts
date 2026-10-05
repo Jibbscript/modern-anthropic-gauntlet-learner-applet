@@ -233,7 +233,7 @@ The \`FakeFS\` API:
 - \`fs.walk(root)\` yields the path of every file under \`root\`, at any depth, in no particular order.
 - \`fs.size(path)\` returns the size in bytes.
 - \`fs.open(path)\` returns a file with \`read(n)\`. Use it in a \`with\` block.
-- \`fs.is_symlink(path)\`, \`fs.list_dir(path)\` and \`fs.is_dir(path)\` work like their \`os\` cousins.
+- \`fs.is_symlink(path)\`, \`fs.is_dir(path)\` and \`fs.list_dir(path)\` (sorted child names) are there if you want them.
 
 Write \`group_by_size(fs, root)\`. Two files can only be identical if they're the same size, so this is the cheap first pass.
 

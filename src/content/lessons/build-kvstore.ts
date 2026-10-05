@@ -276,19 +276,19 @@ def get_at(self, key, field, ts):
           interviewer: 'Suppose many threads share this store. What breaks, and what do you do first?',
           options: [
             {
-              text: 'Give each key its own lock so writers to different keys never contend.',
+              text: 'Give each key its own lock, kept in a dict next to the data, so writers to different keys never contend and throughput scales with the number of keys.',
               quality: 'okay',
               feedback:
-                'A reasonable second step, but now the dict of locks needs guarding, and scans and backups span keys. Lead with the simple correct version.',
+                'A reasonable second step, but the dict of locks needs guarding, scans and backups span keys, and under the GIL the throughput gain is small. Lead with the simple correct version.',
             },
             {
               text: 'Not much. The GIL makes each dict operation atomic, and every method here is only a few dict operations.',
               quality: 'weak',
               feedback:
-                'Each dict operation is atomic in CPython, but a few in a row are not. `delete` is check-then-act: another thread can delete between `field in rec` and `del rec[field]`, and yours raises `KeyError`.',
+                'Each dict operation is atomic in CPython, but a few in a row are not. `delete` is check-then-act: another thread can delete between `field in rec` and `del rec[field]`, and the second `del` raises `KeyError`.',
             },
             {
-              text: 'Compound operations like delete’s check-then-remove can interleave. First, one lock around each public method. It is obviously correct; I would measure contention before going finer.',
+              text: 'Delete’s check-then-remove can interleave with another writer. Start with one lock per public method: obviously correct. Go finer only if contention shows.',
               quality: 'strong',
               feedback: 'Names the actual race, picks the simplest correct fix, and makes finer locking a measured decision.',
             },
@@ -298,12 +298,12 @@ def get_at(self, key, field, ts):
           interviewer: 'How do you test the TTL logic?',
           options: [
             {
-              text: 'Table tests at the boundaries: reads at `t`, `t + ttl - 1` and `t + ttl`, a scan mixing live and expired fields, and an overwrite that resets the TTL.',
+              text: 'Boundary table tests: reads at `t`, `t + ttl - 1` and `t + ttl`, a scan mixing live and expired fields, an overwrite that resets the TTL.',
               quality: 'strong',
               feedback: 'Off-by-one bugs live at the boundary, and these cases pin it from both sides.',
             },
             {
-              text: 'Set a TTL of 2, `time.sleep(2)`, then check the value is gone, so the test exercises real expiry end to end.',
+              text: 'Set a TTL of 2, `time.sleep(2)`, then check the value is gone, so the test exercises real expiry end to end, like production.',
               quality: 'weak',
               feedback: 'Slow, flaky, and pointless: the API takes timestamps as arguments, so there is no clock to wait for.',
             },
@@ -318,17 +318,17 @@ def get_at(self, key, field, ts):
           interviewer: 'Level 4 is half done and you have 8 minutes left. What now?',
           options: [
             {
-              text: 'Rethink the data model; backups would be cleaner with a different structure.',
+              text: 'Step back and rethink the data model: backups would be much cleaner with a versioned structure, and the rewrite should be quick.',
               quality: 'weak',
               feedback: 'A rewrite with 8 minutes left risks every level you have already passed.',
             },
             {
-              text: 'Check levels 1–3 still pass, get the simplest backup working, and tell you exactly what restore is missing and how I would finish it.',
+              text: 'Rerun levels 1–3, get the simplest backup working, then tell you exactly what restore still needs and how I’d finish it.',
               quality: 'strong',
               feedback: 'Protects what works, ships a coherent subset, and shows the rest of your plan.',
             },
             {
-              text: 'Keep coding; finishing level 4 is worth the risk.',
+              text: 'Keep coding as fast as I can; finishing level 4 is worth the risk.',
               quality: 'okay',
               feedback: 'Maybe, if you are close. But a half-wired feature can break earlier tests too.',
             },

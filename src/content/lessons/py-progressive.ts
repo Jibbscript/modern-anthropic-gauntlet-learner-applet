@@ -120,10 +120,10 @@ print([t for t in times if e.alive(t)])`,
     db = KV()
     db.set("a", "1", now=0)
     assert db.get("a", now=0) == "1"
-    assert db.delete("a", now=0) is True
+    assert db.delete("a", now=0)
     assert db.get("a", now=0) is None
     # edge case: delete a missing key
-    assert db.delete("a", now=0) is False
+    assert not db.delete("a", now=0)
 
 def test_level3_ttl_boundary():
     db = KV()
@@ -230,17 +230,17 @@ def test_level3_ttl_boundary():
           interviewer: 'Next: `backup(now)` saves the current state, and `restore(now, backup_ts)` brings it back. Go ahead.',
           options: [
             {
-              text: "I'll copy `_data` into a dict keyed by timestamp on backup, and swap it back in on restore.",
+              text: "I'll copy `_data` into a dict keyed by timestamp on backup and swap that copy back in on restore. Expiry times come along unchanged.",
               quality: 'okay',
-              feedback: 'Fast and mostly right, but it silently picks an answer to the one question that changes the design: what happens to TTLs across a restore?',
+              feedback: 'Fast and mostly right, but it settles the one question that changes the design without asking. With absolute expiry times, a key restored from an old backup can be expired the moment it comes back.',
             },
             {
-              text: 'One question first: after a restore, does a key keep its *remaining* TTL from backup time, or its original expiry timestamp? That decides what the snapshot stores.',
+              text: 'First: after a restore, does a key keep its *remaining* TTL, or its original expiry time? That decides what a snapshot stores.',
               quality: 'strong',
               feedback: 'The ambiguity that changes the data model, asked before typing. Thirty seconds now saves a rewrite later.',
             },
             {
-              text: "This needs history, so I'll restructure the store as an append-only event log and replay it.",
+              text: "Backups need history, so I'll first restructure the store as an append-only event log, then replay it up to `backup_ts`.",
               quality: 'weak',
               feedback: 'A rewrite of passing levels, under a clock, for a requirement two methods can meet. Extend; don\'t rebuild.',
             },
@@ -250,19 +250,19 @@ def test_level3_ttl_boundary():
           interviewer: 'Remaining TTL. How will you test it?',
           options: [
             {
-              text: "The logic is simple enough that I'm confident it works.",
+              text: "It's a few lines of arithmetic and I've reasoned through it carefully, so I'm confident. I'd rather spend the time on the next feature.",
               quality: 'weak',
               feedback: 'Confidence is not evidence. Testing your own implementation is a reported part of these rounds, not an optional extra.',
             },
             {
-              text: "Run the provided tests, and move on if they pass.",
+              text: 'Run the provided tests and move on if they pass. Whoever wrote them knows the spec better than I do.',
               quality: 'okay',
-              feedback: 'Necessary, not sufficient. The provided tests may not hit the boundary you just designed.',
+              feedback: 'Necessary, not sufficient. The provided tests may not hit the boundary you just chose, and the question was how *you* would test it.',
             },
             {
-              text: 'Set `k` with ttl=10 at t=0, back up at t=4, restore at t=100: `get` returns it at 105 and `None` at 106. Then a key that expired before the backup, and an unknown `backup_ts`.',
+              text: 'ttl=10 at t=0, backup at t=4, restore at t=100: alive at 105, gone at 106. Then a key that expired before the backup, and an unknown `backup_ts`.',
               quality: 'strong',
-              feedback: "Concrete numbers, the exact boundary (6 remaining ticks, so alive until 106, half-open), and two edge cases. That's what testing it yourself looks like.",
+              feedback: "Concrete numbers, the exact boundary (6 ticks remain, so alive through 105 and gone at 106), and two edge cases. That's what testing it yourself looks like.",
             },
           ],
         },
@@ -270,18 +270,18 @@ def test_level3_ttl_boundary():
           interviewer: 'Now several threads call these methods at once. What changes?',
           options: [
             {
-              text: 'One `threading.Lock` held for the body of every public method, reads included; private helpers assume it is held. All access already goes through a few methods, so it is a small change. Then a test with threads hammering `set`/`backup` while checking invariants.',
+              text: "One `threading.Lock` around every public method, reads included; helpers assume it's held. Then a test where threads hammer `set` and `backup`.",
               quality: 'strong',
-              feedback: 'Simple, correct, and it cashes in the small-API design. Keeping helpers lock-free avoids a public method deadlocking when it calls another. Go finer-grained only if contention actually shows up.',
+              feedback: 'Simple, correct, and it cashes in the small-API design. Lock-free helpers mean no method re-acquires a lock it already holds, which deadlocks a plain `Lock`. Go finer-grained only if contention shows up.',
             },
             {
-              text: 'Nothing. The GIL makes dict operations atomic.',
+              text: "Nothing. The GIL makes dict operations atomic, and each method is only a few of them, so there's no real window for a race.",
               quality: 'weak',
               feedback:
-                'The GIL makes many single dict operations atomic in CPython, but a method is several operations. A snapshot that loops over `_data` in Python can raise "dictionary changed size during iteration" if another thread inserts mid-loop. And free-threaded builds (optional since 3.13) have no GIL at all.',
+                'The GIL makes many single dict operations atomic in CPython, but "a few of them" is exactly the window. A snapshot that loops over `_data` in Python can raise "dictionary changed size during iteration" if another thread inserts mid-loop. And free-threaded builds (optional since 3.13) have no GIL at all.',
             },
             {
-              text: "Lock `set`, `delete` and `restore`. Reads don't change anything, so they can skip the lock.",
+              text: "Lock the writers: `set`, `delete` and `restore`. Reads change nothing, so `get`, scans and `backup` skip the lock and stay fast.",
               quality: 'okay',
               feedback:
                 'Close, but `backup` and scans iterate while writers mutate, and `restore` swaps `_data` underneath readers. One lock everywhere is easier to get right; tune later.',
@@ -370,18 +370,18 @@ print(alive(105, 100, 5))`,
       code: `class Editor:
     def __init__(self):
         self.lines = []
-        self.history = []
+        self.past = []  # undo snapshots
 
     def write(self, line):
-        self.history.append(self.lines)
+        self.past.append(self.lines)
         self.lines.append(line)
 
     def undo(self):
-        self.lines[:] = self.history.pop()`,
+        self.lines[:] = self.past.pop()`,
       bugLines: [7],
       explanation:
-        '`history` stores references to the one list that `write` keeps mutating, so every saved "snapshot" is the current state. Copy when you save.',
-      fix: { code: `self.history.append(list(self.lines))` },
+        '`past` stores references to the one list that `write` keeps mutating, so every saved "snapshot" is the current state. Copy when you save.',
+      fix: { code: `self.past.append(list(self.lines))` },
     },
     {
       id: 'py-progressive.defer',

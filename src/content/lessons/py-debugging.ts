@@ -27,14 +27,22 @@ const lesson: Lesson = {
       id: 'hook',
       eyebrow: "Code you didn't write",
       title: 'Fourteen lines of noise, one line of signal',
-      body: "Someone else's report script crashes. Most people read the traceback top to bottom and land first on `main.py`, the frame that tells them least.\n\nPython prints the oldest call first and the newest last, so the exception's type and message are the **final** line. Candidate reports say BFS and hash maps matter, but the harder parts of these practical rounds are reading APIs, debugging and testing.",
+      body: "Someone else's report script crashes. Most people read the traceback top to bottom and land first on `main.py`, the frame that tells them least.\n\nPython prints the oldest call first and the newest last, so the exception's type and message are the **final** line. Candidates also report debugging-heavy rounds: finishing or fixing an LLM inference step in Colab, or a role-play on a broken production job.",
+      callout: {
+        tone: 'source',
+        text: 'Candidate accounts: an [AI Safety Fellow final round](https://www.aced.io/experiences/anthropic-machine-learning-engineer-interview-8c0afd) (around 2025) and a [Senior+ infra onsite invite](https://prachub.com/interview-experiences/anthropic-seniorplus-performance-infrastructure-software-engineer-interview-experience-three-screens-and-an-onsite-invitation) (Aug 2026). Not official; formats vary by role.',
+      },
     },
     {
       kind: 'mcq',
       id: 'which-frame',
       eyebrow: 'Read the trace',
-      prompt: '`build_report` crashed on a CSV export. Which frame do you read first?',
-      code: { code: TRACEBACK, lang: 'text', caption: 'Trimmed: paths shortened, `^^^` markers removed.' },
+      prompt: '`build_report` crashed on rows read from a CSV file. Which frame do you read first?',
+      code: {
+        code: TRACEBACK,
+        lang: 'text',
+        caption: 'Real Python 3.11 output, trimmed: paths shortened, `^^^` markers and a chained `AttributeError` from inside `statistics` removed.',
+      },
       choices: [
         {
           text: "`main.py`, line 7: it's at the top, where the program started",
@@ -139,7 +147,7 @@ git bisect reset`,
         'Reproduce it with the smallest input you can',
         'Form one hypothesis; check it with a print, assert or breakpoint',
         'Fix the cause where the bad value is born',
-        'Keep the minimal repro as a regression test',
+        'Confirm the repro now passes, and keep it as a regression test',
       ],
       explanation: "Read before touching anything, shrink before theorising, and test one hypothesis at a time so each check actually rules something out. People skip the last step, but the minimal repro is already a perfect test, so keep it.",
       hint: "You can't test a hypothesis about a failure you can't reproduce.",
@@ -195,6 +203,10 @@ print(chunks([1, 2, 3, 4, 5, 6], 3))`,
       id: 'read-docs',
       title: 'Read docs like a checklist',
       body: "Under time pressure, don't read docs top to bottom. Scan for:\n\n- **Signature**: required, optional, keyword-only\n- **Returns**: a new object, the same one, or `None`?\n- **Raises**: which exceptions, and when\n- **Mutates**: does it change its input?\n- **Cost** and **version notes** (*Changed in 3.x*)\n- **The example**: often the fastest spec\n\nIn a REPL, `help(x)`, `dir(x)` and `inspect.signature(f)` answer most of these.",
+      callout: {
+        tone: 'insight',
+        text: 'Prep guides report that docs and web search are generally fine in live rounds, while AI code generation is not unless you are told otherwise. One Staff candidate reportedly failed an image-pipeline onsite after having to look up the Pillow API live.',
+      },
     },
     {
       kind: 'mcq',
@@ -241,12 +253,12 @@ for k, g in groupby(words, key=first):
           interviewer: "What's your first move?",
           options: [
             {
-              text: 'Add prints through the aggregation loop and rerun the whole input.',
+              text: 'Print the running total inside the aggregation loop, rerun the full input, and scan the output for where it drifts.',
               quality: 'okay',
               feedback: "It might work, but on the full input you'll drown in output. Shrink first, then probe.",
             },
             {
-              text: 'Rewrite the aggregation more cleanly; the bug will probably disappear.',
+              text: 'The level-2 code was rushed anyway. Rewrite the aggregation cleanly now; the bug will probably disappear on the way.',
               quality: 'weak',
               feedback: "Rewriting without understanding trades a known bug for unknown ones, and the interviewer can't see any reasoning.",
             },
@@ -258,40 +270,40 @@ for k, g in groupby(words, key=first):
           ],
         },
         {
-          interviewer: 'Your smallest failing case: totals go wrong only past 1,000 rows.',
+          interviewer: 'Halving narrows it down: 1,000 rows total correctly, 1,001 rows do not.',
           options: [
             {
-              text: "1,000 smells like a batch size. I'll test exactly 1,000 and 1,001 rows and read the batching code's slices and range stop values.",
+              text: "1,000 smells like a batch size. I'll find the batching code and read how it handles the boundary: slices, range stops, the last batch.",
               quality: 'strong',
               feedback: 'Strong. You turned a number into a hypothesis and a targeted check.',
             },
             {
-              text: 'Set a breakpoint at the top and step with `n` until something looks off.',
+              text: 'Set a breakpoint at the top of the aggregation and step with `n`, watching the total until something looks off.',
               quality: 'okay',
-              feedback: 'It gets there eventually, but stepping blind through 1,000 rows is slow. Put the breakpoint where your hypothesis points.',
+              feedback: 'It gets there eventually, but stepping blind through 1,001 rows is slow. Put the breakpoint where your hypothesis points.',
             },
             {
-              text: 'Special-case inputs over 1,000 rows so the totals come out right.',
+              text: 'Add a branch for inputs over 1,000 rows that recomputes the total a second way, so the numbers come out right.',
               quality: 'weak',
-              feedback: 'That patches the symptom and guarantees the next boundary breaks too.',
+              feedback: 'That patches the symptom without explaining it, and the next boundary breaks too.',
             },
           ],
         },
         {
-          interviewer: 'Found it: `range(0, len(rows) - size, size)` drops the last batch. Anything else before you move on?',
+          interviewer: 'Found it: inputs up to 1,000 rows skip batching, and the batch loop uses `range(0, len(rows) - size, size)`, which drops the last batch. Anything else?',
           options: [
             {
-              text: "Fix the stop value and rerun the interviewer's input to confirm.",
+              text: "Fix the stop value and rerun the interviewer's input to confirm the total matches now.",
               quality: 'okay',
               feedback: 'Necessary but not sufficient. Keep the minimal case as a test, and look for copies of the bug.',
             },
             {
-              text: 'Fix it, keep the 1,001-row case as a regression test, and search for the same `len(...) - size` pattern elsewhere.',
+              text: 'Fix it, keep the 1,001-row case as a regression test, and grep for other `len(...) - size` stops.',
               quality: 'strong',
               feedback: 'Strong. A regression test plus a search for siblings is what separates a fix from a patch.',
             },
             {
-              text: "Move on. Time is short and it works now.",
+              text: 'Move on. Time is short, the total matches now, and there are more levels to get through.',
               quality: 'weak',
               feedback: 'Keeping the test takes thirty seconds, and saying so shows the interviewer how you work.',
             },

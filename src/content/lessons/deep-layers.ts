@@ -17,7 +17,7 @@ const lesson: Lesson = {
         'In a deep dive, every sentence you say is a door, and the interviewer chooses which to open. Your job is to say only sentences with a room behind them, and to know each room two levels deeper than you present.',
       callout: {
         tone: 'insight',
-        text: 'Reported deep-dive probes include *Decision A vs Decision B*, sharding strategy and operational reliability (Staff infra reports), and ownership and business metrics (a July 2026 report).',
+        text: 'In one reported March 2026 design round, *Kafka vs Redis* led straight into partitions, offsets and consumer groups. The candidate says they struggled there.',
       },
     },
     {
@@ -89,7 +89,7 @@ const lesson: Lesson = {
       body:
         'Present at level one. Prepare levels two and three for every claim.\n\n' +
         '- **Said**: We chose at-least-once delivery with idempotency keys.\n' +
-        "- **One down**: Exactly-once would need the customer's server to share a transaction with ours, and we don't control it.\n" +
+        "- **One down**: Over HTTP, a lost response looks like a lost request, so exactly-once isn't on offer. We retry and give customers a key to dedupe on.\n" +
         '- **Two down**: The key is the event ID, customers dedupe on it, and about 0.3% of deliveries were retries.',
       callout: {
         tone: 'tip',
@@ -232,9 +232,9 @@ Per-customer queues came later.`,
       kind: 'reflect',
       id: 'your-layers',
       eyebrow: 'Story Bank',
-      prompt: 'For your project, write layers three to five: the two hardest decisions, your numbers, and what broke.',
+      prompt: "For your project, write layers three to six: the two hardest decisions, your numbers, what broke, and what you'd change now.",
       guidance:
-        "For each decision: what you chose, the alternative you rejected, and why. For numbers: at least two of scale, speed, cost and impact, each with a before, an after and a source. For what broke: symptom, cause, your part, and the fix. Then check you could answer two more *why*s under every sentence.",
+        "For each decision: what you chose, the alternative you rejected, and why. For numbers: at least two of scale, speed, cost and impact, each with a before, an after and a source. For what broke: symptom, cause, your part, and the fix. Close with one change you'd make now. Then check you could answer two more *why*s under every sentence.",
       rubric: [
         'Two decisions, each with a named alternative and a reason',
         'At least two numbers, each with a before, an after and a source',
@@ -283,13 +283,13 @@ Per-customer queues came later.`,
       id: 'deep-layers.per-second',
       skill: 'deep.layers',
       kind: 'numeric',
-      prompt: "You'll say *we handled 30M events a day*. Roughly how many per second is that, on average?",
-      answer: 347,
+      prompt: "You'll say *we handled 50M requests a day, and peak traffic ran at 3x the average*. Roughly what peak rate, per second, did you size for?",
+      answer: 1736,
       tolerance: 0.15,
       unit: 'per second',
       explanation:
-        "30,000,000 ÷ 86,400 seconds ≈ 347. Say *about 350 a second on average*, and know your peak-to-average ratio, because the peak is what you sized for.",
-      hint: 'A day has 86,400 seconds.',
+        '50,000,000 ÷ 86,400 ≈ 580 a second on average, so about 1,700 a second at a 3x peak. You size for the peak, so lead with that, and say where the 3x came from.',
+      hint: 'Get the average per second first. A day has 86,400 seconds.',
     },
     {
       id: 'deep-layers.checkable',

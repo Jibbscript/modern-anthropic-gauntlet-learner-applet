@@ -43,7 +43,11 @@ const lesson: Lesson = {
       id: 'hook',
       eyebrow: 'Fluent is not correct',
       title: 'It reads well. Does it run?',
-      body: "AI-written code fails differently from a tired colleague's. The names are tidy, the docstrings confident, the structure looks approvable. The bugs are *plausible*: a parameter that almost exists, a comment claiming thread safety, a test that agrees with the code because it was derived from it.\n\nCandidates report newer interview formats experimenting with agentic coding. Either way, reviewing generated code is now part of the job.",
+      body: "AI-written code fails differently from a tired colleague's. Names are tidy, docstrings confident. The bugs are *plausible*: a parameter that almost exists, a comment claiming thread safety, a test that agrees with the code because it was derived from it.\n\nLive rounds are AI-free unless you're told otherwise. But one August 2026 candidate report describes an onsite with Claude Code available: review four PRs, then improve one.",
+      callout: {
+        tone: 'source',
+        text: "[Candidate AI guidance](https://www.anthropic.com/candidate-ai-guidance) (updated Jul 10, 2025). The PR-review round comes from a single [candidate report](https://prachub.com/interview-experiences/anthropic-software-engineer-interview-experience-reviewing-and-improving-pull-requests-with-claude-code) (Aug 2026, TypeScript); no rubric is public.",
+      },
     },
     {
       kind: 'spotbug',
@@ -85,7 +89,7 @@ def save_snapshot(data, path: Path):
       kind: 'concept',
       id: 'run-it',
       title: 'Run it before you read it closely',
-      body: "Plausible bugs come in two kinds. **Loud** ones crash on the first call: a made-up function, a wrong keyword, a missing import. One run catches them all. **Quiet** ones run fine and return something wrong, or fail only at a boundary, under load or on bad input. Those need a targeted test or a careful read. Running is cheap, so run first and save your reading for the quiet ones.",
+      body: "Plausible bugs come in two kinds. **Loud** ones crash on the first call: a made-up function, a wrong keyword, a missing import. Any run that reaches the line catches them. **Quiet** ones run fine and return something wrong, or fail only at a boundary, under load or on bad input. Those need a targeted test or a careful read. Run first, in a sandbox, and save close reading for those.",
     },
     {
       kind: 'sort',
@@ -108,7 +112,7 @@ def save_snapshot(data, path: Path):
     {
       kind: 'spotbug',
       id: 'swallowed',
-      prompt: "The docstring says it skips missing files. A teammate's config has a trailing comma, and the service silently starts with defaults. Tap the culprit.",
+      prompt: "The docstring says it skips missing files. A teammate's config has a trailing comma, and the service silently starts with defaults. Tap the one line that lets this happen.",
       code: LOAD_CONFIGS,
       bugLines: [13],
       explanation: "A bare `except:` catches everything: `JSONDecodeError`, typos that raise `NameError`, even `KeyboardInterrupt`. The docstring only promised to skip missing files, so catch exactly that and let parse errors raise with the filename attached.",
@@ -216,7 +220,7 @@ def crawl(start, get_links):
       kind: 'concept',
       id: 'mirror-tests',
       title: 'Tests that agree with the bug',
-      body: "Ask an assistant for tests and you often get this: the expected value is computed with the same formula as the implementation. If the formula is wrong, both are wrong together and the test passes. Here the spec said prices round to cents, and neither the code nor its first test does. A test needs an independent oracle: a hand-worked value, a property, or a simpler reference implementation.",
+      body: "A common shape for generated tests: the expected value is computed with the same formula as the implementation. If the formula is wrong, both are wrong together and the test passes. Here the spec said prices round to cents, and neither the code nor its first test does. A test needs an independent oracle: a hand-worked value, a property, or a simpler reference implementation.",
       code: {
         code: `def discount(price, pct):
     return price - price * pct / 100
@@ -297,7 +301,7 @@ def test_rounds_to_cents():  # by hand
       prompt: "Eight worker threads call `record`. The assistant's comment explains why no lock is needed. Tap the line that loses updates.",
       code: STATS,
       bugLines: [10],
-      explanation: "Each dict operation is atomic, but line 10 is a read, an add, then a write, and another thread can run in between. In a CPython 3.11 stress run (8 threads × 100,000 calls), one run counted 800,000 and the next 491,463. The comment is half true, which makes it dangerous. The lock already exists; `record` just doesn't use it.",
+      explanation: "Each dict operation is atomic, but line 10 is a read, an add, then a write, and another thread can run in between. In eight stress runs on one machine (CPython 3.11, 8 threads × 100,000 calls), the count ranged from about 500,000 to the full 800,000. The comment is half true, which makes it dangerous. The lock already exists; `record` just doesn't use it.",
       fix: {
         code: `def record(key: str) -> None:
     with lock:
@@ -389,7 +393,7 @@ def test_rounds_to_cents():  # by hand
       a: '`xs = [3, 1, 2]`, then `expected = xs[len(xs) // 2]` and `assert median(xs) == expected`',
       b: '`assert median([3, 1, 2]) == 2` and `assert median([5, 1]) == 3.0`',
       better: 'b',
-      explanation: "A computes `expected` exactly the way the buggy code does, so it agrees with the bug and passes. B uses hand-worked values, including an even-length case, so the missing sort fails it.",
+      explanation: "A computes `expected` exactly the way the buggy code does, so it agrees with the bug and passes. B's values are worked out by hand: the unsorted middle of `[3, 1, 2]` is `1`, not `2`, so the missing sort fails it. (The `[5, 1]` case pins down averaging; it passes either way.)",
     },
     {
       id: 'agents-review.window',

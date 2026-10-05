@@ -96,8 +96,12 @@
 .tile--reveal .compare-card__label {
   color: var(--good-ink);
 }
-.compare-card__stronger {
-  padding: 3px 9px;
+.chip.compare-card__stronger {
+  gap: 4px;
+  padding: 3px 9px 3px 7px;
+  background: var(--good);
+  color: #fff;
+  box-shadow: 0 2px 0 0 var(--good-edge);
 }
 .compare-card__text {
   font-size: var(--fs-md);

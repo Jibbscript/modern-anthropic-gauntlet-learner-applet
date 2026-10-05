@@ -1,6 +1,6 @@
 import { AnimatePresence, motion } from 'motion/react'
 import { Check, ThumbsUp, UserRound, X } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState, type KeyboardEvent } from 'react'
 import type { CompareStep as T } from '../core/types'
 import { Rich } from '../ui/Rich'
 import { Tile, type TileState } from '../ui/Tile'
@@ -17,8 +17,21 @@ const SPRING = { type: 'spring', stiffness: 520, damping: 32 } as const
  */
 export default function CompareStep({ step, phase, attempt, setController }: StepProps<T>) {
   const [picked, setPicked] = useState<Pick | null>(null)
+  const groupRef = useRef<HTMLDivElement>(null)
   const locked = phase !== 'answer'
   const enter = attempt === 0
+
+  // radio-group keyboard model: arrows move the selection (and focus) between the two answers
+  const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
+    if (locked) return
+    const dir = e.key === 'ArrowDown' || e.key === 'ArrowRight' ? 1 : e.key === 'ArrowUp' || e.key === 'ArrowLeft' ? -1 : 0
+    if (!dir) return
+    e.preventDefault()
+    const cur = picked === 'b' ? 1 : picked === 'a' ? 0 : dir > 0 ? -1 : 2
+    const next = (((cur + dir) % 2) + 2) % 2
+    setPicked(next === 0 ? 'a' : 'b')
+    groupRef.current?.querySelectorAll<HTMLElement>('[role="radio"]')[next]?.focus()
+  }
 
   useEffect(() => {
     setController({
@@ -68,7 +81,7 @@ export default function CompareStep({ step, phase, attempt, setController }: Ste
         {phase === 'answer' ? 'Which answer is stronger?' : phase === 'incorrect' ? 'That one is weaker' : 'The stronger answer'}
       </div>
 
-      <div className="choices compare__answers" role="radiogroup" aria-label="Candidate answers">
+      <div className="choices compare__answers" role="radiogroup" aria-label="Candidate answers" ref={groupRef} onKeyDown={onKeyDown}>
         {(['a', 'b'] as const).map((k, i) => {
           const state = stateOf(k)
           const stronger = showStronger && k === step.better
@@ -87,6 +100,7 @@ export default function CompareStep({ step, phase, attempt, setController }: Ste
                 role="radio"
                 aria-checked={picked === k}
                 aria-pressed={undefined}
+                tabIndex={locked ? undefined : picked == null ? (k === 'a' ? 0 : -1) : picked === k ? 0 : -1}
               >
                 <span className="compare-card__head">
                   <span className="compare-card__label">Answer {k.toUpperCase()}</span>

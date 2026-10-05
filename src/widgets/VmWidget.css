@@ -222,9 +222,12 @@
   min-height: 196px;
   padding: 8px 8px 10px;
   border-radius: var(--r-md);
+  /* faint slot rules, one per block, counted up from the floor */
   background:
+    repeating-linear-gradient(0deg, transparent 0 34px, color-mix(in srgb, var(--ink) 4%, transparent) 34px 35px) 0 calc(100% - 8px) / 100% 100% no-repeat,
     linear-gradient(180deg, transparent 60%, color-mix(in srgb, var(--c, var(--select)) 7%, transparent)),
     var(--surface);
+  background-origin: padding-box;
   box-shadow:
     inset 0 0 0 1.5px var(--line),
     inset 0 -3px 0 0 var(--line-strong);
@@ -250,8 +253,9 @@
   color: var(--bad-ink);
 }
 .vm-blocks {
+  position: relative;
   display: flex;
-  flex-direction: column;
+  flex-direction: column-reverse;
   gap: 5px;
 }
 .vm-block {
@@ -342,16 +346,34 @@
   min-width: 0;
 }
 .vm-say__op {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
   font-family: var(--font-code);
-  font-size: var(--fs-xs);
+  font-size: 13px;
   font-weight: 700;
   color: var(--c-ink, var(--select-edge));
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.vm-say__op b {
+  display: inline-grid;
+  place-items: center;
+  min-width: 20px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 5px;
+  background: var(--c-soft, var(--select-soft));
+  font-family: var(--font-ui);
+  font-size: 11px;
+  font-weight: 700;
 }
 .vm-say__text {
   font-family: var(--font-code);
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--ink);
 }
 .vm-say__muted {

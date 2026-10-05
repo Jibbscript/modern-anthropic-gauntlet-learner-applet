@@ -507,6 +507,7 @@ function Frame({
       style={hueVars(slot)}
       disabled={checked}
       aria-pressed={marked}
+      title={name}
       aria-label={`${name} at depth ${d}${side === 'end' ? ', mark as ending' : ', mark as beginning'}`}
       onClick={() => onTap(side, d)}
       whileTap={checked ? undefined : { y: 2 }}

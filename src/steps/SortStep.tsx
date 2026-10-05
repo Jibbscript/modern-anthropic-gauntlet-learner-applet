@@ -1,6 +1,6 @@
-import { AnimatePresence, LayoutGroup, motion } from 'motion/react'
+import { AnimatePresence, LayoutGroup, motion, useIsPresent } from 'motion/react'
 import { Check, CheckCheck, CircleCheck, CircleX, Eye, MoveRight, X } from 'lucide-react'
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react'
 import type { SortStep as T } from '../core/types'
 import { Rich } from '../ui/Rich'
 import { haptic, sfx } from '../ui/fx'
@@ -62,6 +62,7 @@ export default function SortStep({ step, phase, attempt, setController, lessonId
 
   const stacked = B > 2 || Math.max(...step.items.map((it) => plain(it.text).length)) > 48
   const longLabels = step.buckets.some((b) => b.label.length > (B > 2 ? 11 : 18))
+  const hideButtons = stacked && locked
 
   useEffect(() => {
     memory.set(memKey, st.placed)
@@ -131,9 +132,7 @@ export default function SortStep({ step, phase, attempt, setController, lessonId
 
   const learnerBucket = (i: number) => st.placed.find((p) => p.i === i)?.b
   const shownPlaced: Placement[] =
-    phase === 'revealed' && settled
-      ? [...st.placed.map((p) => p.i), ...st.deck].map((i) => ({ i, b: step.items[i].bucket }))
-      : st.placed
+    phase === 'revealed' && settled ? [...st.placed.map((p) => p.i), ...st.deck].map((i) => ({ i, b: step.items[i].bucket })) : st.placed
 
   const chipState = (p: Placement): ChipState => {
     const ok = step.items[p.i].bucket === learnerBucket(p.i)
@@ -171,27 +170,9 @@ export default function SortStep({ step, phase, attempt, setController, lessonId
             <div className={`sort-deck${st.deck.length ? '' : ' sort-deck--empty'}`}>
               <AnimatePresence initial={attempt === 0}>
                 {st.deck.slice(0, 3).map((i, depth) => (
-                  <motion.div
-                    key={i}
-                    layoutId={lid(i)}
-                    className={`sort-card${depth > 0 ? ' sort-card--behind' : ''}`}
-                    style={{ zIndex: 3 - depth, borderRadius: 18 }}
-                    initial={returning.current === i ? false : { opacity: 0, y: 40, scale: 0.86 }}
-                    animate={{ opacity: 1, y: depth * 9, scale: 1 - depth * 0.055 }}
-                    exit={{ opacity: 0, transition: { duration: 0.3 } }}
-                    transition={FLY}
-                    aria-hidden={depth > 0}
-                  >
-                    <motion.span
-                      layout="position"
-                      className="sort-card__text"
-                      initial={false}
-                      animate={{ opacity: depth === 0 ? 1 : 0 }}
-                      transition={{ duration: 0.18 }}
-                    >
-                      <Rich text={step.items[i].text} inline />
-                    </motion.span>
-                  </motion.div>
+                  <DeckCard key={i} layoutId={lid(i)} depth={depth} enter={returning.current !== i}>
+                    <Rich text={step.items[i].text} inline />
+                  </DeckCard>
                 ))}
                 {st.deck.length === 0 && <StageStatus key={`status-${phase}`} phase={phase} />}
               </AnimatePresence>
@@ -200,143 +181,150 @@ export default function SortStep({ step, phase, attempt, setController, lessonId
         </div>
 
         <div
-          className={['sort-board', stacked ? 'sort-board--stack' : 'sort-board--cols', longLabels && 'sort-board--long'].filter(Boolean).join(' ')}
+          className={['sort-board', stacked ? 'sort-board--stack' : 'sort-board--cols', longLabels && 'sort-board--long']
+            .filter(Boolean)
+            .join(' ')}
           style={{ '--sort-cols': B } as CSSProperties}
         >
-          {step.buckets.map((b, k) => {
-            const count = shownPlaced.filter((p) => p.b === b.id).length
-            return (
-              <motion.button
-                key={`btn-${b.id}`}
-                type="button"
-                className="sort-bucket__btn"
-                style={{ gridColumn: k + 1, gridRow: 1 }}
-                disabled={locked || !st.deck.length}
-                onClick={() => place(b.id)}
-                whileTap={{ scale: 0.97 }}
-                transition={{ type: 'spring', stiffness: 700, damping: 30 }}
-                aria-keyshortcuts={String(k + 1)}
-                aria-label={`Put in ${b.label}`}
-              >
-                <span className="sort-bucket__face">
-                  <span className="sort-bucket__label">{b.label}</span>
-                </span>
-                <AnimatePresence>
-                  {count > 0 && (
-                    <motion.span
-                      key="n"
-                      className="sort-bucket__n tabular"
-                      aria-hidden
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      exit={{ scale: 0 }}
-                      transition={{ type: 'spring', stiffness: 600, damping: 22 }}
-                    >
-                      <motion.span
-                        key={count}
-                        initial={{ scale: 1.5 }}
-                        animate={{ scale: 1 }}
-                        transition={{ type: 'spring', stiffness: 700, damping: 18 }}
-                      >
-                        {count}
-                      </motion.span>
-                    </motion.span>
-                  )}
-                </AnimatePresence>
-              </motion.button>
-            )
-          })}
-          {step.buckets.map((b, k) => {
-            const chips = shownPlaced.filter((p) => p.b === b.id)
-            return (
-              <section
-                key={`tray-${b.id}`}
-                className={`sort-tray${chips.length ? '' : ' sort-tray--empty'}`}
-                style={stacked ? { gridColumn: '1 / -1' } : { gridColumn: k + 1, gridRow: 2 }}
-                aria-label={b.label}
-              >
-                {stacked && (
-                  <header className="sort-tray__head">
-                    <span className="sort-tray__key tabular" aria-hidden>
-                      {k + 1}
+          {/* stacked trays carry their own headers, so once the sort is graded the buttons fold away */}
+          <motion.div
+            className="sort-buttons"
+            initial={false}
+            animate={hideButtons ? { height: 0, opacity: 0 } : { height: 'auto', opacity: 1 }}
+            transition={{ type: 'spring', stiffness: 420, damping: 42 }}
+            style={{ overflow: hideButtons ? 'hidden' : 'visible' }}
+            aria-hidden={hideButtons || undefined}
+          >
+            <div className="sort-buttons__row">
+              {step.buckets.map((b, k) => {
+                const count = shownPlaced.filter((p) => p.b === b.id).length
+                return (
+                  <motion.button
+                    key={`btn-${b.id}`}
+                    type="button"
+                    className="sort-bucket__btn"
+                    disabled={locked || !st.deck.length}
+                    onClick={() => place(b.id)}
+                    whileTap={{ scale: 0.97 }}
+                    transition={{ type: 'spring', stiffness: 700, damping: 30 }}
+                    aria-keyshortcuts={String(k + 1)}
+                    aria-label={`Put in ${b.label}`}
+                  >
+                    <span className="sort-bucket__face">
+                      <span className="sort-bucket__label">{b.label}</span>
                     </span>
-                    <span className="sort-tray__label">{b.label}</span>
-                    <span className="sort-tray__count tabular" aria-label={`${chips.length} cards`}>
-                      {chips.length}
-                    </span>
-                  </header>
-                )}
-                <div className="sort-tray__chips">
-                  <AnimatePresence mode="popLayout" initial={false}>
-                    {chips.map((p) => {
-                      const s = chipState(p)
-                      const it = step.items[p.i]
-                      const why = s === 'reveal' && it.why
-                      return (
-                        <motion.div
-                          key={p.i}
-                          layoutId={lid(p.i)}
-                          className={`sort-chip sort-chip--${s}${why ? ' sort-chip--why' : ''}`}
-                          style={{ borderRadius: 10 }}
-                          animate={s === 'incorrect' ? { x: [0, -6, 6, -4, 4, -2, 0] } : { x: 0 }}
-                          exit={{ opacity: 0, transition: { duration: 0.15 } }}
-                          transition={{ layout: FLY, x: { duration: 0.42 } }}
+                    <AnimatePresence>
+                      {count > 0 && (
+                        <motion.span
+                          key="n"
+                          className="sort-bucket__n tabular"
+                          aria-hidden
+                          initial={{ scale: 0 }}
+                          animate={{ scale: 1 }}
+                          exit={{ scale: 0 }}
+                          transition={{ type: 'spring', stiffness: 600, damping: 22 }}
                         >
-                          {/* the label fades in as the card lands, so the flight reads as one card shrinking into the tray */}
-                          <motion.button
-                            type="button"
-                            layout="position"
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            transition={{ layout: FLY, opacity: { delay: 0.12, duration: 0.2 } }}
-                            className="sort-chip__btn"
-                            disabled={locked}
-                            onClick={() => unplace(p.i)}
-                            aria-label={locked ? undefined : `${plain(it.text)}. Tap to put it back on the deck.`}
+                          <motion.span
+                            key={count}
+                            initial={{ scale: 1.5 }}
+                            animate={{ scale: 1 }}
+                            transition={{ type: 'spring', stiffness: 700, damping: 18 }}
                           >
-                            <Rich text={it.text} inline className="sort-chip__text" />
-                          </motion.button>
-                          <AnimatePresence>
-                            {s !== 'idle' && (
-                              <motion.span
-                                key={s}
-                                className="sort-chip__mark"
-                                initial={{ scale: 0 }}
-                                animate={{ scale: 1 }}
-                                transition={{ type: 'spring', stiffness: 600, damping: 18, delay: 0.05 }}
-                                role="img"
-                                aria-label={s === 'correct' ? 'Right bucket' : s === 'incorrect' ? 'Wrong bucket' : 'Moved here'}
-                              >
-                                {s === 'correct' ? (
-                                  <Check size={12} strokeWidth={3.6} />
-                                ) : s === 'incorrect' ? (
-                                  <X size={12} strokeWidth={3.6} />
-                                ) : (
-                                  <MoveRight size={12} strokeWidth={3.4} />
-                                )}
-                              </motion.span>
-                            )}
-                          </AnimatePresence>
-                          <AnimatePresence initial={false}>
-                            {why && (
-                              <motion.div
-                                className="sort-chip__why"
-                                initial={{ opacity: 0, height: 0 }}
-                                animate={{ opacity: 1, height: 'auto' }}
-                                transition={{ delay: 0.3, duration: 0.25 }}
-                              >
-                                <Rich text={why} inline />
-                              </motion.div>
-                            )}
-                          </AnimatePresence>
-                        </motion.div>
-                      )
-                    })}
-                  </AnimatePresence>
-                </div>
-              </section>
-            )
-          })}
+                            {count}
+                          </motion.span>
+                        </motion.span>
+                      )}
+                    </AnimatePresence>
+                  </motion.button>
+                )
+              })}
+            </div>
+          </motion.div>
+          <div className="sort-trays">
+            {step.buckets.map((b) => {
+              const chips = shownPlaced.filter((p) => p.b === b.id)
+              return (
+                <section key={`tray-${b.id}`} className={`sort-tray${chips.length ? '' : ' sort-tray--empty'}`} aria-label={b.label}>
+                  {stacked && (
+                    <header className="sort-tray__head">
+                      <span className="sort-tray__label">{b.label}</span>
+                      <span className="sort-tray__count tabular" aria-label={`${chips.length} cards`}>
+                        {chips.length}
+                      </span>
+                    </header>
+                  )}
+                  <div className="sort-tray__chips">
+                    <AnimatePresence mode="popLayout" initial={false}>
+                      {chips.map((p) => {
+                        const s = chipState(p)
+                        const it = step.items[p.i]
+                        const why = s === 'reveal' && it.why
+                        return (
+                          <motion.div
+                            key={p.i}
+                            layoutId={lid(p.i)}
+                            className={`sort-chip sort-chip--${s}${why ? ' sort-chip--why' : ''}`}
+                            style={{ borderRadius: 10 }}
+                            animate={s === 'incorrect' ? { x: [0, -6, 6, -4, 4, -2, 0] } : { x: 0 }}
+                            exit={{ opacity: 0, transition: { duration: 0.15 } }}
+                            transition={{ layout: FLY, x: { duration: 0.42 } }}
+                          >
+                            {/* the label fades in as the card lands, so the flight reads as one card shrinking into the tray */}
+                            <motion.button
+                              type="button"
+                              layout="position"
+                              initial={{ opacity: 0 }}
+                              animate={{ opacity: 1 }}
+                              transition={{ layout: FLY, opacity: { delay: 0.12, duration: 0.2 } }}
+                              className="sort-chip__btn"
+                              disabled={locked}
+                              onClick={() => unplace(p.i)}
+                              aria-label={locked ? undefined : `${plain(it.text)}. Tap to put it back on the deck.`}
+                            >
+                              <Rich text={it.text} inline className="sort-chip__text" />
+                            </motion.button>
+                            <AnimatePresence>
+                              {s !== 'idle' && (
+                                <motion.span
+                                  key={s}
+                                  className="sort-chip__mark"
+                                  initial={{ scale: 0 }}
+                                  animate={{ scale: 1 }}
+                                  transition={{ type: 'spring', stiffness: 600, damping: 18, delay: 0.05 }}
+                                  role="img"
+                                  aria-label={s === 'correct' ? 'Right bucket' : s === 'incorrect' ? 'Wrong bucket' : 'Moved here'}
+                                >
+                                  {s === 'correct' ? (
+                                    <Check size={12} strokeWidth={3.6} />
+                                  ) : s === 'incorrect' ? (
+                                    <X size={12} strokeWidth={3.6} />
+                                  ) : (
+                                    <MoveRight size={12} strokeWidth={3.4} />
+                                  )}
+                                </motion.span>
+                              )}
+                            </AnimatePresence>
+                            <AnimatePresence initial={false}>
+                              {why && (
+                                <motion.div
+                                  className="sort-chip__why"
+                                  initial={{ opacity: 0, height: 0 }}
+                                  animate={{ opacity: 1, height: 'auto' }}
+                                  transition={{ delay: 0.3, duration: 0.25 }}
+                                >
+                                  <Rich text={why} inline />
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
+                          </motion.div>
+                        )
+                      })}
+                    </AnimatePresence>
+                  </div>
+                </section>
+              )
+            })}
+          </div>
         </div>
         <div className="visually-hidden" aria-live="polite">
           {live}
@@ -370,6 +358,37 @@ function StageStatus({ phase }: { phase: StepProps['phase'] }) {
         <div className="sort-status__title">{title}</div>
         {sub && <div className="sort-status__sub">{sub}</div>}
       </div>
+    </motion.div>
+  )
+}
+
+/**
+ * One card of the deck. While it flies off into a tray it stays mounted (so it
+ * can crossfade into its chip) but is hidden from assistive tech and pointers.
+ */
+function DeckCard({ layoutId, depth, enter, children }: { layoutId: string; depth: number; enter: boolean; children: ReactNode }) {
+  const present = useIsPresent()
+  return (
+    <motion.div
+      layoutId={layoutId}
+      className={`sort-card${depth > 0 ? ' sort-card--behind' : ''}`}
+      style={{ zIndex: 3 - depth, borderRadius: 18, pointerEvents: present ? undefined : 'none' }}
+      data-exiting={present ? undefined : ''}
+      initial={enter ? { opacity: 0, y: 40, scale: 0.86 } : false}
+      animate={{ opacity: 1, y: depth * 9, scale: 1 - depth * 0.055 }}
+      exit={{ opacity: 0, transition: { duration: 0.3 } }}
+      transition={FLY}
+      aria-hidden={depth > 0 || !present}
+    >
+      <motion.span
+        layout="position"
+        className="sort-card__text"
+        initial={false}
+        animate={{ opacity: depth === 0 ? 1 : 0 }}
+        transition={{ duration: 0.18 }}
+      >
+        {children}
+      </motion.span>
     </motion.div>
   )
 }

@@ -13,8 +13,8 @@ const lesson: Lesson = {
       eyebrow: 'Build round',
       title: 'Two terabytes, one question',
       body:
-        'In one aggregator’s 2026 catalog of candidate reports, file dedup is the second most reported coding question, used as a phone screen and onsite. The obvious answer is one line: hash every file, group by hash.\n\n' +
-        "On a 2 TB drive that line reads 2 TB: over an hour at 500 MB/s, mostly wasted. A file whose size no other file shares can't have a duplicate. The real problem is ==avoiding reads==.",
+        'In one aggregator’s 2026 catalog of candidate reports, file dedup is the second most reported coding question, at both phone screen and onsite. The obvious answer is one line: hash every file, group by hash.\n\n' +
+        "On a 2 TB drive that reads all 2 TB, over an hour at 500 MB/s. Yet a file whose size no other file shares can't have a duplicate. The real problem is ==avoiding reads==.",
       callout: {
         tone: 'tip',
         text: 'Follow-ups candidates report (2026): which parts are IO-bound vs CPU-bound, huge files, huge file counts, real-time detection. Some got no tests and wrote their own.',
@@ -118,7 +118,7 @@ def by_size(paths):
       id: 'stream',
       title: "Stream, don't slurp",
       body:
-        "`f.read()` pulls the whole file into memory. On a 40 GB disk image that means a `MemoryError` or a visit from the OOM killer. Hash in fixed-size chunks instead: memory stays at one buffer whatever the file size, and 64 KiB to 1 MiB chunks keep per-call overhead negligible.\n\n" +
+        "`f.read()` pulls the whole file into memory. On a 40 GB disk image that means a `MemoryError` or the OOM killer. Hash in fixed-size chunks instead: memory stays at one buffer whatever the file size, and 64 KiB to 1 MiB chunks keep per-call overhead negligible.\n\n" +
         'Python 3.11 added `hashlib.file_digest` to run that loop for you. Your interview environment may be older, so know the loop by hand.',
       code: {
         code: `def head_hash(path, n=4096):
@@ -153,7 +153,7 @@ def full_hash(path):
         { options: ['hexdigest', 'read', 'final'], answer: 0 },
       ],
       explanation:
-        '`"rb"` yields bytes; text mode yields `str`, which hashlib rejects (and `"wb"` truncates the file). `1 << 16` is 65,536 bytes; `-1` reads everything and `64` reads 64 bytes. `update` feeds data incrementally, and `hexdigest()` returns a string you can group on. The loop ends when `read` returns `b""`.',
+        '`"rb"` yields bytes; text mode decodes to `str` (or chokes on binary data), and `"wb"` truncates the file. `1 << 16` is 65,536 bytes; `-1` slurps the whole file, and `64`-byte updates are too small for hashlib to release the GIL, which matters once you add threads. `update` feeds data incrementally, `hexdigest()` gives a string to group on, and the loop ends when `read` returns `b""`.',
       hint: 'Hash objects are fed piece by piece, and `read(n)` takes a byte count.',
     },
     {
@@ -198,7 +198,7 @@ def find_candidates(paths):
         try:
             it = os.scandir(d)
         except OSError as err:
-            log.warning("skip %s: %s", d, err)
+            log.warning("skip %s", err)
             continue
         with it:
             for e in it:
@@ -291,12 +291,12 @@ def hash_all(paths, workers=8):
             'A user deleted one of two 4 GB files your tool flagged as duplicates and got no disk space back. What happened?',
           options: [
             {
-              text: "Maybe it went to the trash, or the filesystem keeps snapshots. I'd check `df` and the trash first.",
+              text: "Maybe the file went to the trash, or the filesystem keeps snapshots that still reference it. I'd check `df`, the trash and any snapshot tooling first.",
               quality: 'okay',
               feedback: 'Reasonable debugging, but it skips the likeliest cause: something your own tool got wrong.',
             },
             {
-              text: "Probably hardlinks: two names for one inode. I'd collapse files by `(st_dev, st_ino)` before hashing and report hardlinks separately.",
+              text: "Likely hardlinks: two names, one inode. Collapse by `(st_dev, st_ino)` before hashing and report links separately.",
               quality: 'strong',
               feedback: 'Names the mechanism, the fix, and what the user should see.',
             },
@@ -311,7 +311,7 @@ def hash_all(paths, workers=8):
           interviewer: 'Before deleting anything, should the tool byte-compare files whose hashes match?',
           options: [
             {
-              text: "Accidental SHA-256 collisions aren't a practical risk; bugs in my code are. On the delete path I'd offer a byte-for-byte check and say it costs another full read.",
+              text: "SHA-256 collisions aren't a practical risk; my own bugs are. So on the delete path only, I'd offer a byte-compare and say it costs one more read.",
               quality: 'strong',
               feedback: 'Separates the real risk from the imagined one, and prices the cost.',
             },
@@ -342,7 +342,7 @@ def hash_all(paths, workers=8):
               feedback: 'A real test, but it cannot catch a broken head stage or any of the link cases.',
             },
             {
-              text: 'Fixtures in `tmp_path`: same size but different content, same first 4 KB but different tails, empty files, a hardlink, a symlink, an unreadable dir. Assert exact groups.',
+              text: '`tmp_path` fixtures: same size, different bytes; same first 4 KB, different tails; empty files; a hardlink; a symlink; an unreadable dir. Assert exact groups.',
               quality: 'strong',
               feedback: 'Each fixture targets one stage or one filesystem trap. That is testing your own implementation.',
             },

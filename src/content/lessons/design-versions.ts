@@ -52,7 +52,7 @@ const lesson: Lesson = {
       title: 'Anatomy of a version',
       body: "A save never updates a version. It inserts one whose `parent_id` is the version the editor started from.\n\n- `content_hash` covers body, model and params. If it matches the parent's, the save is a no-op.\n- Bodies live in object storage under their own hash, so a temperature-only change stores no new text.\n- Tags like `prod` are the one mutable part: names that point at versions.",
       code: {
-        code: 'versions        -- append-only\n  id, prompt_id\n  parent_id     -- null for v1\n  content_hash  -- body+model+params\n  body_ref      -- bodies/<sha256(body)>\n  model, params\n  author_id, created_at\n\nprompt_tags     -- mutable pointers\n  prompt_id, name, version_id',
+        code: 'versions        -- append-only\n  id, prompt_id\n  parent_id     -- null for v1\n  content_hash  -- body+model+params\n  body_ref      -- key: sha256(body)\n  model, params\n  author_id, created_at\n\nprompt_tags     -- mutable pointers\n  prompt_id, name, version_id',
         lang: 'text',
       },
     },
@@ -61,7 +61,7 @@ const lesson: Lesson = {
       id: 'canonical-hash',
       eyebrow: 'Predict',
       prompt: 'Your save path hashes each version to spot no-op saves. Three saves arrive with the same text and settings. What does this print?',
-      code: 'import hashlib, json\n\ndef vhash(body, model, params):\n    doc = {"body": body, "model": model, "params": params}\n    raw = json.dumps(doc, sort_keys=True)\n    return hashlib.sha256(raw.encode()).hexdigest()\n\na = vhash("Summarize.", "m1", {"temperature": 0, "max_tokens": 500})\nb = vhash("Summarize.", "m1", {"max_tokens": 500, "temperature": 0})\nc = vhash("Summarize.", "m1", {"temperature": 0.0, "max_tokens": 500})\nprint(a == b, a == c)',
+      code: 'import json\nfrom hashlib import sha256\n\ndef vhash(body, model, params):\n    d = {"body": body, "model": model,\n         "params": params}\n    s = json.dumps(d, sort_keys=True)\n    return sha256(s.encode()).digest()\n\np1 = {"temperature": 0,\n      "max_tokens": 500}\np2 = {"max_tokens": 500,\n      "temperature": 0}\np3 = {"temperature": 0.0,\n      "max_tokens": 500}\na, b, c = (vhash("Hi.", "m1", p)\n           for p in (p1, p2, p3))\nprint(a == b, a == c)',
       answers: ['True False', 'True, False', '(True, False)'],
       explanation:
         '`sort_keys=True` fixes key order, so `a == b`. But `json.dumps(0)` is `0` and `json.dumps(0.0)` is `0.0`: same setting, different bytes, different hash, and dedupe or caching misses silently. Canonicalize *values* too: run params through a schema that coerces types (temperature is always a float) before hashing.',
@@ -112,7 +112,7 @@ const lesson: Lesson = {
       kind: 'concept',
       id: 'limits',
       title: 'Limits per org: requests and tokens',
-      body: "Each org gets a **token bucket**: capacity is the burst it may send at once, the refill rate its sustained pace. Empty bucket: `429` with `Retry-After`.\n\nFor model calls, meter **tokens** as well as requests. One 100,000-token run costs as much as 200 small ones. Behind every org's bucket sits your own provider limit, shared by everyone.\n\nTap to send one request; hold to burst.",
+      body: "Each org gets a **token bucket**: capacity is the burst it may send at once, the refill rate its sustained pace. Empty bucket: `429` with `Retry-After`.\n\nFor model calls, meter **tokens** as well as requests. One 100,000-token run costs as much as 200 small ones. Behind every org's bucket sits your own provider limit, shared by everyone.\n\nHold to burst: five get through, then about one a second.",
       widget: { id: 'tokenbucket', config: { capacity: 5, rate: 1, compareFixedWindow: false, goal: 'explore' } },
     },
     {
@@ -141,12 +141,12 @@ const lesson: Lesson = {
       id: 'retry-key',
       eyebrow: 'Find the bug',
       prompt: 'This client retries on timeouts and sends an idempotency key. Finance still finds runs billed twice. Tap the line.',
-      code: 'def submit_run(api, version_id, inputs, attempts=4):\n    for i in range(attempts):\n        key = str(uuid.uuid4())\n        try:\n            return api.create_run(\n                version_id, inputs,\n                idempotency_key=key, timeout=10,\n            )\n        except api.RateLimited as e:\n            time.sleep(e.retry_after)\n        except api.Timeout:\n            time.sleep(min(2 ** i, 30) + random.random())\n    raise RunNotAccepted(version_id)',
+      code: 'def submit(api, req, attempts=4):\n    for i in range(attempts):\n        key = str(uuid.uuid4())\n        try:\n            return api.create_run(\n                req,\n                idempotency_key=key,\n                timeout=10,\n            )\n        except api.RateLimited as e:\n            time.sleep(e.retry_after)\n        except api.Timeout:\n            time.sleep(backoff(i))\n    raise RunNotAccepted(req)',
       bugLines: [3],
       explanation:
         "A fresh key on every attempt means the server sees each retry as a brand-new run. If attempt 1 was accepted and only its response was lost, attempt 2 creates a second run. The key names the *logical* run, so it's made once, before the loop.",
       fix: {
-        code: 'def submit_run(api, version_id, inputs, attempts=4):\n    key = str(uuid.uuid4())  # one key per logical run\n    for i in range(attempts):\n        try:\n            return api.create_run(\n                version_id, inputs,\n                idempotency_key=key, timeout=10,\n            )\n        ...',
+        code: 'def submit(api, req, attempts=4):\n    key = str(uuid.uuid4())  # once\n    for i in range(attempts):\n        try:\n            return api.create_run(\n                req,\n                idempotency_key=key,\n                timeout=10,\n            )\n        ...',
       },
       hint: 'How does the server decide that a request is a repeat?',
     },
@@ -190,17 +190,17 @@ const lesson: Lesson = {
           interviewer: 'Users want to run a version against a 2,000-row dataset and get a score. How does that work?',
           options: [
             {
-              text: '"One worker job loops over the 2,000 rows, calls the model for each, and writes the score at the end."',
+              text: '"One worker job loops over all 2,000 rows, calls the model for each, and writes the score at the end."',
               quality: 'okay',
               feedback: "It works, and it's simple. But it's serial, and a crash at row 1,900 starts over unless you checkpoint. You've rebuilt a worse queue inside one job.",
             },
             {
-              text: '"An `evals` row, then one child run per dataset row on the same queue, keyed `eval_id:row_id` for idempotency. Each finished child bumps a counter; when all are terminal, an aggregator computes the score."',
+              text: '"An `evals` row, plus one child run per dataset row on the same queue, keyed `eval_id:row_id`. When every child is terminal, an aggregator computes the score."',
               quality: 'strong',
               feedback: 'Strong. Children reuse everything you built for runs: limits, retries, streaming, cost tracking. The deterministic key makes a repeated fan-out harmless.',
             },
             {
-              text: '"The browser loops over the rows and calls `POST /runs` 2,000 times."',
+              text: '"The browser loops over the rows, calls `POST /runs` once per row, and averages the results itself."',
               quality: 'weak',
               feedback: 'Close the laptop and the eval dies halfway, with no server-side record of what finished. Long-running work belongs on the server.',
             },
@@ -210,17 +210,17 @@ const lesson: Lesson = {
           interviewer: "One team's eval is eating all the capacity. Interactive runs are timing out.",
           options: [
             {
-              text: '"Evals go on a lower-priority queue with a per-org cap on in-flight children, drawing on the same token quota. Interactive runs keep reserved capacity, so a person waiting is never behind 2,000 batch rows."',
+              text: '"Evals go on a lower-priority queue with a per-org cap on in-flight children. Interactive runs keep reserved capacity, so nobody waits behind batch rows."',
               quality: 'strong',
               feedback: 'Strong. Fairness is a scheduling decision: priority between kinds of work, and caps within each tenant.',
             },
             {
-              text: '"Add more workers and ask the provider for a higher rate limit."',
+              text: '"Add more workers and ask the model provider for a higher rate limit, so there is room for both kinds of work."',
               quality: 'okay',
               feedback: 'More capacity helps everyone, until the next, bigger eval. Without priority and per-org caps, one tenant can always crowd out the rest.',
             },
             {
-              text: '"Tell users to schedule big evals overnight when traffic is low."',
+              text: '"Ask users to schedule big evals overnight, when interactive traffic is low and nobody is waiting."',
               quality: 'weak',
               feedback: 'That turns a scheduling problem into a support ticket. The system should enforce the policy, not its users.',
             },
@@ -230,17 +230,17 @@ const lesson: Lesson = {
           interviewer: 'Halfway through, the user hits Cancel. Of the 1,000 rows that ran, 40 timed out.',
           options: [
             {
-              text: '"Delete the queued jobs and show the score from whatever finished."',
+              text: '"Delete the queued jobs and show the score computed from whichever rows finished before the cancel."',
               quality: 'okay',
               feedback: 'Close. But a score over 960 rows with 40 silent timeouts looks complete. Say what is missing.',
             },
             {
-              text: '"Count the timeouts as failures and let the eval finish, so the score is complete."',
+              text: '"Count the timeouts as failures and let the eval run to the end, so the score covers every row."',
               quality: 'weak',
               feedback: "It ignores the cancel, keeps spending the customer's tokens, and scores infrastructure flakiness as model failures.",
             },
             {
-              text: '"Mark the eval `cancelled`; workers skip queued children of a cancelled eval, and in-flight ones stop. Show the score as partial, with 40 timed out and an option to retry just those. Bill only tokens actually spent."',
+              text: '"Mark it `cancelled`; workers skip its queued children. Show the score as partial, with 40 timed out and a retry for just those. Bill only tokens actually spent."',
               quality: 'strong',
               feedback: 'Strong. Cancel is a status workers check, partial results are labeled partial, and cost follows real usage.',
             },
@@ -331,11 +331,11 @@ const lesson: Lesson = {
       skill: 'design.execution',
       kind: 'spotbug',
       prompt: 'The queue delivers at least once. When a worker crashes after saving output but before acking, the run is generated and billed twice. Tap the line.',
-      code: 'def handle(job):\n    run = db.get_run(job.run_id)\n    if run.status == "cancelled":\n        return queue.ack(job)\n    db.set_status(run.id, "running")\n    output = model.generate(run.prompt, run.params)\n    db.save_output(run.id, output)\n    db.set_status(run.id, "succeeded")\n    queue.ack(job)',
+      code: 'def handle(job):\n    run = db.get_run(job.run_id)\n    if run.status == "cancelled":\n        return queue.ack(job)\n    db.set_status(run.id, "running")\n    out = model.generate(run)\n    db.save_output(run.id, out)\n    db.set_status(run.id, "succeeded")\n    queue.ack(job)',
       bugLines: [3],
       explanation:
         'The guard skips cancelled runs but not finished ones, so a redelivered job for a `succeeded` run calls the model again. Skip every terminal status. A run left `running` by a dead worker should still be retried; that is what redelivery is for.',
-      fix: { code: 'if run.status in ("cancelled", "succeeded", "failed"):\n    return queue.ack(job)' },
+      fix: { code: 'TERMINAL = {"cancelled", "failed",\n            "succeeded"}\n\ndef handle(job):\n    run = db.get_run(job.run_id)\n    if run.status in TERMINAL:\n        return queue.ack(job)\n    ...' },
     },
     {
       id: 'design-versions.promote',

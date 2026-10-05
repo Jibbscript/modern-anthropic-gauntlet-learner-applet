@@ -30,10 +30,19 @@ export default function MatchStep({ step, phase, attempt, setController, lessonI
   const n = step.pairs.length
   const memKey = `${lessonId ?? mode}:${step.id}`
   const rightOrder = useMemo(() => shuffleNotIdentity(range(n), step.id), [n, step.id])
+  /**
+   * Is left item l correctly paired with right item r? Compared by text, so two
+   * pairs that share an answer (or a prompt) can be matched either way round.
+   */
+  const fits = (l: number, r: number | null) =>
+    r != null && (r === l || step.pairs[r].right === step.pairs[l].right || step.pairs[r].left === step.pairs[l].left)
   /** pairs[left] = index of the right item (by its original pair index) */
   const [pairs, setPairs] = useState<Pairs>(() => {
     const saved = attempt > 0 ? memory.get(memKey) : undefined
-    return range(n).map((l) => (saved?.[l] === l ? l : null))
+    return range(n).map((l) => {
+      const r = saved?.[l] ?? null
+      return r != null && r < n && fits(l, r) ? r : null
+    })
   })
   const [sel, setSel] = useState<{ side: Side; i: number } | null>(null)
   const [settled, setSettled] = useState(false)
@@ -49,7 +58,7 @@ export default function MatchStep({ step, phase, attempt, setController, lessonI
     setController({
       ready: pairs.every((r) => r != null),
       check: () => {
-        const right = pairs.filter((r, l) => r === l).length
+        const right = pairs.filter((r, l) => fits(l, r)).length
         if (right === n) return { correct: true }
         return {
           correct: false,
@@ -57,7 +66,7 @@ export default function MatchStep({ step, phase, attempt, setController, lessonI
         }
       },
     })
-  }, [pairs, n, setController])
+  }, [pairs, n, step, setController])
 
   // revealed: pause on the learner's pairs, then slide the answers into matching rows
   useEffect(() => {
@@ -105,14 +114,15 @@ export default function MatchStep({ step, phase, attempt, setController, lessonI
   const stateL = (l: number): TileState => {
     if (phase === 'answer') return activeSel?.side === 'L' && activeSel.i === l ? 'selected' : 'idle'
     if (phase === 'correct') return 'correct'
-    if (phase === 'incorrect') return pairs[l] === l ? 'correct' : 'incorrect'
-    return pairs[l] === l ? 'correct' : 'reveal'
+    if (phase === 'incorrect') return fits(l, pairs[l]) ? 'correct' : 'incorrect'
+    return fits(l, pairs[l]) ? 'correct' : 'reveal'
   }
   const stateR = (r: number): TileState => {
     if (phase === 'answer') return activeSel?.side === 'R' && activeSel.i === r ? 'selected' : 'idle'
     if (phase === 'correct') return 'correct'
-    if (phase === 'incorrect') return partnerOf(r) === r ? 'correct' : 'incorrect'
-    return partnerOf(r) === r ? 'correct' : 'reveal'
+    const l = partnerOf(r)
+    if (phase === 'incorrect') return l >= 0 && fits(l, r) ? 'correct' : 'incorrect'
+    return l >= 0 && fits(l, r) ? 'correct' : 'reveal'
   }
 
   const how =

@@ -1,6 +1,9 @@
 import type { Step } from '../../core/types'
 
-/** Match step fixtures: a typical 4-pair set, the 6-pair maximum with code on both sides, and 3 long-text pairs. */
+/**
+ * Match step fixtures: a typical 4-pair set, the 6-pair maximum with code on
+ * both sides, 3 long-text pairs, and pairs that share an answer (graded by text).
+ */
 const steps: Step[] = [
   {
     kind: 'match',
@@ -50,6 +53,19 @@ const steps: Step[] = [
       },
     ],
     explanation: 'Every round has a question behind the question. Answer that one.',
+  },
+  {
+    kind: 'match',
+    id: 'fx-match-dupes',
+    eyebrow: 'Edge case',
+    prompt: 'What does each expression evaluate to?',
+    pairs: [
+      { left: '`len("ab")`', right: '`2`' },
+      { left: '`bool(0)`', right: '`False`' },
+      { left: '`1 + 1`', right: '`2`' },
+      { left: '`[] == []`', right: '`True`' },
+    ],
+    explanation: 'Two expressions evaluate to `2`, so either `2` matches either of them. Empty lists compare equal by value, and `0` is falsy.',
   },
 ]
 

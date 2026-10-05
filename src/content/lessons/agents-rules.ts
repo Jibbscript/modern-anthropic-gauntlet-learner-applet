@@ -282,7 +282,7 @@ Thanks, Priya`,
           interviewer: 'Some people think using AI on an application at all is cheating. What do you think?',
           options: [
             {
-              text: "Depends what's measured. When your form asked for no AI, using it would have been cheating. Refining my own draft and saying so seems fair, though it makes polish a weaker signal. My line: opinions or experiences the AI supplied.",
+              text: "Depends what's measured. When your form asked for no AI, using it was cheating. Refining my own draft, disclosed, seems fair, though it weakens polish as a signal. My line: opinions or experiences the AI supplied.",
               quality: 'strong',
               feedback: 'Strong. You reasoned from what is being measured, used the real policy history, named a cost of the current rule, and drew your own line.',
             },
@@ -292,7 +292,7 @@ Thanks, Priya`,
               feedback: 'Dodges the question and leans on the crowd. The round wants your judgment, not a trend report.',
             },
             {
-              text: "Your policy explicitly allows refining a draft, so no, I don't think it's cheating. If the rule allows it, I'd say that makes it fair.",
+              text: "Your policy explicitly allows refining a draft, so no, I don't think it's cheating. If the rule allows it, and I followed it, then it's fair.",
               quality: 'okay',
               feedback: 'Accurate, but it hands the ethics to the policy. A rule says what is permitted; the question asks what you think is right.',
             },
@@ -401,7 +401,7 @@ Thanks, Priya`,
         },
         {
           text: 'Models make more mistakes than candidates do, so the score drops',
-          feedback: "Per Anthropic's Jan 2026 write-up, Claude beat most humans on its performance take-home. Quality isn't what breaks; attribution is.",
+          feedback: "Per Anthropic's Jan 2026 write-up, Claude Opus 4 beat almost every human on its performance take-home. Quality isn't what breaks; attribution is.",
         },
         {
           text: "It doesn't damage anything; it only breaks the rules",

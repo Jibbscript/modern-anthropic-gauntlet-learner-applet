@@ -15,7 +15,7 @@ const lesson: Lesson = {
       title: 'Two slogans, zero signal',
       body:
         "Thursday. Launch is Monday. You find an edge case where the new feature quietly hurts a few users.\n\n" +
-        "Interviewers hear two answers constantly: *Safety always comes first* and *Ship it and iterate*. The first isn't true of anyone who ships software. The second skips who pays. Neither shows how you think.\n\n" +
+        "Two answers come out first: *Safety always comes first* and *Ship it and iterate*. The first isn't true of anyone who ships software. The second skips who pays. Neither shows how you think.\n\n" +
         'This lesson replaces both with ==sizing the risk out loud==.',
       callout: {
         tone: 'insight',
@@ -134,7 +134,7 @@ const lesson: Lesson = {
         'Launch is Monday. Your bulk-archive feature has a known edge case: in shared folders it can archive files a *collaborator* still needs. Archives are restorable for 30 days, but the collaborator gets no notice. It affects about 0.3% of accounts, and your PM wants to ship to everyone. Best call?',
       choices: [
         {
-          text: 'Ship Monday, but flag off shared folders. Log the issue with an owner and a date, and fix it before widening.',
+          text: 'Ship Monday with shared folders excluded by a flag. Log the issue with an owner and a date, and fix before widening.',
           correct: true,
           feedback:
             'Keeps the speed for 99.7% of accounts, removes the harm from people who never opted in, and writes the known issue down.',
@@ -226,10 +226,10 @@ const lesson: Lesson = {
       eyebrow: 'Same tools, higher stakes',
       prompt: 'Match each Anthropic decision to the reasoning move it makes.',
       pairs: [
-        { left: 'Safety levels modeled on biosafety levels (2023)', right: 'Safeguards scale with the danger' },
+        { left: 'Safety levels modeled loosely on biosafety levels (2023)', right: 'Safeguards scale with the danger' },
         { left: "ASL-3 for Opus 4: risk couldn't be ruled out (May 2025)", right: 'Precaution before proof' },
         { left: 'Jailbreak classifiers published with their costs (Feb 2025)', right: 'Price the safety measure too' },
-        { left: 'RSP v3: a lone pause could be less safe (Feb 2026)', right: 'Ask what happens if you stop' },
+        { left: 'RSP v3: a lone pause could leave the world less safe (Feb 2026)', right: 'Ask what happens if you stop' },
         { left: 'The value *Hold light and shade*', right: 'Name the good and bad outcomes' },
       ],
       explanation:
@@ -277,7 +277,7 @@ const lesson: Lesson = {
               feedback: 'Real, but thin. How big was the risk, who disagreed, what did it cost, and would you do it again?',
             },
             {
-              text: "Days before an OAuth launch, I found we logged refresh tokens. I asked to slip only that piece four days; the PM was unhappy. Password login shipped on time. I'd do it again: leaked tokens can't be unleaked.",
+              text: "Days before a login revamp, I found the new OAuth flow logged refresh tokens. I asked to slip only OAuth by four days; the PM was unhappy. The rest shipped on time. I'd do it again: leaked tokens can't be unleaked.",
               quality: 'strong',
               feedback:
                 'Specific and sized. It names who carried the cost and judges the call now. Note the scoping: only the risky half slipped.',
@@ -289,18 +289,18 @@ const lesson: Lesson = {
             'Suppose your team had a capability breakthrough that also carried serious risk if released. Would you support delaying it? What if other labs would not delay?',
           options: [
             {
-              text: "That's really leadership's call more than mine. I'd trust them to weigh it carefully and go with whatever they decide is best.",
+              text: "That's really leadership's call more than mine. I'd trust them to weigh it carefully and go with whatever they decide is best for everyone.",
               quality: 'weak',
               feedback: 'The question asks for your judgment. Deferring entirely suggests you would have no view inside the company either.',
             },
             {
-              text: "Probably yes, if the delay buys something: evals, safeguards, a staged release. If others won't wait, delay is worth less, which is Anthropic's own RSP v3 argument. But less isn't zero. Where exactly, I'm unsure.",
+              text: "Probably yes, if the delay buys something: evals, safeguards, a staged release. If others won't wait, delay is worth less, which is Anthropic's own RSP v3 argument. But less isn't zero. Where the line sits, I'm unsure.",
               quality: 'strong',
               feedback:
                 'Takes a position, asks what the delay buys, engages the follow-up instead of dodging it, and admits uncertainty without hiding behind it.',
             },
             {
-              text: "Yes. If it's risky, we shouldn't release it until it's safe, whatever other labs decide to do. Someone has to hold the line.",
+              text: "Yes. If it's risky, we shouldn't release it until it's safe, whatever other labs decide to do. Someone in the industry has to hold the line.",
               quality: 'okay',
               feedback: 'A clear position, but it ignores the follow-up: if others ship anyway, what does your delay buy? Engage with that.',
             },

@@ -18,7 +18,7 @@ const lesson: Lesson = {
         'A strong *why* fails the swap test: it\'s true only of this place, and it connects to something you have actually done.',
       callout: {
         tone: 'insight',
-        text: 'Candidates report 2026 recruiter screens asking *Why Anthropic?*, *How is Anthropic different from other labs?* and *What did we do right or wrong recently?*, with 20 minutes or more of a 30-minute call going to safety. A March 2026 culture-round report says the interviewer wanted concrete reasons, not generic interest in AI.',
+        text: 'Candidates report 2026 recruiter screens asking *Why Anthropic?*, *How is Anthropic different from other AI labs?* and *Have you followed Anthropic\'s recent moves? What did we do right or wrong?* In one Aug 2026 report, 20 minutes of a 30-minute call went to safety. A March 2026 culture-round report says the interviewer wanted concrete reasons, not generic interest in AI.',
       },
     },
     {
@@ -29,7 +29,7 @@ const lesson: Lesson = {
       a:
         'I\'ve followed AI for years, and I want to work on the most important technology of our time at a company that puts safety first. Your mission really resonates with me, and I do my best work in mission-driven cultures where people care about getting things right.',
       b:
-        'My team moved most of our refactoring to coding agents this year, and I\'ve spent months on why long agent sessions drift. I want to work on that harness, at the source. I also like that you publish your failures, like the September 2026 incident report. If that stopped, I\'d think twice.',
+        'My team moved most of our refactoring to coding agents this year, and I\'ve spent months on why long agent sessions drift. I want to work on that inside Claude Code itself. I also like that you publish your failures, like the September 2026 incident report. If that stopped, I\'d think twice.',
       better: 'b',
       explanation:
         'A survives the swap test, so it fails as an answer: every sentence works for any lab. B names a product area, ties it to the candidate\'s own history, cites a dated example, and states a condition that would make the reason false. That last part is what makes it sound real rather than recited.',
@@ -63,9 +63,9 @@ const lesson: Lesson = {
           feedback: 'Every frontier lab says this about itself. It survives the swap, so it says nothing yet.',
         },
         {
-          text: 'Your 2026 constitution ranks broad safety above broad ethics. I think that\'s right for now, and I want to work near that debate.',
+          text: 'Five years on labor-market data is why I want to work on the Economic Index, which maps Claude usage to occupations.',
           correct: true,
-          feedback: 'Specific, dated, and it takes a position on something only this company wrote.',
+          feedback: 'A named Anthropic project plus your own history with the problem. Swap the name and the sentence stops making sense.',
         },
         {
           text: 'I\'m excited by how fast AI is progressing, and I want to be at a lab that\'s pushing the frontier.',
@@ -74,7 +74,8 @@ const lesson: Lesson = {
         {
           text: 'I\'ve built four tools on MCP since its 2024 launch, and I want to work closer to where it came from.',
           correct: true,
-          feedback: 'A protocol Anthropic originated, plus your own history with it. Swap the name and it\'s false.',
+          feedback:
+            'A protocol Anthropic originated, plus your own history with it. Swap the name and it\'s false. One wrinkle: Anthropic donated MCP to the Linux Foundation\'s Agentic AI Foundation in Dec 2025, so be ready to say what you\'d build here, not on the spec.',
         },
         {
           text: 'Your mission really resonates with me, and I care deeply about AI going well for everyone.',
@@ -94,7 +95,7 @@ const lesson: Lesson = {
         '- **Doesn\'t hold up**: *the only lab with a safety framework*. OpenAI (Dec 2023) and Google DeepMind (May 2024) followed the RSP.',
       callout: {
         tone: 'warn',
-        text: 'Never smear. "They only care about money" tells a recruiter how you will talk about them after you leave. A fair contrast sounds like: "Meta has favored open-weight releases. I see the case for openness, and here\'s where I land."',
+        text: 'Never smear. "They only care about money" tells a recruiter how you will talk about them after you leave. A fair contrast sounds like: "Meta released its Llama models with open weights. I see the case for openness, and here\'s where I land."',
       },
     },
     {
@@ -129,14 +130,14 @@ const lesson: Lesson = {
       id: 'disagree-structure',
       title: 'Build a disagreement you could defend',
       body:
-        'Candidates report being asked *What concerns do you have with Anthropic\'s direction?* Agreeing with everything is weak. So is a hot take. A strong answer has four moves:\n\n' +
+        'Candidates report being asked *What concerns do you have with Anthropic\'s mission or direction?* Agreeing with everything is weak. So is a hot take. Use four moves:\n\n' +
         '1. **Steelman**: their best reasoning, in their words.\n' +
         '2. **Your view**: where you land, and why.\n' +
         '3. **Mind-changer**: what evidence would move you.\n' +
         '4. **Then what**: would you still join, and how would you raise it?',
       callout: {
-        tone: 'quote',
-        text: '"We\'re not looking for a specific belief." Daniela Amodei, on Anthropic\'s culture interview (Bloomberg Businessweek, May 2026)',
+        tone: 'insight',
+        text: 'The critiques aren\'t secret. In *We Must Pace the Frontier* (Sep 2026), Dario Amodei acknowledges Anthropic has been "accused of hype, \'doomerism\', or regulatory capture." If the CEO can name them, you should be able to engage with the strongest one.',
       },
     },
     {
@@ -163,32 +164,32 @@ const lesson: Lesson = {
       pairs: [
         { left: 'Building frontier models while warning about them', right: 'Safety research needs frontier-scale models' },
         { left: 'RSP v3 dropping the 2023 pause pledge', right: 'A lone pause could leave the world less safe' },
-        { left: 'Defense work, with two exceptions', right: 'Back national security, but no mass domestic surveillance or fully autonomous weapons' },
+        { left: 'Defense and intelligence work', right: 'Back national security, but no mass domestic surveillance or fully autonomous weapons' },
         { left: 'Very fast commercial growth', right: 'Prove careful labs can win, so safety becomes competitive' },
-        { left: 'Pushing for chip export controls', right: 'Denying chips to the CCP may matter most' },
+        { left: 'Pushing for chip export controls', right: 'Denying advanced chips to China may be the single most important step' },
       ],
       explanation:
-        'Sources: Core Views (2023: large models are "qualitatively different"); the RSP v3 announcement (Feb 2026); the Department of War statement (Feb 2026: fully autonomous weapons are "simply not reliable enough"); *We Must Pace the Frontier* (Sep 2026); *The Adolescence of Technology* (Jan 2026). Other live topics: open versus closed weights, and political spending ($20M to Public First Action in Feb 2026, later $40M). These are topics, not verdicts. Pick one you have actually thought about.',
+        'Sources: Core Views (2023: large models are "qualitatively different"); the RSP v3 announcement (Feb 2026); the Department of War statement (Feb 2026: current frontier AI is "simply not reliable enough" for fully autonomous weapons); *We Must Pace the Frontier* (Sep 2026); *The Adolescence of Technology* (Jan 2026). Other live topics: open versus closed weights, and political spending ($20M to Public First Action in Feb 2026, later $40M). These are topics, not verdicts. Pick one you have actually thought about.',
     },
     {
       kind: 'mcq',
       id: 'pushback',
       eyebrow: 'Updating',
       prompt:
-        'You told the recruiter you disagree with RSP v3 dropping the pause pledge. They reply: *If one lab pauses while others keep training without strong safeguards, the world could end up less safe. Doesn\'t that answer it?* Best response?',
+        'You told the recruiter you\'re uneasy about Anthropic\'s defense and intelligence work. They reply: *In early 2026 we kept two limits, no mass domestic surveillance and no fully autonomous weapons, even after the Pentagon labeled us a supply-chain risk. Doesn\'t that answer it?* Best response?',
       choices: [
         {
-          text: 'Partly. It moves me on a unilateral pause, but not on my worry that nonbinding goals make drift easier. I\'d watch the roadmap grades.',
+          text: 'Partly. Holding them at that cost shows the limits are real. It doesn\'t settle the uses in between, like intelligence analysis. How do those get reviewed?',
           correct: true,
-          feedback: 'You named what moved, what didn\'t, and what would move you further. That\'s updating in public, which is what this probe is for.',
+          feedback: 'You named what moved, what didn\'t, and what you\'d want to learn next. That\'s updating in public, which is what this probe is for.',
         },
         {
           text: 'That\'s a really good point. I hadn\'t thought about it that way, and honestly it changes my mind, so I think I agree with you now.',
           feedback: 'Caving to the first counterargument reads as agreeableness, not updating. Blind agreement is the failure mode candidates are warned about.',
         },
         {
-          text: 'I hear you, but I still think you should have kept the original 2023 pledge exactly as it was written. A commitment is a commitment.',
-          feedback: 'Holding a view is fine; ignoring the argument isn\'t. Say which part of their point you accept.',
+          text: 'I hear you, but I still think a company focused on AI safety shouldn\'t be doing defense work at all. My view on that hasn\'t changed.',
+          feedback: 'Holding a view is fine; ignoring the argument isn\'t. Their point is evidence the limits are real. Say what it does and doesn\'t change for you.',
         },
         {
           text: 'It\'s your policy, and you know far more about the tradeoffs than I do, so I assume you made the right call there.',
@@ -196,7 +197,7 @@ const lesson: Lesson = {
         },
       ],
       explanation:
-        'A better argument should move you, visibly and by the right amount. Say what changed, what didn\'t, and what evidence would move you further. The 2026 Frontier Safety Roadmap\'s publicly graded goals give you something concrete to watch.',
+        'A better argument should move you, visibly and by the right amount. Say what changed, what didn\'t, and what would move you further. The move is the same whatever your starting view, including if you think those two limits go too far.',
     },
     {
       kind: 'interview',
@@ -218,9 +219,9 @@ const lesson: Lesson = {
               feedback: 'Flattery with no content. Reported failure modes for these conversations include rehearsed enthusiasm and reciting the mission.',
             },
             {
-              text: 'My team moved most refactoring to coding agents this year, and I\'ve spent months on why long sessions drift. I want to work on that harness. Your published incident reports matter too; if those stopped, I\'d be less keen.',
+              text: 'Three years on fraud models taught me to care about "why did it flag this?" Your March 2025 circuit-tracing work asks that at the frontier, and I want to build tooling for it. If interpretability lost headcount here, I\'d be less keen.',
               quality: 'strong',
-              feedback: 'Product area, personal history, a dated reason, and a condition that would make it false.',
+              feedback: 'A dated paper, the personal history that makes it matter to you, a concrete role, and a condition that would make the reason false.',
             },
           ],
         },
@@ -228,7 +229,7 @@ const lesson: Lesson = {
           interviewer: 'Lots of labs say they care about safety. What is actually different here?',
           options: [
             {
-              text: 'Some differences are real, some aren\'t. Frameworks no longer are: OpenAI and DeepMind adopted their own soon after the RSP. Governance still is: a PBC from day one, and a trust-appointed board majority since April 2026. I\'d want to know how much that constrains commercial pressure.',
+              text: 'Some differences are real, some aren\'t. Frameworks aren\'t anymore: OpenAI and DeepMind adopted their own soon after the RSP. Governance is: a PBC from day one, and a trust-appointed board majority since April 2026. Does that hold up against commercial pressure? I\'d want to know.',
               quality: 'strong',
               feedback: 'Credits others, cites checkable facts with dates, and ends on an honest open question instead of a sales pitch.',
             },
@@ -238,7 +239,7 @@ const lesson: Lesson = {
               feedback: 'A smear, and an unfalsifiable one. It tells the recruiter how you will talk about Anthropic after you leave.',
             },
             {
-              text: 'You seem more focused on safety research than the others, and you publish more of it. That research culture matters a lot to me, and it\'s why I applied.',
+              text: 'You seem more focused on safety research than the others, and you publish more of it, even when it makes your own models look bad. That research culture matters a lot to me.',
               quality: 'okay',
               feedback: 'Plausible, but vague. Name one paper or one structural fact and it becomes an answer.',
             },
@@ -253,12 +254,13 @@ const lesson: Lesson = {
               feedback: 'Candidates report that evaluators look for a willingness to critique Anthropic. "Nothing" signals you haven\'t thought hard, or won\'t say.',
             },
             {
-              text: 'RSP v3. I accept that a lone pause could leave the world less safe. But nonbinding goals make drift easier, and I\'d watch the roadmap grades. A year of goals met on time would move me. I\'d still join, and raise it from inside.',
+              text: 'Commercial pace. Your case: careful labs must win commercially so labs compete on safety. My worry: at this growth, every safety delay costs more internally. Holding back Mythos Preview counts for you; if that holds when a rival ships first, I\'d drop it. I\'d still join.',
               quality: 'strong',
-              feedback: 'Steelman, view, mind-changer, and the close, in about thirty seconds.',
+              feedback:
+                'Steelman, view, evidence on both sides, a mind-changer and the close, in about thirty seconds. Same topic as the hedged answer, done properly.',
             },
             {
-              text: 'Maybe the pace of product launches? It feels fast from the outside, though I assume you have good reasons for it that I can\'t see.',
+              text: 'Maybe the pace of product launches? It feels very fast from the outside, though I assume you have good reasons for it that I can\'t see from here.',
               quality: 'okay',
               feedback: 'A real topic, hedged into nothing. What exactly worries you, and what would change your mind?',
             },
@@ -346,7 +348,7 @@ const lesson: Lesson = {
         { left: 'Anthropic', right: 'Trust-appointed directors became a board majority (Apr 2026)' },
         { left: 'OpenAI', right: 'Nonprofit foundation controls a for-profit PBC (Oct 2025)' },
         { left: 'Google DeepMind', right: 'Published its Frontier Safety Framework (May 2024)' },
-        { left: 'Meta', right: 'Has favored open-weight releases (Llama)' },
+        { left: 'Meta', right: 'Released its Llama models with open weights' },
       ],
       explanation: 'Each is checkable and none is a smear. Facts like these let you contrast labs without guessing at anyone\'s motives.',
     },
@@ -384,7 +386,7 @@ const lesson: Lesson = {
         { id: 'changer', label: 'What would move you' },
       ],
       items: [
-        { text: 'Safety research only means something on frontier-scale models.', bucket: 'steelman' },
+        { text: 'Some safety problems only show up in frontier-scale models.', bucket: 'steelman' },
         { text: 'A lone pause while others race ahead could leave the world less safe.', bucket: 'steelman' },
         { text: 'I think the pledge should have been narrowed, not replaced with nonbinding goals.', bucket: 'view' },
         { text: 'Defense work is defensible, but I\'d want the two red lines in every contract.', bucket: 'view' },
@@ -398,10 +400,10 @@ const lesson: Lesson = {
       skill: 'why.disagree',
       kind: 'compare',
       question: 'Where do you disagree with Anthropic?',
-      a: 'I\'m not sure I disagree with anything, honestly. I\'ve read a lot of your material and it all seems well reasoned. If anything, maybe you could be a bit bolder.',
-      b: 'The pace of commercialization. The best case is that careful labs must win commercially for safety to become competitive. My worry is that growth this fast makes every safety delay costlier inside. A launch visibly delayed for safety would move me. I\'d still join.',
-      better: 'b',
-      explanation: 'A agrees with everything, which candidates are warned reads as performance. B names a topic, steelmans it, states a concern, says what would update it, and answers whether they would still join.',
+      a: 'Building frontier models while warning about them. Your case: some safety problems only appear at frontier scale. I buy that for staying near the frontier, less for pushing it. If the Sep 2026 call to pace the frontier shows up in your own release cadence, I\'d drop it. I\'d still join.',
+      b: 'I\'m not sure I disagree with anything, honestly. I\'ve read a lot of your material and it all seems well reasoned. If anything, maybe you could be a bit bolder.',
+      better: 'a',
+      explanation: 'B agrees with everything, which candidates are warned reads as performance. A names a tension, states Anthropic\'s case, says exactly where it stops agreeing, names observable evidence that would change its mind, and answers whether it would still join.',
     },
     {
       id: 'why-your-why.update',

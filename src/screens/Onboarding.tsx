@@ -562,7 +562,6 @@ function InterviewDate(p: {
             value={none ? '' : p.date}
             onChange={(e) => p.onDate(e.target.value)}
           />
-          {p.date && !none && <span className="onb-input-wrap__pretty">{prettyDate(p.date)}</span>}
         </span>
       </motion.label>
       <motion.p className={`onb-note ${p.days != null && p.days < 0 && !none ? 'is-warn' : ''}`} {...rise(4)}>

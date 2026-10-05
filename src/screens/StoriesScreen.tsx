@@ -187,7 +187,8 @@ export default function StoriesScreen() {
     const inProgress = STORY_SLOTS.filter((x) => storyStatus(s.stories[x.id], now) === 'draft').sort(
       (a, b) => (s.stories[b.id]?.updatedAt ?? 0) - (s.stories[a.id]?.updatedAt ?? 0),
     )[0]
-    return { drafted: drafted.length, due, nextDue, inProgress }
+    const unrehearsed = drafted.some((x) => !s.stories[x.id]?.rehearsal?.last)
+    return { drafted: drafted.length, due, nextDue, inProgress, unrehearsed }
   }, [s, now])
 
   const total = STORY_SLOTS.length
@@ -226,7 +227,7 @@ export default function StoriesScreen() {
             {d.due.length > 0 ? (
               <RehearseHero count={d.due.length} onStart={() => nav.openDrill(d.due)} />
             ) : d.drafted > 0 ? (
-              <CaughtUp nextDue={d.nextDue} now={now} onAnyway={() => nav.openDrill()} />
+              <CaughtUp title={d.unrehearsed ? 'Nothing due yet' : 'All rehearsed'} nextDue={d.nextDue} now={now} onAnyway={() => nav.openDrill()} />
             ) : (
               <StartCard
                 resume={d.inProgress}
@@ -321,7 +322,7 @@ function RehearseHero({ count, onStart }: { count: number; onStart: () => void }
   )
 }
 
-function CaughtUp({ nextDue, now, onAnyway }: { nextDue: number | null; now: number; onAnyway: () => void }) {
+function CaughtUp({ title, nextDue, now, onAnyway }: { title: string; nextDue: number | null; now: number; onAnyway: () => void }) {
   return (
     <section className="sto-done">
       <div className="sto-done__top">
@@ -335,7 +336,7 @@ function CaughtUp({ nextDue, now, onAnyway }: { nextDue: number | null; now: num
           <Check size={26} strokeWidth={3.6} />
         </motion.span>
         <div className="sto-done__main">
-          <h2>All rehearsed</h2>
+          <h2>{title}</h2>
           <p>{nextDue ? <>Next story due {dueIn(nextDue, now)}.</> : 'Nothing scheduled yet.'}</p>
         </div>
       </div>

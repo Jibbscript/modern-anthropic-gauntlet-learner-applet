@@ -14,10 +14,10 @@ const lesson: Lesson = {
       title: 'The famous project trap',
       body:
         "You pick the launch everyone has heard of: forty engineers, a keynote, a revenue spike. Ten minutes into questions, the interviewer asks *which part did you design?* You built the settings page.\n\n" +
-        "The deep dive doesn't score the project. It scores **your decisions**, two or three levels down. A boring migration you drove beats a famous launch you attended.",
+        "What gets probed isn't the project. It's **your decisions**, two or three levels down. A boring migration you drove beats a famous launch you attended.",
       callout: {
         tone: 'insight',
-        text: "Candidate reports describe roughly 20 minutes of you presenting, then open discussion; 15-25 minutes is reported across roles. A July 2026 candidate's advice: pick a project you actually did, because borrowed details fall apart under questioning.",
+        text: "Candidate reports (2026): about 20 minutes of you presenting, then discussion; prep guides say 15-25. One July 2026 candidate's advice: pick a project you actually did, because borrowed details fall apart under questioning.",
       },
     },
     {
@@ -45,7 +45,7 @@ const lesson: Lesson = {
         },
       ],
       explanation:
-        'Reported probes include *Decision A vs Decision B*, scaling, reliability, ownership and how success was measured. Every one of them is about your judgment, so pick the project that shows the most of it.',
+        'Candidate-reported probes include *Decision A vs Decision B*, scaling, reliability, ownership and how success was measured. Every one of them is about your judgment, so pick the project that shows the most of it.',
     },
     {
       kind: 'concept',
@@ -137,7 +137,7 @@ const lesson: Lesson = {
         "The test: finish this sentence three times, with three different decisions. *I decided ___, over ___, because ___.* If you can't, or every sentence wants to start with *we*, scope down to the slice you owned: one service, one migration, one incident. That slice is your project. The rest is one sentence of context.",
       callout: {
         tone: 'insight',
-        text: 'Prep guides name crediting decisions to team defaults, instead of your own reasoning, as a common failure in this round.',
+        text: 'Prep guides name crediting decisions to team defaults as a common failure here. For Staff roles they also expect influence across teams, so your slice can be an agreement you brokered.',
       },
     },
     {
@@ -164,7 +164,7 @@ const lesson: Lesson = {
         "For each one, know *where it came from*: a dashboard, a query, or an estimate you'll label as one.",
       callout: {
         tone: 'insight',
-        text: 'One July 2026 candidate reported a deep dive that turned on who decided the business metric. Know who chose yours, and why.',
+        text: 'One July 2026 candidate reported a deep dive that focused on who decided the business metric. Know who chose yours, and why.',
       },
     },
     {

@@ -196,6 +196,7 @@ export default function StoryDrill({ slots, onExit }: { slots?: StorySlotId[]; o
     haptic('light')
   }
 
+  const capped = !!interviewDate && formatInterval(intervals[3]) === formatInterval(intervals[4])
   const remaining = BUDGET_S - timer.elapsed
   const over = remaining < 0
   const timerLabel = over ? 'Over time' : timer.running ? 'Speaking' : timer.elapsed > 0 ? 'Paused' : 'Two minutes'
@@ -452,6 +453,7 @@ export default function StoryDrill({ slots, onExit }: { slots?: StorySlotId[]; o
                   </motion.button>
                 ))}
               </div>
+              {capped && <p className="drl-grade__note">Intervals are capped so this story is fresh for your interview.</p>}
             </motion.div>
           )}
         </AnimatePresence>

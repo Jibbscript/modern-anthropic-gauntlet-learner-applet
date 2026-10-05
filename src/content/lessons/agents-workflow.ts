@@ -53,7 +53,7 @@ const lesson: Lesson = {
       body: "Two candidates get the same repo, the same agent and 40 minutes. One lets it run and ends with more code. The other ends with less code, a written plan, and a test that caught the agent's mistake.\n\nWhich one would you hire? When the tool does the typing, typing stops being the signal. What's left to watch is judgment.",
       callout: {
         tone: 'source',
-        text: "Candidates report agent-assisted rounds in newer formats, e.g. an Aug 2026 [report](https://prachub.com/interview-experiences/anthropic-software-engineer-interview-experience-reviewing-and-improving-pull-requests-with-claude-code) of reviewing and improving PRs with Claude Code. No rubric is public, and formats change.",
+        text: "An Aug 2026 candidate [report](https://prachub.com/interview-experiences/anthropic-software-engineer-interview-experience-reviewing-and-improving-pull-requests-with-claude-code) describes reviewing and improving PRs with Claude Code provided. That's the exception: Anthropic's default is no AI unless a round says so. No rubric is public, and formats change.",
       },
     },
     {
@@ -62,7 +62,7 @@ const lesson: Lesson = {
       prompt: "Agent-assisted round: a small repo, Claude Code, 45 minutes. What's the strongest first five minutes?",
       choices: [
         {
-          text: 'Read the code it touches, say a plan of small slices aloud, brief the first slice',
+          text: 'Read the code the task touches, say a plan of small slices aloud, brief slice one',
           correct: true,
           feedback: 'Right. You build your own model of the code first, and your plan is visible from minute one.',
         },
@@ -117,9 +117,9 @@ const lesson: Lesson = {
       id: 'two-briefs',
       question: "Show me how you'd brief the agent to add retries to the crawler's fetcher.",
       a: 'Add retries to the fetcher so it handles flaky networks. Make it robust and production quality.',
-      b: 'In `crawler/fetch.py`, make `fetch(url)` retry `ConnectionError` and HTTP 5xx: 3 attempts, sleeping 0.5 s then 1 s. Never retry 4xx. Keep the signature; no new dependencies. Add tests in `tests/test_fetch.py` with a fake transport and an injected `sleep`, run them, and paste the output.',
+      b: 'In `crawler/fetch.py`, make `fetch` retry `ConnectionError` and HTTP 5xx: 3 attempts in total, sleeping 0.5 s then 1 s. Never retry 4xx. Don\'t touch the crawl loop; no new dependencies. Add tests in `tests/test_fetch.py` with a fake connection and an injected `sleep`, run them, and paste the output.',
       better: 'b',
-      explanation: "B covers all four parts: file and function (context), exact behaviour (task), what stays fixed (constraints) and a test run with output (done when). A leaves every decision to the agent: which errors, how many tries, which files. *Robust* and *production quality* are vibes, not specs, so the minute you saved writing it goes on reviewing guesses.",
+      explanation: "B covers all four parts: file and function (context), exact behaviour (task), what stays untouched (constraints) and a test run with output (done when). A leaves every decision to the agent: which errors, how many tries, which files. *Robust* and *production quality* are vibes, not specs, so the minute you saved writing it goes on reviewing guesses.",
     },
     {
       kind: 'concept',
@@ -221,12 +221,12 @@ const lesson: Lesson = {
           interviewer: 'How do you want to start?',
           options: [
             {
-              text: 'Hand it the whole task and let it run. It types faster than I do, so that is the best use of time.',
+              text: "Hand it the whole task and let it run. It types far faster than I do, so that's the best use of 40 minutes.",
               quality: 'weak',
               feedback: "You'll get one large diff you can't fully review, and the interviewer sees nothing of how you think.",
             },
             {
-              text: 'Five minutes reading the scheduler and its tests. Then a plan, out loud: timeout field, enforcement in the runner, tests for each. Then I brief the agent one slice at a time.',
+              text: 'First I read the scheduler and its tests. Then a plan, out loud: timeout field, enforcement in the runner, a test for each. Then one slice at a time to the agent.',
               quality: 'strong',
               feedback: 'Strong. You build a model of the code, decompose, and make the plan visible before anything is generated.',
             },
@@ -241,17 +241,17 @@ const lesson: Lesson = {
           interviewer: "Its runner diff uses `signal.alarm` with a handler, and the tests pass. Thoughts?",
           options: [
             {
-              text: "Jobs run in pool threads, and Python only allows signal handlers from the main thread, so this can't work there. The tests likely run on the main thread. I'd first add a test with a slow job in the pool.",
+              text: "Python runs signal handlers only on the main thread, so an alarm never interrupts a pool worker. The tests likely bypass the pool; I'd add a slow-job test through it first.",
               quality: 'strong',
               feedback: 'Strong. You caught a plausible-but-wrong mechanism, explained why the tests miss it, and turned that into a test.',
             },
             {
-              text: "Tests pass, and `signal.alarm` is the standard way to put a time limit on a call in Python, so I'd accept it and move on.",
+              text: "Tests pass, and `signal.alarm` is the standard way to put a time limit on a call in Python, so I'd accept it and move to the next slice.",
               quality: 'weak',
-              feedback: "Standard on the main thread only. In a pool worker, `signal.signal` raises `ValueError`. Green here says nothing about the workers.",
+              feedback: "Standard on the main thread only. In a pool worker, `signal.signal` raises `ValueError`; an alarm set there still runs its handler on the main thread. Green here says nothing about the workers.",
             },
             {
-              text: "I'm not sure `signal` plays well with threads. I'd ask the agent to double-check that, and read the docs if it hedges.",
+              text: "I'm not sure `signal` plays well with threads. I'd ask the agent to double-check that, then read the docs if it hedges at all.",
               quality: 'okay',
               feedback: 'Right instinct, slow route. A five-line experiment or the docs settle it faster than another round of agent opinion.',
             },
@@ -261,17 +261,17 @@ const lesson: Lesson = {
           interviewer: "Its third attempt at cancelling a timed-out job fails with a new error. Now what?",
           options: [
             {
-              text: "Paste the full traceback back in, point out that it's a new error, and ask it to try again with that context.",
+              text: "Paste the full traceback back in, point out that it's a new error this time, and ask it to try again with all that context.",
               quality: 'okay',
               feedback: 'Sometimes fine. On a fourth attempt with errors that keep changing, it is more likely a loop than progress.',
             },
             {
-              text: 'Ask it for a completely different approach, and keep iterating with it until something finally passes the tests.',
+              text: 'Ask it for a completely different approach, and keep iterating with it until something finally passes the test suite.',
               quality: 'weak',
               feedback: "That's the loop, accelerated. 'Until something passes' invites a green that games the test.",
             },
             {
-              text: "Take the wheel: three different errors means neither of us has a model of the bug. Python can't safely kill a thread, so cancellation needs a cooperative check or a process. I'd pick one, then build it or re-brief.",
+              text: "Take the wheel: three different errors means neither of us understands the bug. Python can't safely kill a thread, so it's a cooperative check or a subprocess. I'll pick one and say why.",
               quality: 'strong',
               feedback: 'Strong. You stopped the loop, named the real constraint, and turned it into a decision the interviewer can see.',
             },
@@ -319,7 +319,7 @@ const lesson: Lesson = {
       kind: 'concept',
       id: 'recap',
       title: 'Driving, not riding',
-      body: "1. **Decompose and brief**: small slices, each with context, constraints and a done-when check.\n2. **Verify everything yourself**: read every diff, and believe only test output you saw after the last edit.\n3. **Take the wheel when it loops**, and narrate your reasoning throughout. ==The agent types; the round is about how you judge.==",
+      body: "1. **Decompose and brief**: small slices, each with context, constraints and a done-when check.\n2. **Verify everything yourself**: read every diff, and believe only test output you saw after the last edit.\n3. **Take the wheel when it loops**, and narrate your reasoning throughout. ==The agent types; your judgment is what's left to show.==",
     },
   ],
   cards: [
@@ -380,23 +380,33 @@ Then {{3}} the test output.`,
       },
     },
     {
-      id: 'agents-workflow.evidence',
+      id: 'agents-workflow.cancel-running',
       skill: 'agents.review',
-      kind: 'mcq',
-      prompt: 'An agent says *All 31 tests pass.* Which of these actually shows that?',
-      choices: [
-        { text: 'Test output from a run after its last edit, which you saw', correct: true, feedback: 'Right. Fresh output you saw is evidence; everything else is a claim.' },
-        { text: "Its answer when you ask 'Are you sure?'", feedback: 'Repeating a claim, even more confidently, is still a claim.' },
-        { text: 'A diff that looks right on a careful read', feedback: 'Reading finds a lot, but it does not run the code. Both, not either.' },
-        { text: 'Its summary listing each test it fixed', feedback: 'A detailed claim is still a claim. It may describe an earlier run.' },
-      ],
-      explanation: 'The only proof that tests pass is output from a run after the last change. In a round, say out loud that you are checking.',
+      kind: 'predict',
+      prompt: "An agent's per-job timeout waits 0.1 s for the result, then cancels the job. What does this print?",
+      code: `import time
+import concurrent.futures as cf
+
+def job():
+    time.sleep(1)
+    return "done"
+
+with cf.ThreadPoolExecutor() as ex:
+    fut = ex.submit(job)
+    try:
+        fut.result(timeout=0.1)
+    except cf.TimeoutError:
+        pass
+    print(fut.cancel(), fut.result())`,
+      answers: ['False done'],
+      explanation: "`result(timeout=...)` only stops *waiting*; the job keeps running. `cancel()` returns `False` for a future that has already started, and `result()` then blocks until the job finishes. Python can't kill a thread from outside, so a real timeout needs a cooperative check or a subprocess.",
+      hint: 'Can a future that is already running be cancelled?',
     },
     {
       id: 'agents-workflow.narrate',
       skill: 'agents.workflow',
       kind: 'compare',
-      question: "Interviewer: 'Why did you reject that diff?'",
+      question: 'Why did you reject that diff?',
       a: "It didn't feel right, so I asked for another version.",
       b: "It changed `fetch`'s signature, and three callers depend on it. The brief said keep the API, so I'm re-briefing with that constraint spelled out.",
       better: 'b',

@@ -61,7 +61,6 @@
   flex: 1;
   min-width: 0;
   overflow-wrap: break-word;
-  hyphens: auto;
 }
 .match-item__text .rich-code {
   font-size: 0.9em;
@@ -158,10 +157,16 @@
     column-gap: var(--s-2);
   }
   .match-item.tile {
-    padding-left: var(--s-2);
+    padding-left: 10px;
+    padding-right: 6px;
+    font-size: 13.5px;
   }
   .match-item--right.tile {
-    padding-right: var(--s-2);
+    padding-left: 6px;
+    padding-right: 10px;
+  }
+  .match-item .tile__body {
+    gap: 6px;
   }
   .match-socket,
   .match-socket__dot {

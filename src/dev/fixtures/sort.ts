@@ -1,6 +1,10 @@
 import type { Step } from '../../core/types'
 
-/** Sort step fixtures: 2 buckets with whys, 3 buckets with a missing why, and the 3-item minimum with long text. */
+/**
+ * Sort step fixtures: 2 buckets with whys (side-by-side trays), 3 buckets with a
+ * missing why (stacked trays), the 3-item minimum with long text, and 3 buckets
+ * with long labels and no whys at all.
+ */
 const steps: Step[] = [
   {
     kind: 'sort',
@@ -69,6 +73,25 @@ const steps: Step[] = [
       },
     ],
     explanation: 'Keep the substance and the reflection; cut the grievance.',
+  },
+  {
+    kind: 'sort',
+    id: 'fx-sort-long-labels',
+    eyebrow: 'Edge case',
+    prompt: 'Where does each step of the incident review belong?',
+    buckets: [
+      { id: 'before', label: 'Before the meeting starts' },
+      { id: 'during', label: 'In the room, together' },
+      { id: 'after', label: 'Follow-up after' },
+    ],
+    items: [
+      { text: 'Write a timeline from the logs, with timestamps and who saw what', bucket: 'before' },
+      { text: 'Agree on the contributing factors without naming a person to blame', bucket: 'during' },
+      { text: 'File one ticket per action item, each with an owner and a date', bucket: 'after' },
+      { text: 'Share the draft so people can correct it', bucket: 'before' },
+      { text: 'Check in two weeks that the alerts changed', bucket: 'after' },
+    ],
+    explanation: 'Facts before, judgment together, follow-through after.',
   },
 ]
 

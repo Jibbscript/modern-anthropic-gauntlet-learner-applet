@@ -420,13 +420,13 @@ def check_add_negative():
         { options: ['raises', 'warns', 'fails'], answer: 0 },
         { options: ['match', 'message', 'expected'], answer: 0 },
       ],
-      explanation: '`match` is a regex searched in `str(exc)`. Without it, the `ValueError` that `int("http")` raises inside `parse_port` would satisfy the test too.',
+      explanation: "`match` is a regex searched in `str(exc)`. Without it, any `ValueError` passes, including the one `int()` raises when `parse_port` can't parse its input at all.",
     },
     {
       id: 'py-testing.dead-assert',
       skill: 'py.testing',
       kind: 'spotbug',
-      prompt: 'This test passes even though `cache_size()` returns 999. Tap the problem line.',
+      prompt: '`top_k` raises `ValueError` for a negative `k`. This test passes even though `cache_size()` returns 999. Tap the problem line.',
       code: `def test_rejects_negative_k():
     with pytest.raises(ValueError):
         top_k(["a"], -1)
@@ -474,7 +474,7 @@ def check_add_negative():
       prompt: 'Match each concurrency-testing technique to what it buys you.',
       pairs: [
         { left: 'Stress loop with an invariant check', right: "Raises the odds of hitting a race; can't prove there is none" },
-        { left: '`threading.Barrier` between read and write', right: 'Forces one specific bad interleaving on every run' },
+        { left: 'A `Barrier` hook between read and write', right: 'Forces one specific bad interleaving on every run' },
         { left: 'Pure core, thin threaded shell', right: 'Most logic gets fast single-threaded tests' },
         { left: 'Injected clock', right: 'Time-dependent behaviour becomes deterministic' },
       ],

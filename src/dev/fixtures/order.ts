@@ -1,6 +1,9 @@
 import type { Step } from '../../core/types'
 
-/** Order step fixtures: a typical 5-card sequence, the 3-card minimum, and a long 6-card list with code. */
+/**
+ * Order step fixtures: a typical 5-card sequence, the 3-card minimum, a long
+ * 6-card list with code, and a sequence with repeated cards (graded by text).
+ */
 const steps: Step[] = [
   {
     kind: 'order',
@@ -40,6 +43,16 @@ const steps: Step[] = [
     ],
     explanation:
       'Scope and numbers come first because every later choice depends on them. The API pins down the contract, the diagram shows the shape, and the deep dive is where most of the signal is. Always leave a few minutes to talk about failure.',
+  },
+  {
+    kind: 'order',
+    id: 'fx-order-dupes',
+    eyebrow: 'Edge case',
+    prompt: 'Order one request with **exponential backoff** that succeeds on the third try.',
+    items: ['Call the API', 'Sleep 1 s', 'Call the API', 'Sleep 2 s', 'Call the API'],
+    explanation:
+      'Each failure doubles the wait before the next call. The three calls are interchangeable, so any order that alternates call, 1 s, call, 2 s, call is right.',
+    hint: 'Every sleep sits between two calls, and the waits grow.',
   },
 ]
 
