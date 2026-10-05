@@ -1,6 +1,8 @@
 import type { Course } from '../../core/types'
+import deepSelection from '../lessons/deep-selection'
+import deepLayers from '../lessons/deep-layers'
+import deepDrilldown from '../lessons/deep-drilldown'
 
-// STUB — replaced by the content author for this unit.
 const course: Course = {
   id: 'deepdive',
   title: 'Project Deep Dive',
@@ -8,7 +10,7 @@ const course: Course = {
   color: 'orange',
   icon: 'search',
   why: '',
-  lessons: [],
+  lessons: [deepSelection, deepLayers, deepDrilldown],
 }
 
 export default course

@@ -1,6 +1,12 @@
 import type { Course } from '../../core/types'
+import buildCrawler from '../lessons/build-crawler'
+import buildImage from '../lessons/build-image'
+import buildStacktrace from '../lessons/build-stacktrace'
+import buildCache from '../lessons/build-cache'
+import buildDedup from '../lessons/build-dedup'
+import buildInterpreter from '../lessons/build-interpreter'
+import buildKvstore from '../lessons/build-kvstore'
 
-// STUB — replaced by the content author for this unit.
 const course: Course = {
   id: 'builds',
   title: 'Build Rounds',
@@ -8,7 +14,7 @@ const course: Course = {
   color: 'green',
   icon: 'layers',
   why: '',
-  lessons: [],
+  lessons: [buildCrawler, buildImage, buildStacktrace, buildCache, buildDedup, buildInterpreter, buildKvstore],
 }
 
 export default course

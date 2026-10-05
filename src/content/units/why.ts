@@ -1,6 +1,10 @@
 import type { Course } from '../../core/types'
+import whyMission from '../lessons/why-mission'
+import whyRsp from '../lessons/why-rsp'
+import whyResearch from '../lessons/why-research'
+import whyRisks from '../lessons/why-risks'
+import whyYourWhy from '../lessons/why-your-why'
 
-// STUB — replaced by the content author for this unit.
 const course: Course = {
   id: 'why',
   title: 'Why Anthropic',
@@ -8,7 +12,7 @@ const course: Course = {
   color: 'violet',
   icon: 'shield',
   why: '',
-  lessons: [],
+  lessons: [whyMission, whyRsp, whyResearch, whyRisks, whyYourWhy],
 }
 
 export default course

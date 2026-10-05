@@ -1,6 +1,11 @@
 import type { Course } from '../../core/types'
+import valuesProbes from '../lessons/values-probes'
+import valuesDepth from '../lessons/values-depth'
+import valuesDisagree from '../lessons/values-disagree'
+import valuesEthics from '../lessons/values-ethics'
+import valuesUpdating from '../lessons/values-updating'
+import valuesSelf from '../lessons/values-self'
 
-// STUB — replaced by the content author for this unit.
 const course: Course = {
   id: 'values',
   title: 'Values & Judgment',
@@ -8,7 +13,7 @@ const course: Course = {
   color: 'rose',
   icon: 'heart',
   why: '',
-  lessons: [],
+  lessons: [valuesProbes, valuesDepth, valuesDisagree, valuesEthics, valuesUpdating, valuesSelf],
 }
 
 export default course

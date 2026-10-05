@@ -1,6 +1,10 @@
 import type { Course } from '../../core/types'
+import designDoc from '../lessons/design-doc'
+import designRequirements from '../lessons/design-requirements'
+import designCollab from '../lessons/design-collab'
+import designVersions from '../lessons/design-versions'
+import designScale from '../lessons/design-scale'
 
-// STUB — replaced by the content author for this unit.
 const course: Course = {
   id: 'design',
   title: 'Design in Prose',
@@ -8,7 +12,7 @@ const course: Course = {
   color: 'amber',
   icon: 'pen',
   why: '',
-  lessons: [],
+  lessons: [designDoc, designRequirements, designCollab, designVersions, designScale],
 }
 
 export default course

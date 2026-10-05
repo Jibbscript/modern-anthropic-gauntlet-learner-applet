@@ -1,6 +1,8 @@
 import type { Course } from '../../core/types'
+import agentsRules from '../lessons/agents-rules'
+import agentsWorkflow from '../lessons/agents-workflow'
+import agentsReview from '../lessons/agents-review'
 
-// STUB — replaced by the content author for this unit.
 const course: Course = {
   id: 'agents',
   title: 'With & Without AI',
@@ -8,7 +10,7 @@ const course: Course = {
   color: 'indigo',
   icon: 'bot',
   why: '',
-  lessons: [],
+  lessons: [agentsRules, agentsWorkflow, agentsReview],
 }
 
 export default course

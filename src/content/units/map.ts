@@ -1,6 +1,8 @@
 import type { Course } from '../../core/types'
+import mapLoop from '../lessons/map-loop'
+import mapSignals from '../lessons/map-signals'
+import mapAiRules from '../lessons/map-ai-rules'
 
-// STUB — replaced by the content author for this unit.
 const course: Course = {
   id: 'map',
   title: 'The Gauntlet',
@@ -8,7 +10,7 @@ const course: Course = {
   color: 'slate',
   icon: 'compass',
   why: '',
-  lessons: [],
+  lessons: [mapLoop, mapSignals, mapAiRules],
 }
 
 export default course
