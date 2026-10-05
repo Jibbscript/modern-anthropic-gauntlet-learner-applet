@@ -54,7 +54,10 @@ export default function OrderStep({ step, phase, attempt, setController, onHint,
         if (right === n) return { correct: true }
         return {
           correct: false,
-          feedback: right === 0 ? 'None of the cards are in the right spot yet.' : `${right} of ${n} cards are in the right spot.`,
+          feedback:
+            right === 0
+              ? 'None of the cards are in the right spot yet.'
+              : `${right} of ${n} cards ${right === 1 ? 'is' : 'are'} in the right spot.`,
         }
       },
     })
@@ -250,6 +253,7 @@ function OrderCard({
         className={`order-card order-card--${state}`}
         animate={face}
         transition={{ duration: state === 'incorrect' ? 0.42 : 0.32, delay: phase === 'correct' ? pos * 0.05 : 0 }}
+        onKeyDown={onKeyDown}
       >
         <button
           type="button"
@@ -259,7 +263,6 @@ function OrderCard({
           onClick={() => {
             if (!justDragged.current) onToggle()
           }}
-          onKeyDown={onKeyDown}
         >
           <motion.span
             key={pos}

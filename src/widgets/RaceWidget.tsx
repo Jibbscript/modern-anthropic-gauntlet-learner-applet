@@ -183,7 +183,7 @@ export default function RaceWidget({ config, onComplete }: WidgetProps<RaceConfi
   const goalText = tryToBreak
     ? 'Goal: try to lose an update with the lock on'
     : goal === 'lose-update'
-      ? `Goal: make the final x less than ${expected}`
+      ? `Goal: finish with x below ${expected}`
       : `Goal: finish with x = ${expected}`
   const reachedText = tryToBreak ? 'Goal reached: the lock made it impossible' : goal === 'lose-update' ? 'Goal reached: you lost an update' : 'Goal reached: every increment counted'
   const hint = goal === 'lose-update' ? 'Try switching threads between a LOAD and its STORE.' : 'Let each thread STORE before another thread LOADs.'
@@ -323,7 +323,10 @@ export default function RaceWidget({ config, onComplete }: WidgetProps<RaceConfi
                       <span className="race-ins__pc">
                         {cur && <motion.span layoutId={`${uid}-pc-${t}`} className="race-ins__arrow" transition={reduce ? { duration: 0 } : SPRING} />}
                       </span>
-                      <span className="race-ins__op">{op}</span>
+                      <span className="race-ins__op">
+                        <span className="race-ins__long">{op}</span>
+                        <span className="race-ins__short">{SHORT[op]}</span>
+                      </span>
                       <span className="race-ins__arg">{ARG[op]}</span>
                       {cur && blocked && <Lock className="race-ins__lock" size={12} strokeWidth={2.8} />}
                     </li>
@@ -447,7 +450,6 @@ export default function RaceWidget({ config, onComplete }: WidgetProps<RaceConfi
         <div className="race-foot">
           <span className="race-foot__note">
             {nThreads} threads × {increments} increment{increments > 1 ? 's' : ''}
-            {lock ? ' · with lock L' : ''}
           </span>
           <Button size="sm" variant="ghost" icon={<RotateCcw size={14} strokeWidth={2.6} />} onClick={reset} disabled={state.schedule.length === 0}>
             Reset

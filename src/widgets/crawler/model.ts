@@ -27,9 +27,17 @@ export interface CrawlOptions {
   sameHost: boolean
 }
 
+export interface QEntry {
+  /** unique per enqueue, so the same URL queued twice has two entries */
+  id: number
+  page: number
+}
+
 export interface WorkerState {
   /** page being fetched, or -1 when idle */
   page: number
+  /** id of the queue entry this fetch came from */
+  entry: number
   left: number
   total: number
   /** this fetch is a duplicate (page fetched or in flight before) */
@@ -41,11 +49,12 @@ export type CrawlEvent =
   | { kind: 'done'; page: number; worker: number }
   | { kind: 'enqueue'; page: number; from: number }
   | { kind: 'skip'; page: number; from: number }
-  | { kind: 'drop'; page: number; worker: number }
+  | { kind: 'drop'; page: number; worker: number; entry: number }
 
 export interface CrawlState {
   tick: number
-  queue: number[]
+  queue: QEntry[]
+  nextId: number
   /** the dedupe set (unused for 'none') */
   visited: boolean[]
   /** fetch starts per page */
@@ -100,12 +109,13 @@ export function initCrawl(g: SiteGraph, o: CrawlOptions): CrawlState {
   if (o.dedupe === 'atomic') visited[0] = true
   return {
     tick: 0,
-    queue: [0],
+    queue: [{ id: 0, page: 0 }],
+    nextId: 1,
     visited,
     fetches: new Array<number>(n).fill(0),
     done: new Array<boolean>(n).fill(false),
     skipped: new Array<boolean>(n).fill(false),
-    workers: Array.from({ length: Math.max(1, Math.min(4, Math.round(o.workers))) }, () => ({ page: -1, left: 0, total: 0, dup: false })),
+    workers: Array.from({ length: Math.max(1, Math.min(4, Math.round(o.workers))) }, () => ({ page: -1, entry: -1, left: 0, total: 0, dup: false })),
     totalFetches: 0,
     dupes: 0,
     cap: 3 * crawlable(g, o.sameHost).size,
@@ -151,10 +161,11 @@ export function stepCrawl(g: SiteGraph, o: CrawlOptions, prev: CrawlState): Craw
         if (s.visited[link]) continue
         s.visited[link] = true
       }
-      s.queue.push(link)
+      s.queue.push({ id: s.nextId++, page: link })
       s.events.push({ kind: 'enqueue', page: link, from: page })
     }
     w.page = -1
+    w.entry = -1
     w.left = 0
     w.total = 0
     w.dup = false
@@ -164,9 +175,9 @@ export function stepCrawl(g: SiteGraph, o: CrawlOptions, prev: CrawlState): Craw
   s.workers.forEach((w, wi) => {
     if (w.page >= 0) return
     while (s.queue.length && !(o.dedupe === 'none' && s.totalFetches >= s.cap)) {
-      const page = s.queue.shift()!
+      const { id: entry, page } = s.queue.shift()!
       if (o.dedupe === 'check-then-add' && s.visited[page]) {
-        s.events.push({ kind: 'drop', page, worker: wi })
+        s.events.push({ kind: 'drop', page, worker: wi, entry })
         continue
       }
       const dup = s.fetches[page] > 0
@@ -174,6 +185,7 @@ export function stepCrawl(g: SiteGraph, o: CrawlOptions, prev: CrawlState): Craw
       s.totalFetches += 1
       if (dup) s.dupes += 1
       w.page = page
+      w.entry = entry
       w.total = fetchTicks(page)
       w.left = w.total
       w.dup = dup

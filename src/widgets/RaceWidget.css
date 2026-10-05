@@ -1,5 +1,6 @@
 /* race — threads interleaving LOAD / ADD / STORE on a shared counter */
 .race {
+  container: race / inline-size;
   position: relative;
   display: flex;
   flex-direction: column;
@@ -150,7 +151,7 @@
   align-items: stretch;
 }
 .race-col {
-  container-type: inline-size;
+  container: race-col / inline-size;
   position: relative;
   display: flex;
   flex-direction: column;
@@ -160,27 +161,19 @@
   border-radius: var(--r-md);
   background: var(--surface);
   box-shadow:
+    inset 0 3px 0 0 var(--th),
     inset 0 0 0 1.5px var(--line),
     var(--shadow-sm);
   transition:
     box-shadow var(--dur-2),
     background var(--dur-2);
 }
-.race-col::before {
-  content: '';
-  position: absolute;
-  left: 10px;
-  right: 10px;
-  top: 0;
-  height: 3px;
-  border-radius: 0 0 3px 3px;
-  background: var(--th);
-}
 .race-col.is-blocked {
   background:
     repeating-linear-gradient(-45deg, transparent 0 7px, color-mix(in srgb, var(--ink) 4%, transparent) 7px 14px),
     var(--surface);
   box-shadow:
+    inset 0 3px 0 0 var(--th),
     inset 0 0 0 1.5px var(--line-strong),
     var(--shadow-sm);
 }
@@ -328,10 +321,18 @@
   margin-top: auto;
 }
 
-@container (max-width: 112px) {
+.race-ins__short {
+  display: none;
+}
+@container race-col (max-width: 112px) {
   .race-ins__arg,
+  .race-ins__lock,
+  .race-ins__long,
   .race-col__name {
     display: none;
+  }
+  .race-ins__short {
+    display: inline;
   }
   .race-ins {
     grid-template-columns: 10px auto;
@@ -517,4 +518,16 @@
   font-size: var(--fs-xs);
   font-weight: 700;
   color: var(--ink-3);
+}
+
+@container race (max-width: 300px) {
+  .race-top__stat {
+    padding: var(--s-2) var(--s-1);
+  }
+  .race-top__stat .w-stat__label {
+    letter-spacing: 0.02em;
+  }
+  .race-mem__box {
+    width: 68px;
+  }
 }

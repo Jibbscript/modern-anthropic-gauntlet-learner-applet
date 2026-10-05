@@ -255,6 +255,7 @@ export default function ClozeStep({ step, phase, attempt, setController, onHint 
                         type="button"
                         className={['cloze__chip', on && 'cloze__chip--on'].filter(Boolean).join(' ')}
                         aria-pressed={on}
+                        aria-label={step.blanks[active].options[k]}
                         onClick={() => pick(k)}
                         whileTap={{ y: 2 }}
                       >

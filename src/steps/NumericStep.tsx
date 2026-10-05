@@ -125,7 +125,7 @@ export function judge(x: number, answer: number, tolerance = 0.01): NumericVerdi
   const correct = err <= tolerance + 1e-9
   const dir = x === answer ? 'exact' : x > answer ? 'high' : 'low'
   let far: string | null = null
-  if (answer !== 0 && x !== 0 && Math.sign(x) === Math.sign(answer)) {
+  if (err > 0 && answer !== 0 && x !== 0 && Math.sign(x) === Math.sign(answer)) {
     const r = Math.abs(x / answer)
     const big = r >= 1 ? r : 1 / r
     far = big < 1.95 ? `about ${fmtPct(err * 100)}` : `about ${fmtRatio(big)}×`

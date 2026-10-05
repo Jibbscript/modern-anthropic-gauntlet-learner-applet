@@ -116,6 +116,9 @@
   line-height: 1.35;
   color: inherit;
 }
+.order-card__main:last-child {
+  padding-right: var(--s-3);
+}
 .order-card__main:disabled {
   cursor: default;
 }

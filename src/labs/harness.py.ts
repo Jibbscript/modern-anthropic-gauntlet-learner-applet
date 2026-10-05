@@ -51,6 +51,7 @@ class _Capture(_io.TextIOBase):
         self._n = 0
         self._pending = []
         self._last = _time.perf_counter()
+        self._flushes = 0
         self._emit = emit
         self.truncated = False
 
@@ -71,7 +72,9 @@ class _Capture(_io.TextIOBase):
         elif s:
             self.truncated = True
         now = _time.perf_counter()
-        if self._pending and now - self._last > FLUSH_EVERY:
+        # the first writes go out at once (a hang right after a print still
+        # shows it); after that, chunks are throttled
+        if self._pending and (self._flushes < 64 or now - self._last > FLUSH_EVERY):
             self.flush_out()
         return len(s)
 
@@ -80,6 +83,7 @@ class _Capture(_io.TextIOBase):
             chunk = ''.join(self._pending)
             self._pending = []
             self._last = _time.perf_counter()
+            self._flushes += 1
             self._emit({'type': 'out', 's': chunk})
 
     def getvalue(self):
