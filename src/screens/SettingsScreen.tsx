@@ -22,6 +22,7 @@ import {
 import { useStore, exportState, initialState, DEFAULT_SETTINGS, type GauntletState, type Profile, type ThemePref } from '../core/store'
 import { dayKey, daysBetween } from '../core/dates'
 import { nav, useNav } from '../app/nav'
+import { useClock } from '../app/clock'
 import { Button, IconButton } from '../ui/Button'
 import { Sheet } from '../ui/Sheet'
 import { haptic, sfx } from '../ui/fx'
@@ -73,7 +74,7 @@ export default function SettingsScreen() {
     return () => clearTimeout(t)
   }, [toast])
 
-  const today = dayKey(Date.now())
+  const today = dayKey(useClock())
   const daysLeft = profile.interviewDate ? daysBetween(today, profile.interviewDate) : null
   const retention = RETENTION.find((r) => Math.abs(r.value - settings.retention) < 0.001)
 
@@ -535,7 +536,8 @@ function parseImport(text: string): GauntletState {
   }
 }
 
-function ImportSheet({ onCancel, onDone }: { onCancel: () => void; onDone: () => void }) {
+/** also offered on the onboarding welcome, so a reset or a new device can restore before onboarding again */
+export function ImportSheet({ onCancel, onDone }: { onCancel: () => void; onDone: () => void }) {
   const importState = useStore((s) => s.importState)
   const [text, setText] = useState('')
   const [error, setError] = useState<string | null>(null)

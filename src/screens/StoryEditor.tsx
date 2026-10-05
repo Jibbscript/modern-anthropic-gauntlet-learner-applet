@@ -6,6 +6,7 @@ import type { StorySlotId } from '../core/types'
 import { STORY_BY_ID } from '../content/skills'
 import { CATALOG } from '../content'
 import { nav } from '../app/nav'
+import { useClock } from '../app/clock'
 import { Button, IconButton } from '../ui/Button'
 import { Callout } from '../ui/Callout'
 import { courseStyle } from '../ui/course'
@@ -148,6 +149,7 @@ export default function StoryEditor({ slot }: { slot: StorySlotId }) {
     [slot],
   )
   const written = related.filter((r) => (reflections[r.key] ?? '').trim())
+  const now = useClock()
 
   if (!def) {
     return (
@@ -166,7 +168,6 @@ export default function StoryEditor({ slot }: { slot: StorySlotId }) {
     )
   }
 
-  const now = Date.now()
   const liveEntry = { layers, notes, updatedAt: entry?.updatedAt ?? 0, rehearsal: entry?.rehearsal ?? null, rehearsals: entry?.rehearsals ?? 0 }
   const drafted = isDrafted(liveEntry)
   const status = storyStatus(liveEntry, now)

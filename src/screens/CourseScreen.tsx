@@ -7,6 +7,7 @@ import { areaMastery, buildSession, courseProgress, lessonStatus, skillMastery, 
 import { CATALOG, COURSES } from '../content'
 import { SKILLS } from '../content/skills'
 import { nav } from '../app/nav'
+import { useClock } from '../app/clock'
 import { Button, IconButton } from '../ui/Button'
 import { ProgressBar } from '../ui/ProgressBar'
 import { Rich } from '../ui/Rich'
@@ -475,8 +476,9 @@ export default function CourseScreen({ courseId }: { courseId: AreaId }) {
     return out
   }, [nodes])
   const { done, total } = courseProgress(s, course)
-  const mastery = useMemo(() => areaMastery(s, CATALOG, Date.now())[course.id], [s, course.id])
-  const skillM = useMemo(() => skillMastery(s, CATALOG, Date.now()), [s])
+  const now = useClock()
+  const mastery = useMemo(() => areaMastery(s, CATALOG, now)[course.id], [s, course.id, now])
+  const skillM = useMemo(() => skillMastery(s, CATALOG, now), [s, now])
   const skills = SKILLS.filter((k) => k.area === course.id)
   const geo = geometry(width)
   const steps = course.lessons.reduce((a, l) => a + l.steps.length, 0)

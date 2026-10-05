@@ -192,16 +192,29 @@ export function skillMastery(s: GauntletState, cat: Catalog, now: number): Recor
   return out
 }
 
+/**
+ * Mastery per course over the course's OWN cards. (Skills can span courses;
+ * aggregating whole skills would count other courses' cards, so finishing one
+ * course could never reach full coverage and would move another's ring.)
+ * Same blend as skillMastery: unreviewed unlocked cards get half credit.
+ */
 export function areaMastery(s: GauntletState, cat: Catalog, now: number): Record<string, Mastery> {
-  const bySkill = skillMastery(s, cat, now)
   const out: Record<string, Mastery> = {}
   for (const course of cat.courses) {
-    const skills = new Set(course.lessons.flatMap((l) => l.cards.map((c) => c.skill)))
-    const ms = [...skills].map((k) => bySkill[k]).filter(Boolean)
-    const total = ms.reduce((a, m) => a + m.total, 0)
-    const unlocked = ms.reduce((a, m) => a + m.unlocked, 0)
-    const due = ms.reduce((a, m) => a + m.due, 0)
-    const recall = unlocked ? ms.reduce((a, m) => a + m.recall * m.unlocked, 0) / unlocked : 0
+    let total = 0
+    let unlocked = 0
+    let due = 0
+    let recallSum = 0
+    for (const l of course.lessons)
+      for (const card of l.cards) {
+        total++
+        const c = s.cards[card.id]
+        if (!c) continue
+        unlocked++
+        if (c.due <= now) due++
+        recallSum += c.last != null ? recallNow(c, now) : 0.5
+      }
+    const recall = unlocked ? recallSum / unlocked : 0
     const coverage = total ? unlocked / total : 0
     out[course.id] = { mastery: recall * coverage, recall, coverage, unlocked, total, due }
   }

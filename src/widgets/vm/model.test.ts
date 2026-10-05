@@ -137,4 +137,42 @@ describe('interpreter', () => {
     expect(s.last?.popped).toEqual([4, 10])
     expect(s.last?.pushed).toEqual([6])
   })
+
+  it('jumps to a label that shares its line with an instruction', () => {
+    const p = parseProgram(['PUSH 2', 'loop: PUSH 1', 'SUB', 'DUP', 'JZ out', 'JMP loop', 'out: PRINT'])
+    const s = runVm(p)
+    expect(s.output).toEqual([0])
+    expect(s.status).toBe('halted')
+    expect(s.haltReason).toBe('end')
+  })
+
+  it('JZ to a label on the last line runs off the end and halts cleanly', () => {
+    const s = run(['PUSH 0', 'JZ done', 'PUSH 1', 'done:'])
+    expect(s.status).toBe('halted')
+    expect(s.stack).toEqual([])
+  })
+
+  it('stops with an overflow error instead of reaching Infinity', () => {
+    const s = run(['PUSH 2', 'loop:', 'DUP', 'MUL', 'JMP loop'])
+    expect(s.status).toBe('error')
+    expect(s.error?.message).toMatch(/Overflow/)
+    expect(s.error?.line).toBe(3)
+    for (const x of s.stack) expect(Number.isSafeInteger(x.value)).toBe(true)
+    expect(parseProgram(['PUSH 99999999999999999999']).lines[0].error).toMatch(/too big/)
+  })
+
+  it('never shows negative zero', () => {
+    expect(Object.is(top(['PUSH 0', 'PUSH -5', 'MUL']), 0)).toBe(true)
+    expect(Object.is(top(['PUSH -0']), 0)).toBe(true)
+  })
+
+  it('an error leaves the machine unchanged apart from the error', () => {
+    const p = parseProgram(['PUSH 1', 'SWAP'])
+    const before = stepVm(p, initVm(p))
+    const after = stepVm(p, before)
+    expect(after.status).toBe('error')
+    expect(after.stack).toEqual(before.stack)
+    expect(after.steps).toBe(before.steps)
+    expect(stepVm(p, after)).toBe(after)
+  })
 })

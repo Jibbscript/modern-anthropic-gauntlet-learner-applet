@@ -1,11 +1,13 @@
 import { motion } from 'motion/react'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { Sparkles, Target, Timer, Zap, Layers } from 'lucide-react'
 import type { Course, Lesson } from '../core/types'
 import { courseStyle } from '../ui/course'
 import { CourseIcon } from '../ui/Icon'
 import { Button } from '../ui/Button'
 import { Ticker } from '../ui/Ticker'
+import { qualifies, useStore } from '../core/store'
+import { dayKey, weekOf } from '../core/dates'
 import { celebrate, haptic, sfx } from '../ui/fx'
 import './lesson.css'
 
@@ -13,7 +15,10 @@ export interface LessonSummary {
   xp: number
   accuracy: number
   ms: number
+  /** review cards the lesson has */
   cards: number
+  /** review cards this run actually added to the deck (a replay adds none); defaults to `cards` on a first completion */
+  cardsAdded?: number
   streakExtended: boolean
   streakBefore: number
   streakAfter: number
@@ -31,6 +36,8 @@ export function LessonComplete({ lesson, course, summary, onDone }: { lesson: Le
     }
   }, [summary.streakExtended])
 
+  // read once, after finishLesson ran: a replay (second completion or later) adds no new cards
+  const [added] = useState(() => summary.cardsAdded ?? ((useStore.getState().lessons[lesson.id]?.completions ?? 1) > 1 ? 0 : summary.cards))
   const mins = Math.max(1, Math.round(summary.ms / 60000))
   const perfect = summary.accuracy >= 0.999
 
@@ -92,26 +99,32 @@ export function LessonComplete({ lesson, course, summary, onDone }: { lesson: Le
             animate={{ scale: 1, opacity: 1 }}
             transition={{ type: 'spring', stiffness: 420, damping: 16, delay: 1.1 }}
           >
-            <motion.span
-              className="complete__flame"
-              animate={{ scale: [1, 1.2, 0.9, 1.05, 1] }}
-              transition={{ delay: 1.3, duration: 0.7 }}
-            >
-              <Zap size={30} strokeWidth={2.2} fill="currentColor" />
-            </motion.span>
-            <div>
-              <div className="complete__streak-n tabular">
-                <Ticker from={summary.streakBefore} value={summary.streakAfter} duration={0.6} /> day streak
+            <div className="complete__streak-row">
+              <motion.span
+                className="complete__flame"
+                animate={{ scale: [1, 1.2, 0.9, 1.05, 1] }}
+                transition={{ delay: 1.3, duration: 0.7 }}
+              >
+                <Zap size={30} strokeWidth={2.2} fill="currentColor" />
+              </motion.span>
+              <div>
+                <div className="complete__streak-n tabular">
+                  <Ticker from={summary.streakBefore} value={summary.streakAfter} duration={0.6} /> day streak
+                </div>
+                <div className="complete__streak-sub">Come back tomorrow to keep it going.</div>
               </div>
-              <div className="complete__streak-sub">Come back tomorrow to keep it going.</div>
             </div>
+            <WeekRow />
           </motion.div>
         )}
-        {summary.cards > 0 && (
+        {added > 0 && (
           <motion.div className="complete__cards" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.4 }}>
             <Layers size={18} strokeWidth={2.6} />
             <span>
-              <b>{summary.cards} review cards</b> added. They’ll come back right before you’d forget them.
+              <b>
+                {added} review {added === 1 ? 'card' : 'cards'}
+              </b>{' '}
+              added. {added === 1 ? 'It comes' : 'They’ll come'} back right before you’d forget {added === 1 ? 'it' : 'them'}.
             </span>
           </motion.div>
         )}
@@ -122,5 +135,35 @@ export function LessonComplete({ lesson, course, summary, onDone }: { lesson: Le
         </Button>
       </div>
     </div>
+  )
+}
+
+const DOW = ['M', 'T', 'W', 'T', 'F', 'S', 'S']
+
+/** this week's streak days; the days pop in and today's bolt lands last, with a bounce */
+function WeekRow() {
+  const [week] = useState(() => {
+    const s = useStore.getState()
+    const today = dayKey(Date.now())
+    return weekOf(today).map((k) => ({ k, met: qualifies(s.days[k]), today: k === today }))
+  })
+  return (
+    <ol className="complete__week" aria-label={`${week.filter((d) => d.met).length} of 7 days this week`}>
+      {week.map((d, i) => (
+        <li key={d.k} className={`complete__day ${d.met ? 'is-met' : ''} ${d.today ? 'is-today' : ''}`}>
+          <motion.span
+            className="complete__day-dot"
+            initial={{ scale: 0.4, opacity: 0 }}
+            animate={d.today ? { scale: [0.4, 1.25, 0.9, 1], opacity: 1 } : { scale: 1, opacity: 1 }}
+            transition={d.today ? { delay: 1.75, duration: 0.55 } : { type: 'spring', stiffness: 520, damping: 20, delay: 1.25 + i * 0.04 }}
+          >
+            {d.met && <Zap size={14} strokeWidth={2.2} fill="currentColor" aria-hidden />}
+          </motion.span>
+          <span className="complete__day-dow" aria-hidden>
+            {DOW[i]}
+          </span>
+        </li>
+      ))}
+    </ol>
   )
 }

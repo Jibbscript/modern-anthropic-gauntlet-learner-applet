@@ -1,5 +1,5 @@
 import { motion, type Variants } from 'motion/react'
-import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { Battery, BatteryCharging, Brain, CalendarDays, Check, ChevronRight, Clock, NotebookPen, Sparkles, Target, Trophy, Zap } from 'lucide-react'
 import type { Course, Lesson, StorySlotId } from '../core/types'
@@ -9,6 +9,7 @@ import { recallNow } from '../core/fsrs'
 import { dayKey, daysBetween, weekOf } from '../core/dates'
 import { CATALOG, COURSES } from '../content'
 import { nav, useNav } from '../app/nav'
+import { useClock } from '../app/clock'
 import { Button } from '../ui/Button'
 import { ProgressBar } from '../ui/ProgressBar'
 import { Ring } from '../ui/Ring'
@@ -27,21 +28,6 @@ const hasSteps = (l: Lesson) => l.steps.length > 0
 /** catalog of lessons that can actually be played (authored, with steps) */
 function playableCatalog() {
   return buildCatalog(COURSES.map((c) => ({ ...c, lessons: c.lessons.filter(hasSteps) })))
-}
-
-/** re-render every minute and on refocus so due counts and the day roll over */
-function useNow(ms = 60_000) {
-  const [now, setNow] = useState(() => Date.now())
-  useEffect(() => {
-    const t = setInterval(() => setNow(Date.now()), ms)
-    const vis = () => document.visibilityState === 'visible' && setNow(Date.now())
-    document.addEventListener('visibilitychange', vis)
-    return () => {
-      clearInterval(t)
-      document.removeEventListener('visibilitychange', vis)
-    }
-  }, [ms])
-  return now
 }
 
 const fmt = new Intl.NumberFormat('en-US')
@@ -547,7 +533,7 @@ function CourseCard({ course, s, mastery }: { course: Course; s: GauntletState; 
 
 export default function LearnScreen() {
   const s = useStore()
-  const now = useNow()
+  const now = useClock()
   const today = dayKey(now)
   const [sheet, setSheet] = useState<SheetKind>(null)
   const [scrolled, setScrolled] = useState(false)

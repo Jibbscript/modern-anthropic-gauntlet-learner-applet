@@ -39,12 +39,13 @@ const METRICS: { key: MetricKey; label: string; unit: string; formula: string; w
   { key: 'storagePerYear', label: 'Storage/year', unit: '', formula: 'per day × 365' },
 ]
 
+// placeholders show the accepted formats only; a plausible-looking number here would give answers away
 const QUESTION: Record<MetricKey, { goal: string; q: string; unit: string; hint: string; placeholder: string }> = {
-  avgQps: { goal: 'find the average QPS', q: 'What’s the average QPS?', unit: 'req/s', hint: 'Average QPS = DAU × requests per user ÷ 86,400 seconds.', placeholder: 'e.g. 25 or 1.2k' },
-  peakQps: { goal: 'find the peak QPS', q: 'What’s the peak QPS?', unit: 'req/s', hint: 'Peak QPS = average QPS × the peak factor.', placeholder: 'e.g. 70 or 1.2k' },
-  tokensPerSec: { goal: 'find tokens per second', q: 'How many tokens per second, on average?', unit: 'tok/s', hint: 'Tokens per second = average QPS × tokens per request.', placeholder: 'e.g. 200k' },
-  storagePerDay: { goal: 'find storage per day', q: 'How much new storage per day?', unit: 'per day', hint: 'Storage per day = DAU × requests per user × bytes per version.', placeholder: 'e.g. 2 GB' },
-  storagePerYear: { goal: 'find storage per year', q: 'How much storage per year?', unit: 'per year', hint: 'Storage per year = storage per day × 365.', placeholder: 'e.g. 1 TB' },
+  avgQps: { goal: 'find the average QPS', q: 'What’s the average QPS?', unit: 'req/s', hint: 'Average QPS = DAU × requests per user ÷ 86,400 seconds.', placeholder: 'a number, or 1.2k' },
+  peakQps: { goal: 'find the peak QPS', q: 'What’s the peak QPS?', unit: 'req/s', hint: 'Peak QPS = average QPS × the peak factor.', placeholder: 'a number, or 1.2k' },
+  tokensPerSec: { goal: 'find tokens per second', q: 'How many tokens per second, on average?', unit: 'tok/s', hint: 'Tokens per second = average QPS × tokens per request.', placeholder: 'a number, or 1.2M' },
+  storagePerDay: { goal: 'find storage per day', q: 'How much new storage per day?', unit: 'per day', hint: 'Storage per day = DAU × requests per user × bytes per version.', placeholder: 'with a unit: KB, MB, GB…' },
+  storagePerYear: { goal: 'find storage per year', q: 'How much storage per year?', unit: 'per year', hint: 'Storage per year = storage per day × 365.', placeholder: 'with a unit: GB, TB…' },
 }
 
 const isBytes = (k: MetricKey) => k === 'storagePerDay' || k === 'storagePerYear'
@@ -119,11 +120,17 @@ export default function EstimatorWidget({ config, onComplete }: WidgetProps<Esti
     if (!target || reached) return
     const p = parseAnswer(answer)
     if (!p) {
-      setFeedback({ tone: 'retry', text: 'Type a number, like 70, 1.2k or 2M.' })
+      setFeedback({ tone: 'retry', text: 'Type a number, like 450, 1.2k or 3M.' })
       setShake((n) => n + 1)
       return
     }
     const m = target.metric
+    // a bare number is ambiguous for storage (2 what?): ask for a unit without counting a miss
+    if (isBytes(m) && !p.bytes) {
+      setFeedback({ tone: 'retry', text: 'Add a unit: KB, MB, GB or TB.' })
+      setShake((n) => n + 1)
+      return
+    }
     if (within(p.value, target.value)) {
       setFeedback({ tone: 'good', text: `Correct. About ${fmtMetric(m)(target.value)} ${QUESTION[m].unit}.` })
       complete()
@@ -135,7 +142,8 @@ export default function EstimatorWidget({ config, onComplete }: WidgetProps<Esti
     sfx('wrong')
     haptic('error')
     let nudge: string
-    if (isBytes(m) && !p.suffixed && within(p.value * 1e9, target.value)) nudge = 'Add a unit, like 2 GB.'
+    const off = p.value / target.value
+    if (isBytes(m) && [1e3, 1e6, 1e-3, 1e-6].some((k) => within(off * k, 1))) nudge = 'Right digits, wrong unit. 1 KB = 1,000 bytes, 1 MB = 1,000 KB, 1 GB = 1,000 MB.'
     else if (m === 'peakQps' && within(p.value, d.avgQps) && matches) nudge = 'That’s the average. Peak QPS = average × the peak factor.'
     else if (!matches) nudge = 'First set every slider to the scenario’s numbers, then follow the chain.'
     else nudge = QUESTION[m].hint
@@ -198,7 +206,7 @@ export default function EstimatorWidget({ config, onComplete }: WidgetProps<Esti
                 transition={{ type: 'spring', stiffness: 600, damping: 22 }}
               >
                 <CircleCheck size={13} strokeWidth={2.8} />
-                matches the scenario
+                matches scenario
               </motion.span>
             )}
           </AnimatePresence>
@@ -249,8 +257,9 @@ export default function EstimatorWidget({ config, onComplete }: WidgetProps<Esti
         </header>
         <div className="est-grid">
           {METRICS.map((m) => {
-            const hidden = target?.metric === m.key && !reached && !revealed
-            const isTarget = target?.metric === m.key
+            // the metric being asked about stays masked until it is answered (only when there is a question)
+            const hidden = goal === 'answer' && target?.metric === m.key && !reached && !revealed
+            const isTarget = goal === 'answer' && target?.metric === m.key
             return (
               <div key={m.key} className={['est-card', m.wide ? 'is-wide' : '', isTarget ? 'is-target' : '', isTarget && reached ? 'is-done' : ''].join(' ')}>
                 <span className="est-card__label">{m.label}</span>

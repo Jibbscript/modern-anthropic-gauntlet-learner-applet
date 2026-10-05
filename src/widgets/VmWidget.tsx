@@ -64,9 +64,10 @@ export default function VmWidget({ config, onComplete }: WidgetProps<VmConfig>) 
   }, [prog, predictIdx])
   const answer = Number.isFinite(predict?.answer) ? (predict!.answer as number) : dry.top
   const options = useMemo(() => {
-    const given = (predict?.options ?? []).filter((n) => Number.isFinite(n))
-    if (given.length >= 2) return given
+    const given = [...new Set((predict?.options ?? []).filter((n) => Number.isFinite(n)))]
     const a = answer ?? 0
+    // the right answer must be pickable, or the goal could never be reached
+    if (given.length >= 2) return given.includes(a) ? given : [...given.slice(0, 3), a]
     return [...new Set([a, -a, a + 1, a * 2])].slice(0, 4)
   }, [predict, answer])
   const predictOn = dry.reachable && answer !== undefined
@@ -183,10 +184,14 @@ export default function VmWidget({ config, onComplete }: WidgetProps<VmConfig>) 
     if (!list || list.scrollHeight <= list.clientHeight + 2) return
     const row = list.querySelector<HTMLElement>(`[data-line="${state.pc}"]`)
     if (!row) return
-    const top = row.offsetTop - list.offsetTop
-    if (top < list.scrollTop + 8) list.scrollTop = Math.max(0, top - 8)
-    else if (top + row.offsetHeight > list.scrollTop + list.clientHeight - 8) list.scrollTop = top + row.offsetHeight - list.clientHeight + 8
-  }, [state.pc])
+    // row position inside the scrolled content (rects, not offsetTop: the list is the rows' offsetParent)
+    const top = row.getBoundingClientRect().top - list.getBoundingClientRect().top - list.clientTop + list.scrollTop
+    const bottom = top + row.offsetHeight
+    let to = list.scrollTop
+    if (top < list.scrollTop + 8) to = Math.max(0, top - 8)
+    else if (bottom > list.scrollTop + list.clientHeight - 8) to = bottom - list.clientHeight + 8
+    if (to !== list.scrollTop) list.scrollTo({ top: to, behavior: reduce ? 'auto' : 'smooth' })
+  }, [state.pc, reduce])
 
   const { status, stack, last, error } = state
   const finished = status !== 'ok'
@@ -492,7 +497,7 @@ export default function VmWidget({ config, onComplete }: WidgetProps<VmConfig>) 
         >
           {running ? 'Pause' : 'Run'}
         </Button>
-        <Button size="sm" variant="ghost" className="vm-controls__reset" icon={<RotateCcw size={14} strokeWidth={2.6} />} onClick={reset} disabled={state.steps === 0 && !asking}>
+        <Button size="sm" variant="ghost" className="vm-controls__reset" aria-label="Reset" icon={<RotateCcw size={14} strokeWidth={2.6} />} onClick={reset} disabled={state.steps === 0 && !asking}>
           Reset
         </Button>
       </div>

@@ -117,8 +117,9 @@
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  background: var(--retry);
-  color: #3d2e00;
+  background: var(--retry-soft);
+  color: var(--retry-ink);
+  box-shadow: inset 0 0 0 1.5px var(--retry);
   font-family: var(--font-ui);
   font-size: 11px;
   font-weight: 700;
@@ -285,7 +286,7 @@
 }
 .vm-block.is-top {
   background: var(--c, var(--select));
-  color: #fff;
+  color: var(--c-on, #fff);
   box-shadow:
     0 3px 0 0 var(--c-edge, var(--select-edge)),
     0 6px 14px color-mix(in srgb, var(--c, var(--select)) 35%, transparent);

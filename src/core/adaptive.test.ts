@@ -81,6 +81,18 @@ describe('mastery', () => {
     expect(ar.python.coverage).toBe(0)
   })
 
+  it('counts only a course\'s own cards when a skill spans courses', () => {
+    const shared = buildCatalog([
+      course('concurrency', [lesson('conc-1', [card('conc-1', 'a', 'conc.locks'), card('conc-1', 'b', 'conc.locks')])]),
+      course('builds', [lesson('builds-1', [card('builds-1', 'a', 'conc.locks'), card('builds-1', 'b', 'conc.locks')])]),
+    ])
+    // the concurrency course is finished; the builds course has not been started
+    const s = stateWith({ 'conc-1.a': newCard(NOW), 'conc-1.b': newCard(NOW) })
+    const ar = areaMastery(s, shared, NOW)
+    expect(ar.concurrency).toMatchObject({ coverage: 1, unlocked: 2, total: 2 })
+    expect(ar.builds).toMatchObject({ coverage: 0, unlocked: 0, total: 2, mastery: 0 })
+  })
+
   it('weights coverage by unlocked cards', () => {
     const s = stateWith({ 'conc-1.a': newCard(NOW) })
     const m = skillMastery(s, CAT, NOW).locks

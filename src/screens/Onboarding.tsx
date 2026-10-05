@@ -28,10 +28,12 @@ import { Button, IconButton } from '../ui/Button'
 import { ProgressBar } from '../ui/ProgressBar'
 import { Ring } from '../ui/Ring'
 import { Ticker } from '../ui/Ticker'
+import { Sheet } from '../ui/Sheet'
 import { CourseIcon } from '../ui/Icon'
 import { CourseArt } from '../ui/CourseArt'
 import { courseStyle } from '../ui/course'
 import { celebrate, haptic, sfx } from '../ui/fx'
+import { ImportSheet } from './SettingsScreen'
 import './Onboarding.css'
 
 /* ------------------------------------------------------------------ data */
@@ -144,6 +146,7 @@ export default function Onboarding() {
   const [finishing, setFinishing] = useState(false)
   /** set while revisiting a step from the plan summary: Continue returns to the plan */
   const [editing, setEditing] = useState(false)
+  const [restoring, setRestoring] = useState(false)
 
   const id: StepId = STEPS[step]
   const go = (to: number) => {
@@ -195,6 +198,9 @@ export default function Onboarding() {
           <Button block size="lg" onClick={next}>
             Get started
           </Button>
+          <button type="button" className="onb-restore" onClick={() => setRestoring(true)}>
+            Restore progress from a backup
+          </button>
           <p className="onb-disclaimer">Unofficial · built from public candidate reports</p>
         </>
       )
@@ -316,6 +322,16 @@ export default function Onboarding() {
           </motion.div>
         </AnimatePresence>
       </div>
+      <Sheet open={restoring} onClose={() => setRestoring(false)} label="Import progress">
+        <ImportSheet
+          onCancel={() => setRestoring(false)}
+          onDone={() => {
+            setRestoring(false)
+            // an imported profile is already onboarded: land on Learn with nothing stacked
+            useNav.getState().setTab('learn')
+          }}
+        />
+      </Sheet>
     </div>
   )
 }

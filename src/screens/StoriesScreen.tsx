@@ -1,5 +1,5 @@
 import { motion } from 'motion/react'
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import {
   Bot,
   Check,
@@ -29,6 +29,7 @@ import { dueStories } from '../core/adaptive'
 import { formatInterval } from '../core/fsrs'
 import { DAY_MS, dayKey, daysBetween } from '../core/dates'
 import { nav } from '../app/nav'
+import { useClock } from '../app/clock'
 import { Button } from '../ui/Button'
 import { ProgressBar } from '../ui/ProgressBar'
 import { Ticker } from '../ui/Ticker'
@@ -153,21 +154,6 @@ export function dueIn(due: number, now: number): string {
   return due <= now ? 'now' : `in ${formatInterval((due - now) / DAY_MS)}`
 }
 
-/** re-render every minute so due states stay fresh while the tab is open */
-export function useNow(ms = 60_000) {
-  const [now, setNow] = useState(() => Date.now())
-  useEffect(() => {
-    const t = setInterval(() => setNow(Date.now()), ms)
-    const vis = () => document.visibilityState === 'visible' && setNow(Date.now())
-    document.addEventListener('visibilitychange', vis)
-    return () => {
-      clearInterval(t)
-      document.removeEventListener('visibilitychange', vis)
-    }
-  }, [ms])
-  return now
-}
-
 /* ----------------------------------------------------------- the screen */
 
 const rise = (i: number) => ({
@@ -181,7 +167,7 @@ const MIN_PER_STORY = 3
 
 export default function StoriesScreen() {
   const s = useStore()
-  const now = useNow()
+  const now = useClock()
 
   const d = useMemo(() => {
     const drafted = STORY_SLOTS.filter((x) => isDrafted(s.stories[x.id]))

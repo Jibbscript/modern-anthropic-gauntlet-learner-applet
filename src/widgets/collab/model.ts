@@ -26,10 +26,19 @@ export interface Seg {
 
 export const other = (u: User): User => (u === 'A' ? 'B' : 'A')
 
+/**
+ * Positions are UTF-16 indices, like JavaScript string indices, everywhere
+ * in this module. A position inside a surrogate pair (the middle of an
+ * emoji) is moved past it so no character is ever split.
+ */
 export function clampEdit(base: string, e: Edit): Edit {
-  const at = Math.max(0, Math.min(base.length, Math.round(Number.isFinite(e.at) ? e.at : 0)))
-  return { at, insert: e.insert ?? '' }
+  let at = Math.max(0, Math.min(base.length, Math.round(Number.isFinite(e.at) ? e.at : 0)))
+  if (at > 0 && at < base.length && /[\uD800-\uDBFF]/.test(base[at - 1]) && /[\uDC00-\uDFFF]/.test(base[at])) at++
+  return { at, insert: typeof e.insert === 'string' ? e.insert : '' }
 }
+
+/** split into UTF-16 code units, matching the indices above */
+const units = (s: string): string[] => s.split('')
 
 /** group per-character authors into runs */
 function toSegs(chars: { ch: string; who: Who; lost?: boolean }[]): Seg[] {
@@ -90,7 +99,7 @@ export function transformInsert(op: Edit, user: User, against: Edit): Transform 
 }
 
 function applyInsert(chars: { ch: string; who: Who }[], at: number, text: string, who: Who) {
-  chars.splice(at, 0, ...Array.from(text, (ch) => ({ ch, who })))
+  chars.splice(at, 0, ...units(text).map((ch) => ({ ch, who })))
 }
 
 export interface OtResult {
@@ -109,11 +118,11 @@ export function otMerge(base: string, editA: Edit, editB: Edit): OtResult {
   const bOnA = transformInsert(b, 'B', a)
   const aOnB = transformInsert(a, 'A', b)
   // site A: own insert, then B's transformed op
-  const siteA = Array.from(base, (ch) => ({ ch, who: 'base' as Who }))
+  const siteA = units(base).map((ch) => ({ ch, who: 'base' as Who }))
   applyInsert(siteA, a.at, a.insert, 'A')
   applyInsert(siteA, bOnA.to, b.insert, 'B')
   // site B: own insert, then A's transformed op
-  const siteB = Array.from(base, (ch) => ({ ch, who: 'base' as Who }))
+  const siteB = units(base).map((ch) => ({ ch, who: 'base' as Who }))
   applyInsert(siteB, b.at, b.insert, 'B')
   applyInsert(siteB, aOnB.to, a.insert, 'A')
   const ta = siteA.map((c) => c.ch).join('')
@@ -147,7 +156,7 @@ const sameId = (x: CharId | null, y: CharId | null) => (x === null || y === null
 function insertRun(site: 'a' | 'b', text: string, anchor: CharId | null, clock0: number): CrdtChar[] {
   const out: CrdtChar[] = []
   let prev = anchor
-  Array.from(text).forEach((ch, i) => {
+  units(text).forEach((ch, i) => {
     const id: CharId = { site, n: i + 1, clock: clock0 + i + 1 }
     out.push({ id, ch, who: site === 'a' ? 'A' : 'B', after: prev })
     prev = id
@@ -212,7 +221,7 @@ export function crdtMerge(base: string, editA: Edit, editB: Edit): CrdtResult {
   const b = clampEdit(base, editB)
   const baseChars: CrdtChar[] = []
   let prev: CharId | null = null
-  Array.from(base).forEach((ch, i) => {
+  units(base).forEach((ch, i) => {
     const id: CharId = { site: 'o', n: i + 1, clock: i + 1 }
     baseChars.push({ id, ch, who: 'base', after: prev })
     prev = id
@@ -265,9 +274,9 @@ export function lwwMerge(base: string, editA: Edit, editB: Edit, last: User): Lw
   const winner = last
   const loser = other(last)
   const ghostAt = transformInsert(edits[loser], loser, edits[winner]).to
-  const chars: { ch: string; who: Who; lost?: boolean }[] = Array.from(base, (ch) => ({ ch, who: 'base' as Who }))
+  const chars: { ch: string; who: Who; lost?: boolean }[] = units(base).map((ch) => ({ ch, who: 'base' as Who }))
   applyInsert(chars, edits[winner].at, edits[winner].insert, winner)
-  chars.splice(ghostAt, 0, ...Array.from(edits[loser].insert, (ch) => ({ ch, who: loser as Who, lost: true })))
+  chars.splice(ghostAt, 0, ...units(edits[loser].insert).map((ch) => ({ ch, who: loser as Who, lost: true })))
   return { segs: toSegs(chars), winner, loser }
 }
 

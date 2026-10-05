@@ -100,3 +100,63 @@ describe('last write wins', () => {
     expect(merge('ot', DEFAULT_BASE, DEFAULT_A, DEFAULT_B).text).toBe(merge('crdt', DEFAULT_BASE, DEFAULT_A, DEFAULT_B).text)
   })
 })
+
+describe('invariants (sweep)', () => {
+  const bases = ['', 'ab', 'Summarize the ticket.']
+  const inserts = ['', 'X', ' in 3 bullets']
+  const each = (fn: (base: string, a: { at: number; insert: string }, b: { at: number; insert: string }) => void) => {
+    for (const base of bases)
+      for (let i = 0; i <= base.length; i++)
+        for (let j = 0; j <= base.length; j++) for (const sa of inserts) for (const sb of inserts) fn(base, { at: i, insert: sa }, { at: j, insert: sb })
+  }
+
+  it('LWW: the server copy is exactly the winner’s local copy; the ghost is exactly the loser’s insert', () => {
+    each((base, a, b) => {
+      for (const last of ['A', 'B'] as const) {
+        const r = lwwMerge(base, a, b, last)
+        const winnerEdit = last === 'A' ? a : b
+        const loserEdit = last === 'A' ? b : a
+        expect(textOf(r.segs)).toBe(textOf(localCopy(base, winnerEdit, last)))
+        expect(r.segs.filter((s) => s.lost).map((s) => s.text).join('')).toBe(loserEdit.insert)
+        expect(merge('lww', base, a, b, last).kept).toBe(loserEdit.insert ? 1 : 2)
+      }
+    })
+  })
+
+  it('OT and CRDT preserve intent: each insert stays contiguous and the base order is untouched', () => {
+    each((base, a, b) => {
+      for (const strat of ['ot', 'crdt'] as const) {
+        const m = merge(strat, base, a, b)
+        expect(m.text.length).toBe(base.length + a.insert.length + b.insert.length)
+        expect(m.segs.filter((s) => s.who === 'A').map((s) => s.text)).toEqual(a.insert ? [a.insert] : [])
+        expect(m.segs.filter((s) => s.who === 'B').map((s) => s.text)).toEqual(b.insert ? [b.insert] : [])
+        expect(m.segs.filter((s) => s.who === 'base').map((s) => s.text).join('')).toBe(base)
+        // each insert lands right after the base character its author saw on its left
+        const pos = (who: 'A' | 'B') => {
+          let n = 0
+          for (const s of m.segs) {
+            if (s.who === who) return n
+            if (s.who === 'base') n += s.text.length
+          }
+          return -1
+        }
+        if (a.insert) expect(pos('A')).toBe(a.at)
+        if (b.insert) expect(pos('B')).toBe(b.at)
+      }
+    })
+  })
+})
+
+describe('positions', () => {
+  it('index in UTF-16 units like JS strings and never split an emoji', () => {
+    const base = 'Hi 👋 there'
+    const a = { at: 5, insert: '!' } // right after the emoji (2 code units)
+    const b = { at: 4, insert: '?' } // inside the emoji: moved past it
+    expect(textOf(otMerge(base, a, b).segs)).toBe('Hi 👋!? there')
+    expect(textOf(crdtMerge(base, a, b).segs)).toBe(textOf(otMerge(base, a, b).segs))
+    expect(textOf(localCopy(base, b, 'B'))).toBe('Hi 👋? there')
+  })
+  it('tolerates a malformed edit', () => {
+    expect(textOf(otMerge('abc', { at: Number.NaN, insert: 'X' }, { at: 1, insert: undefined as unknown as string }).segs)).toBe('Xabc')
+  })
+})

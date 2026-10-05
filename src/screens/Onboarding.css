@@ -75,6 +75,19 @@
   background: linear-gradient(180deg, transparent, var(--bg));
   pointer-events: none;
 }
+.onb-restore {
+  align-self: center;
+  min-height: 44px;
+  margin: calc(var(--s-1) * -1) 0;
+  padding: 0 var(--s-3);
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  color: var(--ink-2);
+  border-radius: var(--r-pill);
+}
+.onb-restore:active {
+  color: var(--ink);
+}
 .onb-disclaimer {
   text-align: center;
   font-size: 12px;

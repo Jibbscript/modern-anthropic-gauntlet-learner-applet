@@ -450,6 +450,10 @@
 }
 
 @container est (max-width: 280px) {
+  .est-match {
+    gap: 3px;
+    padding: 0 6px;
+  }
   .est-card__label {
     letter-spacing: 0.02em;
   }

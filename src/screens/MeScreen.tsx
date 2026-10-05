@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'motion/react'
-import { useEffect, useMemo, useState, type ReactNode } from 'react'
+import { useMemo, useState, type ReactNode } from 'react'
 import { BatteryCharging, BookOpen, Brain, CalendarDays, ChevronDown, ChevronRight, Settings, Sparkles, Target, Trophy, User, Zap, type LucideIcon } from 'lucide-react'
 import { useStore, liveStreak, type Profile } from '../core/store'
 import type { Course } from '../core/types'
@@ -9,6 +9,7 @@ import { skillMastery, type Mastery } from '../core/adaptive'
 import { ACHIEVEMENTS } from '../core/achievements'
 import { addDays, dayKey, daysBetween, parseDayKey, weekOf } from '../core/dates'
 import { nav } from '../app/nav'
+import { useClock } from '../app/clock'
 import { IconButton } from '../ui/Button'
 import { ProgressBar } from '../ui/ProgressBar'
 import { Ticker } from '../ui/Ticker'
@@ -27,15 +28,6 @@ const ROLE_LABEL: Record<Profile['role'], string> = {
   other: 'Engineer',
 }
 
-function useNow(ms = 60_000) {
-  const [now, setNow] = useState(() => Date.now())
-  useEffect(() => {
-    const t = setInterval(() => setNow(Date.now()), ms)
-    return () => clearInterval(t)
-  }, [ms])
-  return now
-}
-
 const rise = (i: number) => ({
   initial: { opacity: 0, y: 14 },
   animate: { opacity: 1, y: 0 },
@@ -48,7 +40,7 @@ const fmtStat = (n: number) => (n >= 1e6 ? `${(n / 1e6).toFixed(1).replace(/\.0$
 
 export default function MeScreen() {
   const s = useStore()
-  const now = useNow()
+  const now = useClock()
   const today = dayKey(now)
   const live = liveStreak(s.streak, today)
 

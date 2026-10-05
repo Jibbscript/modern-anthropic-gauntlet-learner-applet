@@ -1,5 +1,5 @@
 import { motion } from 'motion/react'
-import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { ArrowRight, Brain, Check, ChevronRight, Clock, Dumbbell, Layers, RotateCcw, TerminalSquare, Timer } from 'lucide-react'
 import { useStore, type GauntletState } from '../core/store'
 import type { AreaId, Course, Lab } from '../core/types'
@@ -10,6 +10,7 @@ import { buildSession, forecast, leeches } from '../core/adaptive'
 import { formatInterval, recallNow, type CardState } from '../core/fsrs'
 import { parseDayKey } from '../core/dates'
 import { nav, useNav } from '../app/nav'
+import { useClock } from '../app/clock'
 import { Button } from '../ui/Button'
 import { ProgressBar } from '../ui/ProgressBar'
 import { Ring } from '../ui/Ring'
@@ -25,21 +26,6 @@ const DAY = 86_400_000
 const SECONDS_PER_CARD = 20
 
 const COURSE_BY_ID = Object.fromEntries(CATALOG.courses.map((c) => [c.id, c])) as Record<AreaId, Course>
-
-/** re-render every minute so due counts stay fresh while the tab is open */
-function useNow(ms = 60_000) {
-  const [now, setNow] = useState(() => Date.now())
-  useEffect(() => {
-    const t = setInterval(() => setNow(Date.now()), ms)
-    const vis = () => document.visibilityState === 'visible' && setNow(Date.now())
-    document.addEventListener('visibilitychange', vis)
-    return () => {
-      clearInterval(t)
-      document.removeEventListener('visibilitychange', vis)
-    }
-  }, [ms])
-  return now
-}
 
 function useWidth<T extends HTMLElement>() {
   const ref = useRef<T>(null)
@@ -139,7 +125,7 @@ const pct = (v: number) => `${Math.round(v * 100)}%`
 
 export default function PracticeScreen() {
   const raw = useStore()
-  const now = useNow()
+  const now = useClock()
   const setTab = useNav((n) => n.setTab)
   const s = useMemo(() => scopedState(raw), [raw])
 

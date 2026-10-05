@@ -84,7 +84,8 @@ export function parseProgram(src: string[]): Program {
         line.error = kind === 'int' ? `${op} needs one number` : kind === 'label' ? `${op} needs a label` : `${op} needs a variable name`
       } else if (kind === 'int') {
         if (!INT.test(args[0])) line.error = `${op} needs a whole number, not '${args[0]}'`
-        else line.instr = { op, arg: Number(args[0]) }
+        else if (!Number.isSafeInteger(Number(args[0]))) line.error = `${args[0]} is too big for this machine`
+        else line.instr = { op, arg: Number(args[0]) + 0 }
       } else if (!NAME.test(args[0])) {
         line.error = `Bad ${kind} '${args[0]}'`
       } else line.instr = { op, arg: args[0] }
@@ -225,7 +226,10 @@ export function stepVm(prog: Program, s: VmState): VmState {
       if (!need(2)) return fail(`Stack underflow: ${op} needs 2 values, found ${stack.length}`)
       const b = pop()
       const a = pop()
-      const r = op === 'ADD' ? a + b : op === 'SUB' ? a - b : a * b
+      // + 0 folds −0 (from 0 × −n) into 0
+      const r = (op === 'ADD' ? a + b : op === 'SUB' ? a - b : a * b) + 0
+      // a doubling loop would otherwise reach Infinity; integers here are exact up to 2^53
+      if (!Number.isSafeInteger(r)) return fail(`Overflow: ${showNum(a)} ${SYM[op]} ${showNum(b)} is too big for this machine`)
       push(r)
       text = `pop ${showNum(b)}, pop ${showNum(a)} → push ${fmt(a)} ${SYM[op]} ${fmt(b)} = ${showNum(r)}`
       break

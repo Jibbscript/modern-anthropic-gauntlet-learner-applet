@@ -40,10 +40,20 @@ for (const c of COURSES)
 
 const proxy = process.env.HTTPS_PROXY || process.env.https_proxy
 const browser = await chromium.launch(proxy ? { proxy: { server: proxy, bypass: 'localhost,127.0.0.1' } } : {})
-const page = await browser.newPage({ viewport: { width: 390, height: 844 }, ignoreHTTPSErrors: true, colorScheme: dark ? 'dark' : 'light' })
 let errs: string[] = []
-page.on('console', (m) => m.type() === 'error' && errs.push(m.text()))
-page.on('pageerror', (e) => errs.push(String(e)))
+// Headless Chromium keeps every navigated document alive in the renderer, so
+// one long-lived page crashes after a few hundred renders. Use a fresh page
+// (and renderer) every RECYCLE targets, and after a crash.
+const RECYCLE = 60
+type Page = Awaited<ReturnType<typeof browser.newPage>>
+let page: Page
+async function freshPage() {
+  await page?.close().catch(() => {})
+  page = await browser.newPage({ viewport: { width: 390, height: 844 }, ignoreHTTPSErrors: true, colorScheme: dark ? 'dark' : 'light' })
+  page.on('console', (m) => m.type() === 'error' && errs.push(m.text()))
+  page.on('pageerror', (e) => errs.push(String(e)))
+}
+await freshPage()
 
 const failures: string[] = []
 let n = 0
@@ -69,11 +79,13 @@ async function check(t: { label: string; url: string }) {
 }
 
 for (const t of targets) {
+  if (n && n % RECYCLE === 0) await freshPage()
   let real: string[]
   try {
     real = await check(t)
   } catch {
-    // a dev-server reload can interrupt a check; retry once
+    // a dev-server reload can interrupt a check, or the renderer can crash; retry once on a fresh page
+    await freshPage()
     real = await check(t).catch((e) => [`check failed: ${String(e).split('\n')[0]}`])
   }
   if (real.length) failures.push(`${t.label}\n    ${real.join('\n    ')}`)

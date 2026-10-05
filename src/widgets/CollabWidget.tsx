@@ -398,7 +398,7 @@ export default function CollabWidget({ config, onComplete }: WidgetProps<CollabC
         <Button size="sm" variant="primary" icon={<ArrowLeftRight size={15} strokeWidth={2.6} />} onClick={sync} disabled={phase !== 'ready'} className="collab-sync">
           {syncing ? 'Syncing…' : merged ? 'Synced' : 'Sync'}
         </Button>
-        <Button size="sm" variant="ghost" className="collab-reset" icon={<RotateCcw size={14} strokeWidth={2.6} />} onClick={() => restart(true)} disabled={phase === 'typing'}>
+        <Button size="sm" variant="ghost" className="collab-reset" aria-label="Reset" icon={<RotateCcw size={14} strokeWidth={2.6} />} onClick={() => restart(true)} disabled={phase === 'typing'}>
           Reset
         </Button>
       </div>

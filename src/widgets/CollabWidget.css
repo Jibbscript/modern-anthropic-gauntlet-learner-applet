@@ -587,6 +587,21 @@
   .collab-reset .btn__label {
     display: none;
   }
+  /* three stat boxes are too narrow for their labels here: stack them as label / value rows */
+  .collab-stats {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 4px;
+  }
+  .collab-stats .w-stat {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--s-2);
+    padding: 6px var(--s-3);
+  }
+  .collab-stats .w-stat__value {
+    font-size: var(--fs-md);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
