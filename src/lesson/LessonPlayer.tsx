@@ -70,12 +70,15 @@ export function LessonPlayer({ lessonId, onExit }: { lessonId: string; onExit: (
     const graded = run.graded.length
     const accuracy = graded ? run.firstTry / graded : 1
     const before = useStore.getState().streak.current
+    const have = useStore.getState().cards
+    const cardsAdded = lesson.cards.filter((c) => !have[c.id]).length
     const r = useStore.getState().finishLesson(lessonId, { accuracy, cardIds: lesson.cards.map((c) => c.id), activeMs: run.ms })
     setSummary({
       xp: run.xp + r.xp,
       accuracy,
       ms: run.ms,
       cards: lesson.cards.length,
+      cardsAdded,
       streakExtended: r.streakExtended,
       streakBefore: before,
       streakAfter: useStore.getState().streak.current,

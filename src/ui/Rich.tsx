@@ -8,7 +8,8 @@ import './ui.css'
  * Blocks: paragraphs, "- " bullets, "1. " numbered items, "> " quotes.
  */
 
-const INLINE_SRC = /(`[^`\n]+`)|(\*\*[^*]+?\*\*)|(==[^=]+?==)|(\[[^\]]+\]\([^)\s]+\))|(\*[^*\n]+?\*)/.source
+// a highlight may hold a lone '=' ("==throughput = min(...)=="), just not '=='
+const INLINE_SRC = /(`[^`\n]+`)|(\*\*[^*]+?\*\*)|(==(?:[^=\n]|=(?!=))+?==)|(\[[^\]]+\]\([^)\s]+\))|(\*[^*\n]+?\*)/.source
 
 export function renderInline(text: string, keyBase = 'i'): ReactNode[] {
   const out: ReactNode[] = []

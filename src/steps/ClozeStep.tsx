@@ -3,7 +3,7 @@ import { CircleCheck } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import type { ClozeStep as T, Lang } from '../core/types'
 import { Rich } from '../ui/Rich'
-import { Code, Toks } from '../ui/code/Code'
+import { Code, Toks, glueIndent } from '../ui/code/Code'
 import { tokenLines, tokenizePython, type Tok, type TokKind } from '../ui/code/highlight'
 import { haptic, sfx } from '../ui/fx'
 import { seededShuffle } from './shuffle'
@@ -249,7 +249,7 @@ export default function ClozeStep({ step, phase, attempt, setController, onHint,
         renderLine={(n) => {
           const segs = lines[n - 1]
           if (!segs?.length) return undefined
-          return segs.map((s, k) => (s.t === 'code' ? <Toks key={k} toks={s.toks} /> : renderSlot(s.i, k)))
+          return segs.map((s, k) => (s.t === 'code' ? <Toks key={k} toks={k === 0 ? glueIndent(s.toks) : s.toks} /> : renderSlot(s.i, k)))
         }}
       />
 

@@ -1,9 +1,12 @@
 import { AnimatePresence, MotionConfig, motion } from 'motion/react'
-import { Suspense, lazy, useEffect, useMemo, useState } from 'react'
+import { Suspense, lazy, useEffect, useMemo } from 'react'
+import { useClock } from './clock'
+import { useHistorySync } from './nav'
 import { Trophy } from 'lucide-react'
 import { useStore } from '../core/store'
 import { CATALOG } from '../content'
-import { dueCardIds, dueStories } from '../core/adaptive'
+import { dueCardIds } from '../core/adaptive'
+import { rehearsalsDue } from '../screens/StoriesScreen'
 import { ACHIEVEMENTS, newlyEarned } from '../core/achievements'
 import { COVERS, useNav, type Overlay } from './nav'
 import { TabBar } from '../ui/TabBar'
@@ -36,21 +39,6 @@ function useTheme() {
   return reduce
 }
 
-/** re-render every minute so due counts and streak state stay fresh */
-function useClock(ms = 60_000) {
-  const [now, setNow] = useState(Date.now())
-  useEffect(() => {
-    const t = setInterval(() => setNow(Date.now()), ms)
-    const vis = () => document.visibilityState === 'visible' && setNow(Date.now())
-    document.addEventListener('visibilitychange', vis)
-    return () => {
-      clearInterval(t)
-      document.removeEventListener('visibilitychange', vis)
-    }
-  }, [ms])
-  return now
-}
-
 function OverlayView({ o }: { o: Overlay }) {
   const pop = useNav((s) => s.pop)
   switch (o.kind) {
@@ -80,7 +68,9 @@ function OverlayView({ o }: { o: Overlay }) {
 function AchievementToast() {
   const unseen = useStore((s) => s.unseenAchievements)
   const markSeen = useStore((s) => s.markAchievementsSeen)
-  const first = unseen[0] ? ACHIEVEMENTS.find((a) => a.id === unseen[0]) : undefined
+  // hold the toast while a lesson/review/lab cover is open; it shows once the learner is back
+  const covered = useNav((n) => n.stack.some((o) => COVERS.has(o.kind)))
+  const first = !covered && unseen[0] ? ACHIEVEMENTS.find((a) => a.id === unseen[0]) : undefined
   useEffect(() => {
     if (!first) return
     sfx('unlock')
@@ -95,9 +85,9 @@ function AchievementToast() {
           key={first.id}
           className="toast"
           onClick={markSeen}
-          initial={{ y: -80, opacity: 0, scale: 0.9 }}
+          initial={{ y: -16, opacity: 0, scale: 0.9 }}
           animate={{ y: 0, opacity: 1, scale: 1 }}
-          exit={{ y: -80, opacity: 0 }}
+          exit={{ y: -16, opacity: 0, scale: 0.96 }}
           transition={{ type: 'spring', stiffness: 460, damping: 28 }}
         >
           <span className="toast__icon">
@@ -119,6 +109,7 @@ function AchievementToast() {
 export function App() {
   const reduce = useTheme()
   const now = useClock()
+  useHistorySync()
   const onboarded = useStore((s) => s.profile.onboarded)
   const tab = useNav((s) => s.tab)
   const stack = useNav((s) => s.stack)
@@ -136,7 +127,7 @@ export function App() {
   }, [state.lessons, state.days, state.streak, state.stories, state.labs, state.xp])
 
   const badges = useMemo(
-    () => ({ practice: dueCardIds(state, now, CATALOG).length, stories: dueStories(state, now).length }),
+    () => ({ practice: dueCardIds(state, now, CATALOG).length, stories: rehearsalsDue(state, now).length }),
     [state, now],
   )
 

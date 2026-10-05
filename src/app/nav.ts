@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { create } from 'zustand'
 import type { AreaId, StorySlotId } from '../core/types'
 
@@ -31,15 +32,67 @@ interface Nav {
   reset: () => void
 }
 
-export const useNav = create<Nav>((set) => ({
+declare const __ARTIFACT__: boolean
+
+/**
+ * Browser history mirrors the overlay stack so the Android / browser Back
+ * button closes the top page instead of leaving the app. Each pushed overlay
+ * adds a history entry tagged with its depth; popstate trims the stack to the
+ * depth of the entry we land on. Disabled inside sandboxed artifact frames.
+ */
+const historyOn = () => typeof window !== 'undefined' && typeof history !== 'undefined' && !__ARTIFACT__
+const depthOf = (st: unknown) => (st && typeof st === 'object' && typeof (st as { g?: unknown }).g === 'number' ? (st as { g: number }).g : 0)
+
+export const useNav = create<Nav>((set, get) => ({
   tab: 'learn',
   stack: [],
-  setTab: (tab) => set({ tab, stack: [] }),
-  push: (o) => set((s) => ({ stack: [...s.stack, o] })),
-  pop: () => set((s) => ({ stack: s.stack.slice(0, -1) })),
+  setTab: (tab) => {
+    const depth = historyOn() ? depthOf(history.state) : 0
+    set({ tab, stack: [] })
+    if (depth > 0) history.go(-depth)
+  },
+  push: (o) => {
+    const stack = [...get().stack, o]
+    set({ stack })
+    if (historyOn()) {
+      try {
+        history.pushState({ g: stack.length }, '')
+      } catch {
+        /* history unavailable */
+      }
+    }
+  },
+  pop: () => {
+    const { stack } = get()
+    if (!stack.length) return
+    if (historyOn() && depthOf(history.state) === stack.length) {
+      // let popstate do the trim so history and stack stay in step
+      history.back()
+      return
+    }
+    set({ stack: stack.slice(0, -1) })
+  },
   replace: (o) => set((s) => ({ stack: [...s.stack.slice(0, -1), o] })),
-  reset: () => set({ stack: [] }),
+  reset: () => {
+    const depth = historyOn() ? depthOf(history.state) : 0
+    set({ stack: [] })
+    if (depth > 0) history.go(-depth)
+  },
 }))
+
+/** install the popstate listener once (App) */
+export function useHistorySync() {
+  useEffect(() => {
+    if (!historyOn()) return
+    const onPop = (e: PopStateEvent) => {
+      const depth = depthOf(e.state)
+      const { stack } = useNav.getState()
+      if (stack.length > depth) useNav.setState({ stack: stack.slice(0, depth) })
+    }
+    window.addEventListener('popstate', onPop)
+    return () => window.removeEventListener('popstate', onPop)
+  }, [])
+}
 
 /** shorthand helpers for screens */
 export const nav = {

@@ -20,6 +20,18 @@ export function Toks({ toks }: { toks: Tok[] }) {
   )
 }
 
+/**
+ * Leading indentation as no-break spaces. Where code soft-wraps (inside a
+ * step), a long first word must not break off onto the next row and leave the
+ * line's own row holding nothing but its indent.
+ */
+export function glueIndent(toks: Tok[]): Tok[] {
+  const first = toks[0]
+  const lead = first && /^[ \t]+/.exec(first.v)
+  if (!lead) return toks
+  return [{ ...first, v: lead[0].replace(/\t/g, '    ').replace(/ /g, '\u00a0') + first.v.slice(lead[0].length) }, ...toks.slice(1)]
+}
+
 /** leading indent in columns (tab = 4); lets a soft-wrapped line hang past its own indent */
 function indentOf(line: string) {
   let n = 0
@@ -70,7 +82,7 @@ export function Code({
               <div key={i} className={['code__line', highlight?.includes(n) && 'code__line--hl', lc].filter(Boolean).join(' ')} {...rest}>
                 {numbers && <span className="code__no">{n}</span>}
                 <span className="code__src" style={{ '--hang': indentOf(raw[i] ?? '') } as CSSProperties}>
-                  {renderLine?.(n, toks, raw[i] ?? '') ?? (toks.length ? <Toks toks={toks} /> : ' ')}
+                  {renderLine?.(n, toks, raw[i] ?? '') ?? (toks.length ? <Toks toks={glueIndent(toks)} /> : ' ')}
                 </span>
               </div>
             )
