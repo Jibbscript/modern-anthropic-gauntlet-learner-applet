@@ -388,7 +388,7 @@
   padding: 0 var(--s-3) 0 var(--s-3);
   text-align: right;
   color: var(--ink-3);
-  opacity: 0.6;
+  opacity: 0.8;
   user-select: none;
   -webkit-user-select: none;
   font-variant-numeric: tabular-nums;
