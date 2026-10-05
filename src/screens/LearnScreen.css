@@ -387,8 +387,7 @@ button.learn-card:focus-visible,
   font-weight: 500;
   color: var(--ink-3);
 }
-.learn-hero__dot,
-.learn-review__dot {
+.learn-hero__dot {
   width: 3px;
   height: 3px;
   border-radius: 50%;
@@ -498,14 +497,19 @@ button.learn-card:focus-visible,
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 4px 6px;
+  gap: 2px 12px;
   margin-top: 4px;
   font-size: 13px;
   font-weight: 500;
   color: var(--ink-3);
 }
-.learn-review__meta > span:not(.learn-review__dot) {
+.learn-review__meta > span {
   white-space: nowrap;
+}
+.learn-review__time {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
 }
 .learn-review__meta b {
   color: var(--ink);

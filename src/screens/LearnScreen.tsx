@@ -434,8 +434,10 @@ function ReviewCard({ s, now }: { s: GauntletState; now: number }) {
             ) : (
               <span>First pass locks them in</span>
             )}
-            <span className="learn-review__dot" aria-hidden="true" />
-            <span className="tabular">{session < n ? `First ${session}, ≈ ${mins} min` : `≈ ${mins} min`}</span>
+            <span className="learn-review__time tabular">
+              <Clock size={13} strokeWidth={2.6} aria-hidden="true" />
+              {session < n ? `${session} cards, ≈ ${mins} min` : `≈ ${mins} min`}
+            </span>
           </div>
         </div>
       </div>

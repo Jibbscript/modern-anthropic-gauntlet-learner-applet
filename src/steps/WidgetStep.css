@@ -70,3 +70,10 @@
 .widget-goal--reached .widget-goal__label {
   color: var(--good-ink);
 }
+
+.widget-step__host {
+  min-width: 0;
+}
+.widget-step__skip {
+  align-self: flex-start;
+}

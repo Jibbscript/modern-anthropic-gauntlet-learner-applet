@@ -757,7 +757,7 @@ function Plan(p: {
         ? 'You rated every area the same, so start where the loop starts.'
         : 'Nothing rated below Okay, so start with how the loop works.'
       : f.tied
-        ? 'You rated every area the same, so start here.'
+        ? `You rated every area ${CONF_LABEL[f.v]}, so start at the top of the loop.`
         : f.v <= 2
           ? `You rated it ${CONF_LABEL[f.v]}, so it comes first.`
           : 'Your lowest-rated area, so it comes first.'

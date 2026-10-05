@@ -157,6 +157,8 @@ export default function InterviewStep({ step, phase, attempt, complete }: StepPr
 
   const current = picks.length
   const optionsOpen = phase === 'answer' && !wrapped && asked === current + 1 && current < turns.length && !typing
+  const optionsLive = useRef(optionsOpen)
+  optionsLive.current = optionsOpen
 
   const rootRef = useRef<HTMLDivElement>(null)
   /**
@@ -242,7 +244,8 @@ export default function InterviewStep({ step, phase, attempt, complete }: StepPr
     const anchors = root.querySelectorAll<HTMLElement>('[data-anchor]')
     const anchor = anchors[anchors.length - 1]
     if (!anchor) return
-    const opts = root.querySelector<HTMLElement>('.interview-options')
+    // reply tiles count only while live (not while they fade out after a pick)
+    const opts = optionsLive.current ? root.querySelector<HTMLElement>('.interview-options') : null
     const end = Math.max(bottom(anchor), opts ? bottom(opts) : 0) + 20
     const t = Math.max(0, Math.min(max, top(anchor) - 16, end - view))
     // only ever scroll down: the learner may have scrolled up to re-read

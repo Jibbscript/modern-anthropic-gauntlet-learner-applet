@@ -94,11 +94,15 @@ const booting = (async () => {
     self.postMessage({ type: "failed", message: String((err && err.message) || err) });
   }
 })();
+// "from x import y", "import x", and "import a, b.c as d" (every name in the list counts)
 function wantedPackages(src) {
   const out = new Set();
-  const re = /^\\s*(?:import|from)\\s+([A-Za-z_][\\w]*)/gm;
+  const re = /^[ \\t]*(?:from[ \\t]+([A-Za-z_]\\w*)|import[ \\t]+([^\\n#;]+))/gm;
   let m;
-  while ((m = re.exec(src))) if (STDLIB[m[1]]) out.add(STDLIB[m[1]]);
+  while ((m = re.exec(src))) {
+    const names = m[1] ? [m[1]] : m[2].split(",").map((part) => part.trim().split(/[.\\s]/)[0]);
+    for (const name of names) if (STDLIB[name]) out.add(STDLIB[name]);
+  }
   return [...out];
 }
 self.onmessage = async (e) => {

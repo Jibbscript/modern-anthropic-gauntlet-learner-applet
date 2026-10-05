@@ -79,6 +79,13 @@
   gap: 5px;
   color: var(--good-ink);
 }
+.reflect-saved--restored {
+  color: var(--ink-3);
+}
+.reflect-saved__icon {
+  display: inline-grid;
+  place-items: center;
+}
 
 /* ---------------------------------------------------------------- rubric */
 

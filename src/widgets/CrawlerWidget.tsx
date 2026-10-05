@@ -64,6 +64,7 @@ export default function CrawlerWidget({ config, onComplete }: WidgetProps<Crawle
   const groupId = useId()
   const edges = useMemo(() => edgeGeometry(graph), [graph])
   const reach = useMemo(() => crawlable(graph, opts.sameHost), [graph, opts.sameHost])
+  const reachList = useMemo(() => [...reach].sort((a, b) => a - b), [reach])
 
   // play loop: one tick every TICK_MS; stops on pause, finish and unmount
   useEffect(() => {
@@ -384,27 +385,23 @@ export default function CrawlerWidget({ config, onComplete }: WidgetProps<Crawle
 
         <div className="crawl-queue crawl-visited">
           <span className="w-label">Visited</span>
+          {/* one fixed slot per crawlable page, so the row never re-wraps (and shifts the controls) mid-crawl */}
           <div className="crawl-visited__chips" aria-label={`Visited set: ${visited.map((p) => graph.pages[p].label).join(', ') || 'empty'}`}>
             {opts.dedupe === 'none' ? (
               <span className="crawl-queue__empty">no visited set</span>
-            ) : visited.length === 0 ? (
-              <span className="crawl-queue__empty">empty</span>
             ) : (
-              <AnimatePresence initial={false}>
-                {visited.map((p) => (
-                  <motion.span
-                    key={p}
-                    className="crawl-chip crawl-chip--sm"
-                    style={hostVar(graph.pages[p].host)}
-                    initial={reduce ? false : { scale: 0, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    exit={{ scale: 0, opacity: 0 }}
-                    transition={{ type: 'spring', stiffness: 560, damping: 26 }}
-                  >
-                    {graph.pages[p].label}
-                  </motion.span>
-                ))}
-              </AnimatePresence>
+              reachList.map((p) => (
+                <motion.span
+                  key={p}
+                  className={`crawl-vslot${sim.visited[p] ? ' is-in' : ''}`}
+                  style={hostVar(graph.pages[p].host)}
+                  initial={false}
+                  animate={sim.visited[p] && !reduce ? { scale: [1.35, 1] } : { scale: 1 }}
+                  transition={{ type: 'spring', stiffness: 560, damping: 20 }}
+                >
+                  {graph.pages[p].label}
+                </motion.span>
+              ))
             )}
           </div>
         </div>

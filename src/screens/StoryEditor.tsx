@@ -240,7 +240,7 @@ export default function StoryEditor({ slot }: { slot: StorySlotId }) {
               <span className="tabular">
                 {done} of {def.layers.length} layers written
               </span>
-              {entry?.rehearsal && drafted && (
+              {entry?.rehearsal && canRehearse && (
                 <span className="sed-q__due">
                   <Mic size={13} strokeWidth={2.8} />
                   {entry.rehearsal.due <= now ? 'Due now' : `Next ${dueIn(entry.rehearsal.due, now)}`}

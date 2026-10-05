@@ -127,6 +127,7 @@
 .cs-hero__sub {
   margin-top: 8px;
   max-width: 30ch;
+  text-wrap: balance;
   font-size: var(--fs-md);
   font-weight: 500;
   color: var(--ink-2);

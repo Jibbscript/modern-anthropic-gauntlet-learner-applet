@@ -374,15 +374,27 @@
   flex: 1;
   padding: 2px;
 }
-.crawl-chip.crawl-chip--sm {
+.crawl-vslot {
+  flex: none;
+  display: inline-grid;
+  place-items: center;
   min-width: 18px;
   height: 18px;
   padding: 0 3px;
   border-radius: 5px;
   font-size: 10.5px;
+  font-weight: 900;
+  color: var(--ink-3);
+  outline: 1px dashed var(--line-strong);
+  outline-offset: -1px;
+  transition:
+    background var(--dur-2),
+    color var(--dur-2);
+}
+.crawl-vslot.is-in {
   background: var(--host);
-  box-shadow: none;
   color: #fff;
+  outline-color: transparent;
 }
 .crawl-queue__chips {
   display: flex;

@@ -21,6 +21,8 @@ const KINDS: { id: TaskKind; label: string }[] = [
 const DEFAULT_EXECUTOR: Executor = 'thread'
 const DEFAULT_WORKERS = 2
 const DRAW_S = 0.6
+/** a setup must stay unchanged this long to count (goal 'fastest' and 'explore') */
+const SETTLE_MS = 600
 
 // chart geometry (viewBox units)
 const VB_W = 320
@@ -88,10 +90,11 @@ export default function PoolWidget({ config, onComplete }: WidgetProps<PoolConfi
         haptic('success')
         completeRef.current(true)
       },
-      reduce ? 0 : DRAW_S * 1000,
+      // independent of reduced motion: settling is about the learner's choice, not the animation
+      SETTLE_MS,
     )
     return () => window.clearTimeout(t)
-  }, [key, fastest, goal, reduce])
+  }, [key, fastest, goal])
 
   const reset = () => {
     setKind(initial.kind)

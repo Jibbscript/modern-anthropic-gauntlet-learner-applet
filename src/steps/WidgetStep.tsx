@@ -1,7 +1,8 @@
 import { AnimatePresence, motion } from 'motion/react'
-import { Check, Target } from 'lucide-react'
+import { ArrowRight, Check, Target } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { WidgetStep as T } from '../core/types'
+import { Button } from '../ui/Button'
 import { Rich } from '../ui/Rich'
 import { haptic, sfx } from '../ui/fx'
 import { WidgetHost } from '../widgets/WidgetHost'
@@ -20,6 +21,7 @@ const SETTLE_MS = 500
  */
 export default function WidgetStep({ step, phase, attempt, complete }: StepProps<T & { id: string }>) {
   const required = step.requireComplete !== false
+  const failed = useWidgetFailed()
   const [reached, setReached] = useState(phase === 'correct')
   const reachedRef = useRef(reached)
   const completeRef = useRef(complete)
@@ -50,9 +52,52 @@ export default function WidgetStep({ step, phase, attempt, complete }: StepProps
       {step.eyebrow && <div className="eyebrow step__eyebrow">{step.eyebrow}</div>}
       <Rich text={step.prompt} className="step__prompt" />
       {step.goal && <GoalChip goal={step.goal} reached={reached} animate={attempt === 0 || reached} />}
-      <WidgetHost widget={step.widget} onComplete={onWidget} />
+      <div className="widget-step__host" ref={failed.ref}>
+        <WidgetHost widget={step.widget} onComplete={onWidget} />
+      </div>
+      {/* a simulation that cannot load (unknown id, a lazy chunk failing offline) must not strand a required step */}
+      {failed.value && required && phase === 'answer' && !reached && (
+        <Button
+          variant="secondary"
+          size="md"
+          className="widget-step__skip"
+          iconRight={<ArrowRight size={18} strokeWidth={2.8} />}
+          onClick={() => complete({ correct: true, feedback: 'Skipped: the simulation did not load.' })}
+        >
+          Continue without it
+        </Button>
+      )}
     </div>
   )
+}
+
+/** watches the widget host for its error state (WidgetHost renders .widget-error instead of throwing) */
+function useWidgetFailed() {
+  const [value, setValue] = useState(false)
+  const mo = useRef<MutationObserver | null>(null)
+  const ref = useCallback((el: HTMLDivElement | null) => {
+    mo.current?.disconnect()
+    mo.current = null
+    if (!el) return
+    const check = () => {
+      if (!el.querySelector(':scope > .widget-error, :scope > .widget-stage > .widget-error')) return
+      setValue(true)
+      mo.current?.disconnect()
+    }
+    check()
+    if (typeof MutationObserver === 'undefined') return
+    const obs = new MutationObserver(() => {
+      // the stage can appear after a Suspense swap; watch its direct children too (not the whole widget subtree)
+      const stage = el.querySelector(':scope > .widget-stage')
+      if (stage) obs.observe(stage, { childList: true })
+      check()
+    })
+    obs.observe(el, { childList: true })
+    const stage = el.querySelector(':scope > .widget-stage')
+    if (stage) obs.observe(stage, { childList: true })
+    mo.current = obs
+  }, [])
+  return { value, ref }
 }
 
 function GoalChip({ goal, reached, animate }: { goal: string; reached: boolean; animate: boolean }) {

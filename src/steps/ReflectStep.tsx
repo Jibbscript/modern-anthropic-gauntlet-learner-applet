@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'motion/react'
-import { BookMarked, Check, CloudCheck, ListChecks } from 'lucide-react'
+import { BookMarked, Check, CloudCheck, History, ListChecks } from 'lucide-react'
 import { useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import type { ReflectStep as T } from '../core/types'
 import { useStore } from '../core/store'
@@ -13,6 +13,17 @@ import './ReflectStep.css'
 const DRAFT_MS = 600
 
 const countWords = (s: string) => (s.trim() ? s.trim().split(/\s+/).length : 0)
+
+/** nearest ancestor that scrolls vertically (the StepRunner body) */
+function scrollParent(el: HTMLElement): HTMLElement | null {
+  let p = el.parentElement
+  while (p) {
+    const oy = getComputedStyle(p).overflowY
+    if (oy === 'auto' || oy === 'scroll') return p
+    p = p.parentElement
+  }
+  return null
+}
 
 /** merge a reflection into a Story Bank slot's notes without duplicating it */
 function mergeNotes(notes: string, text: string): string {
@@ -31,7 +42,8 @@ export default function ReflectStep({ step, setController, lessonId }: StepProps
   const key = `${lessonId ?? 'free'}/${step.id}`
   const [text, setText] = useState(() => useStore.getState().reflections[key] ?? '')
   const [ticked, setTicked] = useState<boolean[]>(() => step.rubric.map(() => false))
-  const [savedAt, setSavedAt] = useState(0)
+  /** draft indicator: "restored" when the step opens on a saved draft, then "saved" after each autosave (n re-pops the icon) */
+  const [draft, setDraft] = useState<{ kind: 'restored' | 'saved'; n: number } | null>(() => (text.trim() ? { kind: 'restored', n: 0 } : null))
   const slot = step.slot ? STORY_BY_ID[step.slot] : undefined
   const words = countWords(text)
   const ready = text.trim().length > 0
@@ -71,7 +83,7 @@ export default function ReflectStep({ step, setController, lessonId }: StepProps
     if (pending.current != null) clearTimeout(pending.current)
     pending.current = window.setTimeout(() => {
       pending.current = null
-      if (saveDraft(latest.current)) setSavedAt(Date.now())
+      if (saveDraft(latest.current)) setDraft((d) => ({ kind: 'saved', n: (d?.n ?? 0) + 1 }))
     }, DRAFT_MS)
   }
 
@@ -103,11 +115,23 @@ export default function ReflectStep({ step, setController, lessonId }: StepProps
 
   // ---- autosize
   const area = useRef<HTMLTextAreaElement>(null)
+  const field = useRef<HTMLDivElement>(null)
   const fit = useCallback(() => {
     const el = area.current
     if (!el) return
+    const sc = scrollParent(el)
+    // collapsing to measure shrinks the page for a moment, which clamps the scroll position; put it back
+    const keep = sc?.scrollTop ?? 0
+    const was = el.offsetHeight
     el.style.height = 'auto'
     el.style.height = `${el.scrollHeight + 2}px`
+    if (!sc) return
+    if (sc.scrollTop !== keep) sc.scrollTop = keep
+    // typing at the end grows the field downwards: keep its bottom edge (and the word count) above the fold
+    if (el.offsetHeight > was && document.activeElement === el && el.selectionEnd === el.value.length && field.current) {
+      const over = field.current.getBoundingClientRect().bottom + 12 - sc.getBoundingClientRect().bottom
+      if (over > 0) sc.scrollTop += over
+    }
   }, [])
   useLayoutEffect(fit, [text, fit])
   useEffect(() => {
@@ -118,15 +142,12 @@ export default function ReflectStep({ step, setController, lessonId }: StepProps
   }, [fit])
 
   const toggle = (i: number) => {
-    setTicked((t) => {
-      const next = t.map((v, k) => (k === i ? !v : v))
-      if (next[i]) {
-        haptic('light')
-        if (next.every(Boolean)) sfx('unlock')
-        else sfx('select')
-      } else sfx('tap')
-      return next
-    })
+    const next = ticked.map((v, k) => (k === i ? !v : v))
+    if (next[i]) {
+      haptic('light')
+      sfx(next.every(Boolean) ? 'unlock' : 'select')
+    } else sfx('tap')
+    setTicked(next)
   }
   const nTicked = ticked.filter(Boolean).length
   const allTicked = nTicked === step.rubric.length && step.rubric.length > 0
@@ -149,7 +170,7 @@ export default function ReflectStep({ step, setController, lessonId }: StepProps
         <Rich text={step.guidance} className="reflect-guidance" />
       </div>
 
-      <div className="reflect-field">
+      <div className="reflect-field" ref={field}>
         <textarea
           ref={area}
           className="reflect-input"
@@ -163,20 +184,29 @@ export default function ReflectStep({ step, setController, lessonId }: StepProps
           spellCheck
         />
         <div className="reflect-meta">
-          <span className="reflect-count tabular" aria-live="polite">
+          <span className="reflect-count tabular">
             {words} {words === 1 ? 'word' : 'words'}
           </span>
-          <AnimatePresence>
-            {savedAt > 0 && ready && (
+          <AnimatePresence mode="wait" initial={false}>
+            {draft && ready && (
               <motion.span
-                key={savedAt}
-                className="reflect-saved"
+                key={draft.kind}
+                className={`reflect-saved reflect-saved--${draft.kind}`}
                 initial={{ opacity: 0, y: 4 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0 }}
+                exit={{ opacity: 0, transition: { duration: 0.12 } }}
                 transition={{ duration: 0.2 }}
               >
-                <CloudCheck size={14} strokeWidth={2.4} /> Draft saved
+                <motion.span
+                  key={draft.n}
+                  className="reflect-saved__icon"
+                  initial={draft.n > 0 ? { scale: 0.5, rotate: -20 } : false}
+                  animate={{ scale: 1, rotate: 0 }}
+                  transition={{ type: 'spring', stiffness: 600, damping: 16 }}
+                >
+                  {draft.kind === 'restored' ? <History size={14} strokeWidth={2.4} /> : <CloudCheck size={14} strokeWidth={2.4} />}
+                </motion.span>
+                {draft.kind === 'restored' ? 'Draft restored' : 'Draft saved'}
               </motion.span>
             )}
           </AnimatePresence>
