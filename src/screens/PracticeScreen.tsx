@@ -6,7 +6,7 @@ import type { AreaId, Course, Lab } from '../core/types'
 import { CATALOG } from '../content'
 import { SKILL_BY_ID } from '../content/skills'
 import { LABS } from '../labs/data'
-import { areaMastery, buildSession, forecast, leeches, skillMastery } from '../core/adaptive'
+import { buildSession, forecast, leeches } from '../core/adaptive'
 import { formatInterval, recallNow, type CardState } from '../core/fsrs'
 import { parseDayKey } from '../core/dates'
 import { nav, useNav } from '../app/nav'
@@ -31,7 +31,12 @@ function useNow(ms = 60_000) {
   const [now, setNow] = useState(() => Date.now())
   useEffect(() => {
     const t = setInterval(() => setNow(Date.now()), ms)
-    return () => clearInterval(t)
+    const vis = () => document.visibilityState === 'visible' && setNow(Date.now())
+    document.addEventListener('visibilitychange', vis)
+    return () => {
+      clearInterval(t)
+      document.removeEventListener('visibilitychange', vis)
+    }
   }, [ms])
   return now
 }
@@ -82,6 +87,48 @@ function practiceSet(s: GauntletState, now: number, opts: { skill?: string; area
   return [...ids, ...rest]
 }
 
+interface MemStat {
+  /** cards in the catalog */
+  total: number
+  /** cards the learner has unlocked */
+  unlocked: number
+  /** unlocked cards reviewed at least once */
+  reviewed: number
+  /** mean recall of reviewed cards, null before the first review */
+  recall: number | null
+  due: number
+}
+
+/**
+ * Memory per course and per skill, counted over each course's OWN cards (the
+ * skill-based areaMastery double-counts skills shared across courses) and
+ * over reviewed cards only, so the numbers move when the learner practises.
+ */
+function memoryStats(s: GauntletState, now: number) {
+  const blank = (): MemStat & { sum: number } => ({ total: 0, unlocked: 0, reviewed: 0, recall: null, due: 0, sum: 0 })
+  const byCourse: Record<string, ReturnType<typeof blank>> = {}
+  const bySkill: Record<string, ReturnType<typeof blank>> = {}
+  for (const [id, card] of Object.entries(CATALOG.cards)) {
+    const courseId = CATALOG.lessons[card.lessonId]?.courseId
+    const targets = [courseId ? (byCourse[courseId] ??= blank()) : null, (bySkill[card.skill] ??= blank())]
+    const st = s.cards[id]
+    for (const m of targets) {
+      if (!m) continue
+      m.total++
+      if (!st) continue
+      m.unlocked++
+      if (st.due <= now) m.due++
+      if (st.last != null) {
+        m.reviewed++
+        m.sum += recallNow(st, now)
+      }
+    }
+  }
+  const done = (r: Record<string, ReturnType<typeof blank>>) =>
+    Object.fromEntries(Object.entries(r).map(([k, { sum, ...m }]) => [k, { ...m, recall: m.reviewed ? sum / m.reviewed : null }])) as Record<string, MemStat>
+  return { byCourse: done(byCourse), bySkill: done(bySkill) }
+}
+
 const rise = (i: number) => ({
   initial: { opacity: 0, y: 14 },
   animate: { opacity: 1, y: 0 },
@@ -103,13 +150,15 @@ export default function PracticeScreen() {
     const strength = reviewed.length ? reviewed.reduce((a, c) => a + recallNow(c, now), 0) / reviewed.length : null
     const upcoming = ids.map((id) => s.cards[id].due).filter((t) => t > now)
     const nextDue = upcoming.length ? Math.min(...upcoming) : null
-    const bySkill = skillMastery(s, CATALOG, now)
-    const weak = Object.entries(bySkill)
-      .filter(([id, m]) => m.unlocked > 0 && SKILL_BY_ID[id])
-      .sort((a, b) => a[1].mastery - b[1].mastery || b[1].due - a[1].due)
+    const mem = memoryStats(s, now)
+    // weak spots: skills you have actually been tested on, weakest memory first
+    const weak = Object.entries(mem.bySkill)
+      .filter(([id, m]) => m.recall != null && SKILL_BY_ID[id])
+      .sort((a, b) => (a[1].recall as number) - (b[1].recall as number) || b[1].due - a[1].due)
       .slice(0, 3)
-    const byArea = areaMastery(s, CATALOG, now)
-    const courses = CATALOG.courses.filter((c) => byArea[c.id]?.total > 0).map((c) => ({ course: c, m: byArea[c.id] }))
+    const withCards = CATALOG.courses.filter((c) => (mem.byCourse[c.id]?.total ?? 0) > 0)
+    const courses = withCards.filter((c) => mem.byCourse[c.id].unlocked > 0).map((c) => ({ course: c, m: mem.byCourse[c.id] }))
+    const notStarted = withCards.filter((c) => mem.byCourse[c.id].unlocked === 0)
     return {
       total: ids.length,
       plan,
@@ -117,6 +166,7 @@ export default function PracticeScreen() {
       nextDue,
       weak,
       courses,
+      notStarted,
       fc: forecast(s, now, 7),
       trouble: leeches(s),
       reviewedCount: reviewed.length,
@@ -162,7 +212,7 @@ export default function PracticeScreen() {
 
               {d.weak.length > 0 && (
                 <motion.section className="prac-sec" {...rise(i++)}>
-                  <SectionHead title="Weak spots" aside="Lowest mastery first" />
+                  <SectionHead title="Weak spots" aside="Lowest recall first" />
                   <div className="prac-card">
                     {d.weak.map(([id, m]) => {
                       const skill = SKILL_BY_ID[id]
@@ -173,8 +223,8 @@ export default function PracticeScreen() {
                           <div className="prac-row__main">
                             <div className="prac-row__title">{skill.name}</div>
                             <div className="prac-row__meter">
-                              <ProgressBar value={m.mastery} tone="course" height={8} label={`${skill.name} mastery`} />
-                              <span className="prac-row__pct tabular">{pct(m.mastery)}</span>
+                              <ProgressBar value={m.recall ?? 0} tone="course" height={8} label={`${skill.name} recall`} />
+                              <span className="prac-row__pct tabular">{pct(m.recall ?? 0)}</span>
                             </div>
                             <div className="prac-row__meta">
                               {course?.title}
@@ -185,6 +235,7 @@ export default function PracticeScreen() {
                             size="sm"
                             variant="secondary"
                             className="prac-row__btn"
+                            aria-label={`Practice ${skill.name}`}
                             onClick={() => {
                               const ids = practiceSet(s, now, { skill: id })
                               if (ids.length) nav.openReview(ids, skill.name)
@@ -203,11 +254,11 @@ export default function PracticeScreen() {
                 <SectionHead title="Next 7 days" aside={`${d.fc.reduce((a, x) => a + x.count, 0)} due this week`} />
                 <div className="prac-card prac-card--pad">
                   <ForecastChart data={d.fc} />
-                  <p className="prac-note">Cards due each day. Today includes anything overdue.</p>
+                  <p className="prac-note">Cards due each day. Today counts overdue cards and any due later today.</p>
                 </div>
               </motion.section>
 
-              {d.courses.length > 0 && (
+              {d.courses.length + d.notStarted.length > 0 && (
                 <motion.section className="prac-sec" {...rise(i++)}>
                   <SectionHead title="Memory by course" aside="Recall" />
                   <div className="prac-card">
@@ -219,16 +270,34 @@ export default function PracticeScreen() {
                         <span className="prac-row__main">
                           <span className="prac-row__line">
                             <span className="prac-row__title">{course.title}</span>
-                            <span className="prac-row__big tabular">{m.unlocked ? pct(m.recall) : '–'}</span>
+                            <span className={`prac-row__big tabular ${m.recall == null ? 'is-new' : ''}`}>{m.recall == null ? 'New' : pct(m.recall)}</span>
                           </span>
-                          <ProgressBar value={m.unlocked ? m.recall : 0} tone="course" height={8} label={`${course.title} recall`} />
+                          <ProgressBar value={m.recall ?? 0} tone="course" height={8} label={`${course.title} recall`} />
                           <span className="prac-row__meta tabular">
-                            {m.unlocked}/{m.total} unlocked{m.due > 0 ? ` · ${m.due} due` : ''}
+                            {m.unlocked}/{m.total} cards{m.due > 0 ? ` · ${m.due} due` : m.recall == null ? ' · first review soon' : ''}
                           </span>
                         </span>
                         <ChevronRight className="prac-row__chev" size={20} strokeWidth={2.6} />
                       </button>
                     ))}
+                    {d.notStarted.length > 0 && (
+                      <button type="button" className="prac-row prac-row--tap prac-row--more" onClick={() => setTab('learn')}>
+                        <span className="prac-more__arts" aria-hidden>
+                          {d.notStarted.slice(0, 3).map((c) => (
+                            <span key={c.id} className="prac-more__art">
+                              <CourseArt course={c} size={40} />
+                            </span>
+                          ))}
+                        </span>
+                        <span className="prac-row__main">
+                          <span className="prac-row__title">
+                            {d.notStarted.length} {d.notStarted.length === 1 ? 'course' : 'courses'} not started
+                          </span>
+                          <span className="prac-row__meta">Finish a lesson to add its cards</span>
+                        </span>
+                        <ChevronRight className="prac-row__chev" size={20} strokeWidth={2.6} />
+                      </button>
+                    )}
                   </div>
                 </motion.section>
               )}
@@ -410,15 +479,15 @@ function ForecastChart({ data }: { data: { day: string; count: number }[] }) {
   const plotH = H - top - bottom
   const max = Math.max(1, ...data.map((x) => x.count))
   const n = Math.max(1, data.length)
-  // keep the wider "Today" label clear of the left edge on narrow phones
-  const padX = Math.max(0, 22 - width / n / 2)
+  // narrow phones: other days shrink to one letter so "Today" always fits its pill
+  const narrow = width / n < 46
+  const pillW = narrow ? 44 : 50
+  // keep the Today pill clear of the left edge
+  const padX = Math.max(0, pillW / 2 + 1 - width / n / 2)
   const band = (width - 2 * padX) / n
   const bw = Math.min(24, band * 0.58)
   const baseY = top + plotH
-  // "Today" in a pill when there is room, else the weekday in the pill
-  const roomy = band >= 44
-  const todayLabel = roomy ? 'Today' : weekday(data[0]?.day ?? '')
-  const pillW = roomy ? 50 : Math.min(band - 2, 40)
+  const label = (key: string, i: number) => (i === 0 ? 'Today' : narrow ? weekday(key, 'narrow') : weekday(key))
   return (
     <div ref={ref} className="prac-fc">
       {width > 0 && (
@@ -447,8 +516,8 @@ function ForecastChart({ data }: { data: { day: string; count: number }[] }) {
                   {x.count}
                 </text>
                 {today && <rect className="prac-fc__pill" x={cx - pillW / 2} y={H - 21} width={pillW} height={21} rx={10.5} />}
-                <text className={`prac-fc__day ${today ? 'is-today' : ''}`} x={cx} y={H - 6} textAnchor="middle">
-                  {today ? todayLabel : weekday(x.day)}
+                <text className={`prac-fc__day ${today ? 'is-today' : ''}`} x={cx} y={H - 6} textAnchor="middle" aria-hidden>
+                  {label(x.day, i)}
                 </text>
               </g>
             )
@@ -459,8 +528,8 @@ function ForecastChart({ data }: { data: { day: string; count: number }[] }) {
   )
 }
 
-function weekday(key: string) {
-  return new Date(parseDayKey(key)).toLocaleDateString('en-US', { weekday: 'short' })
+function weekday(key: string, style: 'short' | 'narrow' = 'short') {
+  return new Date(parseDayKey(key)).toLocaleDateString('en-US', { weekday: style })
 }
 
 function LabCard({ lab, passed }: { lab: Lab; passed: number }) {

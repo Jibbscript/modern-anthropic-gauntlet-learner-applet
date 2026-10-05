@@ -50,10 +50,14 @@ const lesson: Lesson = {
       kind: 'concept',
       id: 'anatomy',
       title: 'Anatomy of a version',
-      body: "A save never updates a version. It inserts one whose `parent_id` is the version the editor started from.\n\n- `content_hash` covers body, model and params. If it matches the parent's, the save is a no-op.\n- Bodies live in object storage under their own hash, so a temperature-only change stores no new text.\n- Tags like `prod` are the one mutable part: names that point at versions.",
+      body: "A save never updates a version. It inserts one whose `parent_id` is the version the editor started from.\n\n- `content_hash` covers body, model and params. If it matches the parent's, the save is a no-op.\n- Bodies live in object storage under their own hash, so a temperature-only change stores no new text.\n- Pointers are the only mutable part: the prompt's head, and tags like `prod`.",
       code: {
         code: 'versions        -- append-only\n  id, prompt_id\n  parent_id     -- null for v1\n  content_hash  -- body+model+params\n  body_ref      -- key: sha256(body)\n  model, params\n  author_id, created_at\n\nprompt_tags     -- mutable pointers\n  prompt_id, name, version_id',
         lang: 'text',
+      },
+      callout: {
+        tone: 'source',
+        text: 'Prep-site write-ups of the Prompt Playground round candidates report (2026) recommend immutable versions plus a compare-and-set head pointer: [The Forward Deployed](https://www.theforwarddeployed.io/interviews/anthropic/questions/prompt-playground). A guide, not an official rubric.',
       },
     },
     {
@@ -72,14 +76,14 @@ const lesson: Lesson = {
       id: 'what-changes',
       prompt: 'What actually changes in storage? Match each action to its write.',
       pairs: [
-        { left: 'Save edited text', right: 'Insert a version whose parent is the one you edited' },
+        { left: 'Save edited text', right: 'Insert a version (parent: the one you edited); move the head' },
         { left: 'Save with nothing changed', right: "No write: the hash matches the parent's" },
         { left: 'Promote v8 to production', right: 'Update one row: point the `prod` tag at v8' },
         { left: 'Diff v3 against v8', right: 'No write: computed from two stored bodies' },
         { left: "Duplicate a teammate's prompt", right: "A new prompt whose first version's parent is theirs" },
       ],
       explanation:
-        'The tag is the only row that ever changes. Everything else is an insert or a read, which is why history cannot be lost and why promotion and rollback are single-row updates you can audit.',
+        'Only pointers ever change: the head and tags like `prod`. Everything else is an insert or a read, which is why history cannot be lost and why promotion and rollback are single-row updates you can audit.',
     },
     {
       kind: 'concept',
@@ -254,7 +258,7 @@ const lesson: Lesson = {
       kind: 'concept',
       id: 'recap',
       title: 'Remember',
-      body: "1. **Versions are immutable** rows with a content hash and a parent. Tags like `prod` are the only mutable pointers, and runs reference versions, so every output is explainable.\n2. **A run is a job**: queue, workers, SSE, and per-org buckets on both requests and tokens.\n3. **Timeouts are ambiguous.** One idempotency key per logical run, and workers that tolerate at-least-once delivery.",
+      body: "1. **Versions are immutable** rows with a content hash and a parent. Only pointers (the head, tags like `prod`) ever move, and runs reference versions, so every output is explainable.\n2. **A run is a job**: queue, workers, SSE, and per-org buckets on both requests and tokens.\n3. **Timeouts are ambiguous.** One idempotency key per logical run, and workers that tolerate at-least-once delivery.",
     },
   ],
   cards: [

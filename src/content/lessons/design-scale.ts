@@ -31,11 +31,15 @@ const lesson: Lesson = {
       id: 'shape-picks-store',
       title: 'Shape picks the store',
       body: "Ask three questions of each piece of data: how big, does it change, how is it read?\n\n- **Postgres**: small rows you filter, join and update in transactions. Orgs, members, prompts, version metadata, run status.\n- **Object storage**: big immutable blobs, read whole. Prompt bodies, run outputs, dataset files. Key them by hash or run id.\n- **Cache**: hot reads you can rebuild from the other two if it vanishes.",
+      callout: {
+        tone: 'source',
+        text: 'Prep-site write-ups of the Prompt Playground round candidates report (2026) list metadata vs blob storage as a standard probe: [aceoffer](https://aceoffer.app/interviews/prompt_playground_system_design). Second-hand guides, not verbatim questions.',
+      },
     },
     {
       kind: 'sort',
       id: 'pick-store',
-      prompt: 'Where does each piece of data live?',
+      prompt: 'Which store should serve each one?',
       buckets: [
         { id: 'pg', label: 'Postgres' },
         { id: 'blob', label: 'Object storage' },
@@ -47,7 +51,7 @@ const lesson: Lesson = {
         { text: 'Monthly token usage per org, for billing', bucket: 'pg', why: 'Money. If the cache restarts, an invoice must not reset to zero.' },
         { text: 'A 12 MB prompt body', bucket: 'blob', why: 'Big, immutable, always read whole. Postgres can hold it, but it bloats backups and replication.' },
         { text: 'The 50 MB CSV behind an eval dataset', bucket: 'blob', why: 'A file. Store it once, keep row counts and metadata in Postgres.' },
-        { text: 'The current version of a prompt opened 2,000 times a minute', bucket: 'cache', why: 'Hot and rebuildable. Versions are immutable, so a cached copy is never stale.' },
+        { text: 'Reads of a prompt version opened 2,000 times a minute', bucket: 'cache', why: 'Hot and rebuildable: the durable copy stays in Postgres and object storage. Versions are immutable, so a cached copy is never stale.' },
         { text: "Per-org rate-limit buckets", bucket: 'cache', why: 'Touched on every request and cheap to lose: a reset bucket just starts full.' },
       ],
       explanation:

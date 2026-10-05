@@ -308,7 +308,7 @@ function RehearseHero({ count, onStart }: { count: number; onStart: () => void }
         </div>
         <MicArt />
       </div>
-      <p className="sto-hero__text">Say each one out loud against a two-minute timer, then grade how it went.</p>
+      <p className="sto-hero__text">Say each one out loud with the timer running, then grade how it went.</p>
       <div className="sto-hero__chips">
         <span className="sto-chip">
           <Timer size={15} strokeWidth={2.6} />
